@@ -1,0 +1,46 @@
+{
+  "name": "type-mongodb",
+  "version": "0.0.0-beta",
+  "description": "A simple decorator based MongoDB ODM.",
+  "keywords": [],
+  "author": "Jordan <j@jrdn.org>",
+  "license": "ISC",
+  "main": "lib/index.js",
+  "typings": "lib/index.d.ts",
+  "directories": {
+    "lib": "lib"
+  },
+  "files": [
+    "lib"
+  ],
+  "scripts": {
+    "build": "tsc -b . --force",
+    "clean": "rimraf lib",
+    "watch": "tsc -w",
+    "prepublishOnly": "yarn clean && yarn build",
+    "mongo-start": "MONGODB_VERSION=4.0.x mongodb-runner start --topology=replicaset --name=test --port=31000",
+    "mongo-stop": "mongodb-runner stop --topology=replicaset --name=test",
+    "pretest": "if [ ! -z $CI ]; then yarn mongo-start; fi",
+    "test": "jest --runInBand",
+    "pretty": "prettier '{src,tests}/**/*.ts' --write"
+  },
+  "dependencies": {
+    "mongodb": "^3.3.2"
+  },
+  "devDependencies": {
+    "@types/jest": "^24.0.18",
+    "@types/mongodb": "^3.3.1",
+    "jest": "^24.9.0",
+    "mongodb-runner": "^4.7.2",
+    "prettier": "^1.18.2",
+    "reflect-metadata": "^0.1.13",
+    "ts-jest": "^24.0.2",
+    "typescript": "^3.6.2"
+  },
+  "peerDependencies": {
+    "reflect-metadata": "^0.1.13"
+  },
+  "prettier": {
+    "singleQuote": true
+  }
+}
