@@ -1,8 +1,8 @@
-import { Model, Document, Field } from '../../src';
+import { Document, Field } from '../../src';
 import { ObjectId } from 'mongodb';
 
 @Document()
-export class Simple extends Model {
+export class Simple {
   @Field()
   _id: ObjectId;
 

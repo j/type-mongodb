@@ -1,5 +1,6 @@
-import { Model, Document, Field } from '../../src';
+import { Document, Field } from '../../src';
 import { ObjectId } from 'mongodb';
+import { UserRepository } from './UserRepository';
 
 export class Product {
   @Field()
@@ -25,8 +26,8 @@ export class Review {
   rating: number;
 }
 
-@Document()
-export class User extends Model {
+@Document({ repository: UserRepository })
+export class User {
   @Field()
   _id: ObjectId;
 

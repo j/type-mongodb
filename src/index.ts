@@ -1,6 +1,6 @@
 export * from './decorators';
-export * from './Model';
 export * from './DocumentManager';
-export * from './events/interfaces';
+export * from './events';
+export * from './repository';
 
 export { ObjectId, Cursor } from './common/types';

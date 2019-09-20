@@ -1,4 +1,5 @@
-import { Newable } from '../common';
+import { DocumentType, Newable } from '../common';
+import { Repository } from 'src/repository/Repository';
 
 /**
  * Definitions provide the metadata classes with the data to
@@ -6,7 +7,8 @@ import { Newable } from '../common';
  */
 
 export interface DocumentDefinition<T = any> {
-  DocumentClass: Newable<T>;
+  DocumentClass: DocumentType<T>;
+  RepositoryClass: Newable<Repository<T>>;
   connection: string;
   database?: string;
   collection: string;
@@ -14,7 +16,7 @@ export interface DocumentDefinition<T = any> {
 }
 
 export interface FieldDefinition<T = any> {
-  DocumentClass: Newable<T>;
+  DocumentClass: DocumentType<T>;
   fieldName: string;
   isEmbedded: boolean;
   embedded?: () => any;

@@ -18,37 +18,37 @@ export enum Events {
   AfterDeleteMany = 'afterDeleteMany'
 }
 
-export interface Event<M = any> {
-  meta: DocumentMetadata<M>;
+export interface Event<T = any> {
+  meta: DocumentMetadata<T>;
 }
 
-export interface InsertEvent<M = any> extends Event<M> {
-  model: M;
+export interface InsertEvent<T = any> extends Event<T> {
+  model: T;
 }
 
-export interface UpdateEvent<M = any> extends Event<M> {
+export interface UpdateEvent<T = any> extends Event<T> {
   update: any;
-  filter: FilterQuery<M>;
+  filter: FilterQuery<T>;
 }
 
-export interface DeleteEvent<M = any> extends Event<M> {
-  filter: FilterQuery<M>;
+export interface DeleteEvent<T = any> extends Event<T> {
+  filter: FilterQuery<T>;
 }
 
-export interface EventSubscriber<M = any> {
+export interface EventSubscriber<T = any> {
   getSubscribedDocuments?(dm: DocumentManager): any[];
 
   // events on single document
-  beforeInsert?(e: InsertEvent<M>): Promise<void> | void;
-  afterInsert?(e: InsertEvent<M>): Promise<void> | void;
-  beforeUpdate?(e: UpdateEvent<M>): Promise<void> | void;
-  afterUpdate?(e: UpdateEvent<M>): Promise<void> | void;
-  beforeDelete?(e: DeleteEvent<M>): Promise<void> | void;
-  afterDelete?(e: DeleteEvent<M>): Promise<void> | void;
+  beforeInsert?(e: InsertEvent<T>): Promise<void> | void;
+  afterInsert?(e: InsertEvent<T>): Promise<void> | void;
+  beforeUpdate?(e: UpdateEvent<T>): Promise<void> | void;
+  afterUpdate?(e: UpdateEvent<T>): Promise<void> | void;
+  beforeDelete?(e: DeleteEvent<T>): Promise<void> | void;
+  afterDelete?(e: DeleteEvent<T>): Promise<void> | void;
 
   // events on many documents
-  beforeUpdateMany?(e: UpdateEvent<M>): Promise<void> | void;
-  afterUpdateMany?(e: UpdateEvent<M>): Promise<void> | void;
-  beforeDeleteMany?(e: DeleteEvent<M>): Promise<void> | void;
-  afterDeleteMany?(e: DeleteEvent<M>): Promise<void> | void;
+  beforeUpdateMany?(e: UpdateEvent<T>): Promise<void> | void;
+  afterUpdateMany?(e: UpdateEvent<T>): Promise<void> | void;
+  beforeDeleteMany?(e: DeleteEvent<T>): Promise<void> | void;
+  afterDeleteMany?(e: DeleteEvent<T>): Promise<void> | void;
 }

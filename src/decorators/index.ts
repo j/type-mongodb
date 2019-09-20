@@ -1,11 +1,14 @@
 import { FieldDefinition } from '../metadata/definitions';
 import { definitionStorage } from '../utils/definitionStorage';
+import { Newable } from '../common';
+import { Repository } from '../repository';
 
 interface DocumentOptions {
   connection?: string;
   database?: string;
   collection?: string;
   extensions?: Record<any, any>;
+  repository?: Newable<Repository<any>>;
 }
 
 export function Document(options: DocumentOptions = {}): ClassDecorator {
@@ -13,6 +16,7 @@ export function Document(options: DocumentOptions = {}): ClassDecorator {
     definitionStorage.documents.set(target, {
       ...options,
       DocumentClass: target,
+      RepositoryClass: options.repository || Repository,
       connection: options.connection || 'default',
       database: options.database,
       collection: options.collection || target.name

@@ -1,22 +1,23 @@
 import { DocumentMetadata } from './DocumentMetadata';
 import { FieldMetadata } from './FieldMetadata';
-import { Newable, FieldsOf } from '../common/types';
+import { DocumentType } from '../common/types';
 import { definitionStorage } from '../utils/definitionStorage';
 import { TypeMongoError } from '../errors';
 import { DocumentManager } from '../DocumentManager';
 import { EmbeddedDocumentMetadata } from './EmbeddedDocumentMetadata';
-import { FieldsMetadata } from './BaseDocumentMetadata';
+import { FieldsMetadata } from './AbstractDocumentMetadata';
 
 export interface BuildMetadataStorageOptions {
   dm: DocumentManager;
-  documents: Newable<any>[];
+  documents: DocumentType<any>[];
 }
 
 /**
  * DocumentMetadataFactory builds and validates all the Document's metadata.
  */
 export class DocumentMetadataFactory {
-  public loadedMetadata: Map<Newable, DocumentMetadata<any, any>> = new Map();
+  public loadedMetadata: Map<DocumentType, DocumentMetadata<any>> = new Map();
+
   private isBuilt: boolean = false;
 
   constructor(public readonly opts: BuildMetadataStorageOptions) {}
@@ -38,9 +39,7 @@ export class DocumentMetadataFactory {
   /**
    * Gets the DocumentMetadata for the given class.
    */
-  getMetadataFor<M = any, D = FieldsOf<M>>(
-    DocumentClass: Newable
-  ): DocumentMetadata<M, D> {
+  getMetadataFor<T>(DocumentClass: DocumentType<T>): DocumentMetadata<T> {
     this.assertMetadataIsBuilt();
 
     return this.loadedMetadata.get(DocumentClass);
@@ -80,7 +79,9 @@ export class DocumentMetadataFactory {
   /**
    * Builds the DocumentMetadata and it's fields for the given class.
    */
-  protected buildMetadataForDocument(DocumentClass: Newable): DocumentMetadata {
+  protected buildMetadataForDocument(
+    DocumentClass: DocumentType
+  ): DocumentMetadata {
     if (!definitionStorage.documents.has(DocumentClass)) {
       throw new TypeMongoError(
         `"${DocumentClass.name}" is not a decorated @Document()`
@@ -96,23 +97,24 @@ export class DocumentMetadataFactory {
       def.database
     );
 
-    // Duck-type check if class is like the Model class for active-record style functionality
-    if (typeof (def.DocumentClass as any).setDocumentManager === 'function') {
-      (def.DocumentClass as any).setDocumentManager(this.opts.dm);
-    }
+    const repository = new def.RepositoryClass();
+    repository.manager = this.opts.dm;
 
-    return new DocumentMetadata({
+    const meta = new DocumentMetadata({
       DocumentClass,
       fields: this.buildFields(DocumentClass),
       connection,
       db,
       collection: db.collection(def.collection),
+      repository,
       extensions: def.extensions || {}
     });
+
+    return meta;
   }
 
   protected buildEmbeddedDocumentMetadata(
-    DocumentClass: Newable
+    DocumentClass: DocumentType
   ): EmbeddedDocumentMetadata {
     return new EmbeddedDocumentMetadata(
       DocumentClass,
@@ -124,7 +126,7 @@ export class DocumentMetadataFactory {
    * Recursively adds fields to the DocumentMetadata.
    */
   protected buildFields(
-    target: Newable,
+    target: DocumentType,
     fields?: FieldsMetadata
   ): FieldsMetadata {
     if (!definitionStorage.fields.has(target)) {

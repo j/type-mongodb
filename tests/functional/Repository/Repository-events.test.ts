@@ -1,8 +1,9 @@
 import 'reflect-metadata';
 import { ObjectId } from 'mongodb';
-import { Document, Field, EventSubscriber } from '../../src';
-import { DocumentManager } from '../../src/DocumentManager';
-import { DocumentMetadata } from '../../src/metadata/DocumentMetadata';
+import { Document, Field, EventSubscriber } from '../../../src';
+import { DocumentManager } from '../../../src/DocumentManager';
+import { DocumentMetadata } from '../../../src/metadata/DocumentMetadata';
+import { Repository } from '../../../src/repository/Repository';
 
 @Document()
 class Event {
@@ -10,7 +11,7 @@ class Event {
   _id: ObjectId;
 
   @Field()
-  field: string;
+  field?: string;
 }
 
 class NoopListener implements EventSubscriber<any> {
@@ -28,6 +29,7 @@ class NoopListener implements EventSubscriber<any> {
 
 describe('DocumentManager -> Events', () => {
   let manager: DocumentManager;
+  let repository: Repository<Event>;
   let meta: DocumentMetadata;
   let spies: { [key: string]: jest.SpyInstance } = {};
 
@@ -72,6 +74,8 @@ describe('DocumentManager -> Events', () => {
     });
 
     meta = manager.getMetadataFor(Event);
+    repository = manager.getRepository(Event);
+
     // single documents
     spies.beforeInsert = jest.spyOn(NoopListener.prototype, 'beforeInsert');
     spies.afterInsert = jest.spyOn(NoopListener.prototype, 'afterInsert');
@@ -112,7 +116,7 @@ describe('DocumentManager -> Events', () => {
   });
 
   test('create() -> single document', async () => {
-    const model = await manager.create(Event, {});
+    const model = await repository.create({});
     assertEventsCalled([spies.beforeInsert, spies.afterInsert], 1);
     assertEventCalledWith(spies.beforeInsert, 1, {
       meta,
@@ -126,7 +130,7 @@ describe('DocumentManager -> Events', () => {
 
   test('create() -> multiple documents', async () => {
     const events = [{ field: 'event1' }, { field: 'event2' }];
-    const models = await manager.create(Event, events);
+    const models = await repository.create(events);
     assertEventsCalled([spies.beforeInsert, spies.afterInsert], 2);
     assertEventCalledWith(spies.beforeInsert, 1, {
       meta,
@@ -148,7 +152,7 @@ describe('DocumentManager -> Events', () => {
 
   test('insertOne()', async () => {
     const model = Object.assign(new Event(), { field: 'event' });
-    await manager.insertOne(model);
+    await repository.insertOne(model);
     assertEventsCalled([spies.beforeInsert, spies.afterInsert]);
     assertEventCalledWith(spies.beforeInsert, 1, {
       meta,
@@ -166,7 +170,7 @@ describe('DocumentManager -> Events', () => {
       Object.assign(new Event(), { field: 'event2' })
     ];
 
-    await manager.insertMany(Event, models);
+    await repository.insertMany(models);
     assertEventsCalled([spies.beforeInsert, spies.afterInsert], 2);
     assertEventCalledWith(spies.beforeInsert, 1, {
       meta,
@@ -189,7 +193,7 @@ describe('DocumentManager -> Events', () => {
   test('findOneAndUpdate()', async () => {
     const filter = {};
     const update = { $set: { field: 'event' } };
-    await manager.findOneAndUpdate(Event, filter, update);
+    await repository.findOneAndUpdate(filter, update);
     assertEventsCalled([spies.beforeUpdate, spies.afterUpdate]);
     assertEventCalledWith(spies.beforeUpdate, 1, {
       meta,
@@ -205,13 +209,13 @@ describe('DocumentManager -> Events', () => {
 
   test('findOneAndReplace() -> does not have events', async () => {
     const model = Object.assign(new Event(), { field: 'event' });
-    await manager.findOneAndReplace(Event, {}, model);
+    await repository.findOneAndReplace({}, model);
     assertEventsCalled([]);
   });
 
   test('findOneAndDelete()', async () => {
     const filter = {};
-    await manager.findOneAndDelete(Event, filter);
+    await repository.findOneAndDelete(filter);
     assertEventsCalled([spies.beforeDelete, spies.afterDelete]);
     assertEventCalledWith(spies.beforeDelete, 1, {
       meta,
@@ -226,7 +230,7 @@ describe('DocumentManager -> Events', () => {
   test('updateOne() -> beforeUpdate & afterUpdate called', async () => {
     const filter = {};
     const update = { $set: { field: 'event' } };
-    await manager.updateOne(Event, filter, update);
+    await repository.updateOne(filter, update);
     assertEventsCalled([spies.beforeUpdate, spies.afterUpdate]);
     assertEventCalledWith(spies.beforeUpdate, 1, {
       meta,
@@ -243,7 +247,7 @@ describe('DocumentManager -> Events', () => {
   test('updateMany() -> beforeUpdate & afterUpdate called', async () => {
     const filter = {};
     const update = { $set: { field: 'event' } };
-    await manager.updateMany(Event, filter, update);
+    await repository.updateMany(filter, update);
     assertEventsCalled([spies.beforeUpdateMany, spies.afterUpdateMany]);
     assertEventCalledWith(spies.beforeUpdateMany, 1, {
       meta,
@@ -259,13 +263,13 @@ describe('DocumentManager -> Events', () => {
 
   test('replaceOne() -> does not have events', async () => {
     const model = Object.assign(new Event(), { field: 'event' });
-    await manager.replaceOne(Event, {}, model);
+    await repository.replaceOne({}, model);
     assertEventsCalled([]);
   });
 
   test('deleteOne()', async () => {
     const filter = {};
-    await manager.deleteOne(Event, filter);
+    await repository.deleteOne(filter);
     assertEventsCalled([spies.beforeDelete, spies.afterDelete]);
     assertEventCalledWith(spies.beforeDelete, 1, {
       meta,
@@ -279,7 +283,7 @@ describe('DocumentManager -> Events', () => {
 
   test('deleteMany()', async () => {
     const filter = {};
-    await manager.deleteMany(Event, filter);
+    await repository.deleteMany(filter);
     assertEventsCalled([spies.beforeDeleteMany, spies.afterDeleteMany]);
     assertEventCalledWith(spies.beforeDeleteMany, 1, {
       meta,

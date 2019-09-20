@@ -8,8 +8,8 @@ export interface FieldMetadataOpts<T = any> extends FieldDefinition<T> {
   embeddedMetadata?: EmbeddedDocumentMetadata;
 }
 
-export class FieldMetadata<M = any> {
-  public readonly DocumentClass: Newable<M>;
+export class FieldMetadata<T = any> {
+  public readonly DocumentClass: Newable<T>;
   public readonly fieldName: string;
   public readonly database: string;
   public readonly embedded?: () => any;

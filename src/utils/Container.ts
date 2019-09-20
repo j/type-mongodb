@@ -1,49 +1,35 @@
 import { Newable } from '../common/types';
-import { Model } from '../Model';
-import { DocumentMetadata } from '../metadata/DocumentMetadata';
 
 export interface ContainerType {
-  get<T>(target: Newable<T>): T;
-  has(target: any): boolean;
-  set(target: any, value: any): void;
+  get<T>(InstanceClass: Newable<T>): T;
 }
 
 export class DefaultContainer implements ContainerType {
-  private map = new Map<Newable<any>, any>();
+  private instances = new Map<Newable, any>();
 
-  get<T>(target: Newable<T>): T {
-    return this.map.get(target);
-  }
+  get<T>(InstanceClass: Newable<T>): T {
+    if (this.instances.has(InstanceClass)) {
+      return this.instances.get(InstanceClass);
+    }
 
-  has(target: any): any {
-    return this.map.has(target);
-  }
+    const instance = new InstanceClass();
 
-  set(target: any, value: any): void {
-    this.map.set(target, value);
+    this.instances.set(InstanceClass, instance);
+
+    return instance;
   }
 }
 
 export class Container {
-  private container: ContainerType;
+  protected readonly defaultContainer: DefaultContainer;
 
-  constructor(container?: ContainerType) {
-    if (!container) {
-      this.container = new DefaultContainer();
-    }
+  constructor(protected userContainer?: ContainerType) {
+    this.defaultContainer = new DefaultContainer();
   }
 
-  get<T extends Model>(target: Newable<T>): DocumentMetadata<T>;
-  get<T>(target: Newable<T>): T;
-  get<T>(target: Newable<T>): T {
-    return this.container.get(target);
-  }
-
-  has(target: any): any {
-    return this.container.has(target);
-  }
-
-  set(target: any, value: any): void {
-    this.container.set(target, value);
+  get<T>(InstanceClass: Newable<T>): T {
+    return this.userContainer
+      ? this.userContainer.get(InstanceClass)
+      : this.defaultContainer.get(InstanceClass);
   }
 }

@@ -65,12 +65,12 @@ export class EventManager {
     });
   }
 
-  async dispatchBeforeAndAfter<M = any, R = any>(
+  async dispatchBeforeAndAfter<T1 = any, T2 = any>(
     before: Events,
     after: Events,
-    e: InsertEvent<M> | UpdateEvent<M> | DeleteEvent<M>,
-    run: () => Promise<R>
-  ): Promise<R> {
+    e: InsertEvent<T1> | UpdateEvent<T1> | DeleteEvent<T1>,
+    run: () => Promise<T2>
+  ): Promise<T2> {
     await this.dispatch(before, e);
     const result = await run();
     await this.dispatch(after, e);
@@ -81,9 +81,9 @@ export class EventManager {
   /**
    * Dispatches the all the subscribed events for the document.
    */
-  async dispatch<M = any>(
+  async dispatch<T = any>(
     type: Events,
-    e: InsertEvent<M> | UpdateEvent<M> | DeleteEvent<M>
+    e: InsertEvent<T> | UpdateEvent<T> | DeleteEvent<T>
   ): Promise<void> {
     if (!this.documentsWithSubscribers.has(e.meta.DocumentClass)) {
       return;

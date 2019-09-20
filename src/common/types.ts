@@ -13,16 +13,20 @@ import {
   DeleteWriteOpResultObject
 } from 'mongodb';
 
-export type WithId<T = any> = T & { _id?: any };
-export type OptionalId<T = any> = Omit<T, '_id'> & WithId<T>;
+export type DocumentType<T = any> = Newable<WithId<T>>;
+export type DocumentInstance<T = any> = WithId<T>;
+export type WithId<T = any> = Omit<T, '_id'> & { _id: any };
+export type OptionalId<T = any> = Omit<T, '_id'> & { _id?: any };
 export type Newable<T = any> = new (...args: any[]) => T;
-export type FieldsOf<T = any> = { [P in keyof T]?: T[P] };
+export type PropsOf<T = any> = { [P in keyof T]: T[P] };
 
 /**
  * Mongo Types
  */
 export {
   Cursor,
+  Collection,
+  Db,
   ObjectId,
   FilterQuery,
   UpdateQuery,

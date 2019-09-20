@@ -1,4 +1,4 @@
-import { Newable, FieldsOf } from '../common/types';
+import { DocumentType, PropsOf, OptionalId } from '../common/types';
 import { FieldMetadata } from './FieldMetadata';
 
 export type FieldsMetadata = Map<string, FieldMetadata>;
@@ -7,12 +7,12 @@ export type FieldsMetadata = Map<string, FieldMetadata>;
  * BaseDocumentMetadata contains all the needed info for Document and embedded
  * documents.
  */
-export abstract class BaseDocumentMetadata<M = any, D = FieldsOf<M>> {
-  public readonly DocumentClass: Newable<M>;
+export abstract class AbstractDocumentMetadata<T> {
+  public readonly DocumentClass: DocumentType<T>;
   public readonly name: string;
   public readonly fields: FieldsMetadata;
 
-  constructor(DocumentClass: Newable<M>, fields: FieldsMetadata) {
+  constructor(DocumentClass: DocumentType<T>, fields: FieldsMetadata) {
     this.DocumentClass = DocumentClass;
     this.name = DocumentClass.name;
     this.fields = fields;
@@ -29,21 +29,21 @@ export abstract class BaseDocumentMetadata<M = any, D = FieldsOf<M>> {
   /**
    * Maps model fields to a mongodb document.
    */
-  toDB(model: M): D {
+  toDB(model: T): PropsOf<T> {
     return this.mapDataInto({}, model, 'toDB');
   }
 
   /**
    * Maps mongodb document(s) to a model.
    */
-  fromDB(doc: D | any): M {
+  fromDB(doc: PropsOf<T> | any): T {
     return this.mapDataInto(new this.DocumentClass(), doc, 'fromDB');
   }
 
   /**
    * Creates a model from model properties.
    */
-  init(props: FieldsOf<M>): M {
+  init(props: PropsOf<OptionalId<T>>): T {
     return this.mapDataInto(new this.DocumentClass(), props, 'init');
   }
 
@@ -54,7 +54,7 @@ export abstract class BaseDocumentMetadata<M = any, D = FieldsOf<M>> {
   /**
    * Iterates over the fields for mapping between different types
    */
-  protected mapDataInto<T>(
+  protected mapDataInto(
     into: any,
     data: any,
     mapper: 'toDB' | 'fromDB' | 'init'

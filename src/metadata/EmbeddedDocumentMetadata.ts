@@ -1,10 +1,8 @@
-import { FieldsOf } from '../common/types';
-import { BaseDocumentMetadata } from './BaseDocumentMetadata';
+import { AbstractDocumentMetadata } from './AbstractDocumentMetadata';
 
 /**
  * DocumentMetadata contains all the needed info for Document classes.
  */
-export class EmbeddedDocumentMetadata<
-  M = any,
-  D = FieldsOf<M>
-> extends BaseDocumentMetadata<M, D> {}
+export class EmbeddedDocumentMetadata<T = any> extends AbstractDocumentMetadata<
+  T
+> {}
