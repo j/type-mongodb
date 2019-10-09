@@ -195,12 +195,10 @@ export class Repository<T> {
     update: UpdateQuery<T>,
     opts: FindOneAndUpdateOptions = {}
   ): Promise<T | null> {
-    return this.runQuery(
-      this.collection.findOneAndUpdate(filter, update, {
-        returnOriginal: false,
-        ...opts
-      })
-    );
+    return this.findOneAnd('Update', filter, update, {
+      returnOriginal: false,
+      ...opts
+    });
   }
 
   async findOneAndReplace(
@@ -208,19 +206,17 @@ export class Repository<T> {
     props: OptionalId<PropsOf<T>>,
     opts?: FindOneAndReplaceOptions
   ): Promise<T | null> {
-    return this.runQuery(
-      this.collection.findOneAndReplace(filter, props, {
-        returnOriginal: false,
-        ...opts
-      })
-    );
+    return this.findOneAnd('Replace', filter, props, {
+      returnOriginal: false,
+      ...opts
+    });
   }
 
   async findOneAndDelete(
     filter: FilterQuery<T>,
     opts?: FindOneAndDeleteOptions
   ): Promise<T | null> {
-    return this.runQuery(this.collection.findOneAndDelete(filter, opts));
+    return this.findOneAnd('Delete', filter, opts);
   }
 
   async updateOne(
@@ -295,11 +291,17 @@ export class Repository<T> {
     return value;
   }
 
-  protected async runQuery<T1 extends { ok?: number; value?: any }>(
-    query: Promise<T1>
+  protected async findOneAnd(
+    op: 'Update' | 'Replace' | 'Delete',
+    ...args: any
   ): Promise<T | null> {
-    const data = await query;
+    const result = await this.collection[`findOneAnd${op}`].apply(
+      this.collection,
+      args
+    );
 
-    return data && data.ok && data.value ? this.fromDB(data.value) : null;
+    return result && result.ok && result.value
+      ? this.fromDB(result.value)
+      : null;
   }
 }
