@@ -26,7 +26,7 @@ import {
   ObjectId
 } from '../common/types';
 import { DocumentMetadata } from '../metadata/DocumentMetadata';
-import { TypeMongoError } from '../errors';
+import { DocumentNotFound } from '../errors';
 import { DocumentManager } from '../DocumentManager';
 
 /**
@@ -269,23 +269,11 @@ export class Repository<T> {
 
   protected failIfEmpty(
     meta: DocumentMetadata<T>,
-    criteria: FilterQuery<any>,
+    filter: FilterQuery<any>,
     value: any
   ) {
     if (!value) {
-      if (
-        criteria &&
-        Object.keys(criteria).length === 1 &&
-        typeof criteria._id !== 'undefined'
-      ) {
-        throw new TypeMongoError(
-          `"${meta.name}" with id "${criteria._id}" not found`
-        );
-      }
-
-      throw new TypeMongoError(
-        `"${meta.name}" not found with criteria: '${JSON.stringify(criteria)}'`
-      );
+      throw new DocumentNotFound(meta, filter);
     }
 
     return value;

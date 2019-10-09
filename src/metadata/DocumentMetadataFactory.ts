@@ -2,7 +2,6 @@ import { DocumentMetadata } from './DocumentMetadata';
 import { FieldMetadata } from './FieldMetadata';
 import { DocumentType } from '../common/types';
 import { definitionStorage } from '../utils/definitionStorage';
-import { TypeMongoError } from '../errors';
 import { DocumentManager } from '../DocumentManager';
 import { EmbeddedDocumentMetadata } from './EmbeddedDocumentMetadata';
 import { FieldsMetadata } from './AbstractDocumentMetadata';
@@ -28,7 +27,7 @@ export class DocumentMetadataFactory {
 
   build() {
     if (this.isBuilt) {
-      throw new TypeMongoError('DocumentMetadata already built');
+      throw new Error('DocumentMetadata already built');
     }
 
     this.buildDocuments();
@@ -60,7 +59,7 @@ export class DocumentMetadataFactory {
 
   protected assertMetadataIsBuilt() {
     if (!this.isBuilt) {
-      throw new TypeMongoError('DocumentMetadata is not initialized');
+      throw new Error('DocumentMetadata is not initialized');
     }
   }
 
@@ -83,9 +82,7 @@ export class DocumentMetadataFactory {
     DocumentClass: DocumentType
   ): DocumentMetadata {
     if (!definitionStorage.documents.has(DocumentClass)) {
-      throw new TypeMongoError(
-        `"${DocumentClass.name}" is not a decorated @Document()`
-      );
+      throw new Error(`"${DocumentClass.name}" is not a decorated @Document()`);
     }
 
     const def = definitionStorage.documents.get(DocumentClass);
@@ -130,7 +127,7 @@ export class DocumentMetadataFactory {
     fields?: FieldsMetadata
   ): FieldsMetadata {
     if (!definitionStorage.fields.has(target)) {
-      throw new TypeMongoError(`"${target.name}" does not have any fields`);
+      throw new Error(`"${target.name}" does not have any fields`);
     }
 
     fields = fields || new Map();
