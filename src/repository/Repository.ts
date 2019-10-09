@@ -102,7 +102,7 @@ export class Repository<T> {
   find(query: FilterQuery<T>, options?: FindOptions): Cursor<T>;
   find(query: FilterQuery<T>, opts?: FindOptions): Cursor<T> {
     const cursor = this.collection.find(query, opts);
-    cursor.map((doc: any) => this.metadata.fromDB(doc));
+    cursor.map((doc: any) => this.fromDB(doc));
 
     return cursor;
   }
@@ -125,7 +125,7 @@ export class Repository<T> {
   ): Promise<T | null> {
     const found = await this.collection.findOne(filter, opts);
 
-    return found ? this.metadata.fromDB(found) : null;
+    return found ? this.fromDB(found) : null;
   }
 
   async findOneOrFail(
@@ -178,9 +178,7 @@ export class Repository<T> {
     model: OptionalId<T>,
     opts?: InsertOneOptions
   ): Promise<InsertOneResult> {
-    if (!model._id) {
-      model._id = this.id();
-    }
+    const doc = this.toDB(model as T);
 
     return this.manager.eventManager.dispatchBeforeAndAfter(
       Events.BeforeInsert,
@@ -189,7 +187,7 @@ export class Repository<T> {
         meta: this.metadata,
         model: model as T
       },
-      () => this.collection.insertOne(this.metadata.toDB(model), opts)
+      () => this.collection.insertOne(doc, opts)
     );
   }
 
@@ -199,6 +197,8 @@ export class Repository<T> {
   ): Promise<InsertManyResult> {
     const beforeInsertEvents: Promise<any>[] = [];
     const afterInsertEvents: Promise<any>[] = [];
+
+    const docs = models.map(model => this.toDB(model as T));
 
     models.forEach(model => {
       if (!model._id) {
@@ -222,10 +222,7 @@ export class Repository<T> {
 
     await Promise.all(beforeInsertEvents);
 
-    const result = this.collection.insertMany(
-      models.map(model => this.metadata.toDB(model)),
-      opts
-    );
+    const result = this.collection.insertMany(docs, opts);
 
     await Promise.all(afterInsertEvents);
 
@@ -324,7 +321,7 @@ export class Repository<T> {
   ): Promise<ReplaceOneResult> {
     return this.collection.replaceOne(
       filter,
-      this.metadata.toDB(this.metadata.init(props)),
+      this.toDB(this.init(props)),
       opts
     );
   }
@@ -396,8 +393,6 @@ export class Repository<T> {
   ): Promise<T | null> {
     const data = await query;
 
-    return data && data.ok && data.value
-      ? this.metadata.fromDB(data.value)
-      : null;
+    return data && data.ok && data.value ? this.fromDB(data.value) : null;
   }
 }

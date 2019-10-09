@@ -1,5 +1,7 @@
-import { DocumentType, PropsOf, OptionalId } from '../common/types';
+import { ObjectId } from 'mongodb';
+import { PropsOf, OptionalId, Newable } from '../common/types';
 import { FieldMetadata } from './FieldMetadata';
+import { DocumentTransformer } from '../document/DocumentTransformer';
 
 export type FieldsMetadata = Map<string, FieldMetadata>;
 
@@ -7,12 +9,15 @@ export type FieldsMetadata = Map<string, FieldMetadata>;
  * BaseDocumentMetadata contains all the needed info for Document and embedded
  * documents.
  */
-export abstract class AbstractDocumentMetadata<T> {
-  public readonly DocumentClass: DocumentType<T>;
+export abstract class AbstractDocumentMetadata<
+  T,
+  D extends Newable = Newable<T>
+> {
+  public readonly DocumentClass: D;
   public readonly name: string;
   public readonly fields: FieldsMetadata;
 
-  constructor(DocumentClass: DocumentType<T>, fields: FieldsMetadata) {
+  constructor(DocumentClass: D, fields: FieldsMetadata) {
     this.DocumentClass = DocumentClass;
     this.name = DocumentClass.name;
     this.fields = fields;
@@ -27,54 +32,37 @@ export abstract class AbstractDocumentMetadata<T> {
   }
 
   /**
+   * Creates the document _id.
+   */
+  id(id?: string | ObjectId): ObjectId {
+    return new ObjectId(id);
+  }
+
+  /**
+   * Creates the document _id.
+   */
+  hasId(): boolean {
+    return this.fields.has('_id');
+  }
+
+  /**
    * Maps model fields to a mongodb document.
    */
   toDB(model: T): PropsOf<T> {
-    return this.mapDataInto({}, model, 'toDB');
+    return DocumentTransformer.toDB(this, model);
   }
 
   /**
    * Maps mongodb document(s) to a model.
    */
   fromDB(doc: PropsOf<T> | any): T {
-    return this.mapDataInto(new this.DocumentClass(), doc, 'fromDB');
+    return DocumentTransformer.fromDB(this, doc);
   }
 
   /**
    * Creates a model from model properties.
    */
   init(props: PropsOf<OptionalId<T>>): T {
-    return this.mapDataInto(new this.DocumentClass(), props, 'init');
-  }
-
-  // -------------------------------------------------------------------------
-  // Protected Methods
-  // -------------------------------------------------------------------------
-
-  /**
-   * Iterates over the fields for mapping between different types
-   */
-  protected mapDataInto(
-    into: any,
-    data: any,
-    mapper: 'toDB' | 'fromDB' | 'init'
-  ): T {
-    this.fields.forEach(
-      ({ isEmbedded, isEmbeddedArray, embeddedMetadata, fieldName }) => {
-        if (typeof data[fieldName] !== 'undefined') {
-          if (!isEmbedded) {
-            into[fieldName] = data[fieldName];
-          } else if (isEmbeddedArray) {
-            into[fieldName] = (data[fieldName] || []).map((value: any) =>
-              embeddedMetadata[mapper](value)
-            );
-          } else {
-            into[fieldName] = embeddedMetadata[mapper](data[fieldName]);
-          }
-        }
-      }
-    );
-
-    return into;
+    return DocumentTransformer.init(this, props);
   }
 }
