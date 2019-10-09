@@ -5,15 +5,12 @@ import {
   ConnectionManager,
   ConnectionManagerOptions
 } from './connection/ConnectionManager';
-import { EventSubscriber } from './events/interfaces';
-import { EventManager } from './events';
 import { Repository } from './repository/Repository';
 
 export interface DocumentManagerOptions {
   connections?: ConnectionManagerOptions[];
   connection?: ConnectionManagerOptions;
   documents: DocumentType<any>[];
-  subscribers?: EventSubscriber[];
 }
 
 /**
@@ -24,7 +21,6 @@ export interface DocumentManagerOptions {
 export class DocumentManager {
   public readonly metadataFactory: DocumentMetadataFactory;
   public readonly connectionManager: ConnectionManager;
-  public readonly eventManager: EventManager;
 
   constructor(private readonly opts: DocumentManagerOptions) {
     if (this.opts.connection && this.opts.connections) {
@@ -45,8 +41,6 @@ export class DocumentManager {
       dm: this,
       documents: opts.documents
     });
-
-    this.eventManager = new EventManager(this.opts.subscribers);
   }
 
   // -------------------------------------------------------------------------
@@ -55,10 +49,6 @@ export class DocumentManager {
 
   buildMetadata(): void {
     this.metadataFactory.build();
-  }
-
-  buildSubscribers(): void {
-    this.eventManager.build(this);
   }
 
   /**
@@ -134,9 +124,7 @@ export class DocumentManager {
     const dm = new DocumentManager(opts);
 
     await dm.connect();
-
     dm.buildMetadata();
-    dm.buildSubscribers();
 
     return dm;
   }

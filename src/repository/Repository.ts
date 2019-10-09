@@ -28,7 +28,6 @@ import {
 import { DocumentMetadata } from '../metadata/DocumentMetadata';
 import { TypeMongoError } from '../errors';
 import { DocumentManager } from '../DocumentManager';
-import { Events } from '../events';
 
 /**
  * Repository for documents
@@ -178,55 +177,17 @@ export class Repository<T> {
     model: OptionalId<T>,
     opts?: InsertOneOptions
   ): Promise<InsertOneResult> {
-    const doc = this.toDB(model as T);
-
-    return this.manager.eventManager.dispatchBeforeAndAfter(
-      Events.BeforeInsert,
-      Events.AfterInsert,
-      {
-        meta: this.metadata,
-        model: model as T
-      },
-      () => this.collection.insertOne(doc, opts)
-    );
+    return this.collection.insertOne(this.toDB(model as T), opts);
   }
 
   async insertMany(
     models: OptionalId<T>[],
     opts?: InsertManyOptions
   ): Promise<InsertManyResult> {
-    const beforeInsertEvents: Promise<any>[] = [];
-    const afterInsertEvents: Promise<any>[] = [];
-
-    const docs = models.map(model => this.toDB(model as T));
-
-    models.forEach(model => {
-      if (!model._id) {
-        model._id = this.id();
-      }
-
-      beforeInsertEvents.push(
-        this.manager.eventManager.dispatch(Events.BeforeInsert, {
-          meta: this.metadata,
-          model: model as T
-        })
-      );
-
-      afterInsertEvents.push(
-        this.manager.eventManager.dispatch(Events.AfterInsert, {
-          meta: this.metadata,
-          model: model as T
-        })
-      );
-    });
-
-    await Promise.all(beforeInsertEvents);
-
-    const result = this.collection.insertMany(docs, opts);
-
-    await Promise.all(afterInsertEvents);
-
-    return result;
+    return this.collection.insertMany(
+      models.map(model => this.toDB(model as T)),
+      opts
+    );
   }
 
   async findOneAndUpdate(
@@ -234,21 +195,11 @@ export class Repository<T> {
     update: UpdateQuery<T>,
     opts: FindOneAndUpdateOptions = {}
   ): Promise<T | null> {
-    return this.manager.eventManager.dispatchBeforeAndAfter(
-      Events.BeforeUpdate,
-      Events.AfterUpdate,
-      {
-        meta: this.metadata,
-        filter,
-        update
-      },
-      async () =>
-        this.runQuery(
-          this.collection.findOneAndUpdate(filter, update, {
-            returnOriginal: false,
-            ...opts
-          })
-        )
+    return this.runQuery(
+      this.collection.findOneAndUpdate(filter, update, {
+        returnOriginal: false,
+        ...opts
+      })
     );
   }
 
@@ -269,15 +220,7 @@ export class Repository<T> {
     filter: FilterQuery<T>,
     opts?: FindOneAndDeleteOptions
   ): Promise<T | null> {
-    return this.manager.eventManager.dispatchBeforeAndAfter(
-      Events.BeforeDelete,
-      Events.AfterDelete,
-      {
-        meta: this.metadata,
-        filter
-      },
-      async () => this.runQuery(this.collection.findOneAndDelete(filter, opts))
-    );
+    return this.runQuery(this.collection.findOneAndDelete(filter, opts));
   }
 
   async updateOne(
@@ -285,16 +228,7 @@ export class Repository<T> {
     update: UpdateQuery<T>,
     opts?: UpdateOneOptions
   ): Promise<UpdateOneResult> {
-    return this.manager.eventManager.dispatchBeforeAndAfter(
-      Events.BeforeUpdate,
-      Events.AfterUpdate,
-      {
-        meta: this.metadata,
-        filter,
-        update
-      },
-      () => this.collection.updateOne(filter, update, opts)
-    );
+    return this.collection.updateOne(filter, update, opts);
   }
 
   async updateMany(
@@ -302,16 +236,7 @@ export class Repository<T> {
     update: UpdateQuery<T>,
     opts?: UpdateManyOptions
   ): Promise<UpdateManyResult> {
-    return this.manager.eventManager.dispatchBeforeAndAfter(
-      Events.BeforeUpdateMany,
-      Events.AfterUpdateMany,
-      {
-        meta: this.metadata,
-        filter,
-        update
-      },
-      () => this.collection.updateMany(filter, update, opts)
-    );
+    return this.collection.updateMany(filter, update, opts);
   }
 
   async replaceOne(
@@ -330,34 +255,16 @@ export class Repository<T> {
     filter: FilterQuery<T>,
     opts?: DeleteOptions & { bypassDocumentValidation?: boolean }
   ): Promise<boolean> {
-    return this.manager.eventManager.dispatchBeforeAndAfter(
-      Events.BeforeDelete,
-      Events.AfterDelete,
-      {
-        meta: this.metadata,
-        filter
-      },
-      async () => {
-        const result = await this.collection.deleteOne(filter, opts);
+    const result = await this.collection.deleteOne(filter, opts);
 
-        return result && result.deletedCount === 1;
-      }
-    );
+    return result && result.deletedCount === 1;
   }
 
   async deleteMany(
     filter: FilterQuery<T>,
     opts?: DeleteOptions
   ): Promise<DeleteResult> {
-    return this.manager.eventManager.dispatchBeforeAndAfter(
-      Events.BeforeDeleteMany,
-      Events.AfterDeleteMany,
-      {
-        meta: this.metadata,
-        filter
-      },
-      () => this.collection.deleteMany(filter, opts)
-    );
+    return this.collection.deleteMany(filter, opts);
   }
 
   // -------------------------------------------------------------------------
