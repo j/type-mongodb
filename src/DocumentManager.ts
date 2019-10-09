@@ -8,14 +8,12 @@ import {
 import { EventSubscriber } from './events/interfaces';
 import { EventManager } from './events';
 import { Repository } from './repository/Repository';
-import { Container, ContainerType } from './utils/Container';
 
 export interface DocumentManagerOptions {
   connections?: ConnectionManagerOptions[];
   connection?: ConnectionManagerOptions;
   documents: DocumentType<any>[];
   subscribers?: EventSubscriber[];
-  container?: ContainerType;
 }
 
 /**
@@ -27,7 +25,6 @@ export class DocumentManager {
   public readonly metadataFactory: DocumentMetadataFactory;
   public readonly connectionManager: ConnectionManager;
   public readonly eventManager: EventManager;
-  public readonly container: Container;
 
   constructor(private readonly opts: DocumentManagerOptions) {
     if (this.opts.connection && this.opts.connections) {
@@ -50,7 +47,6 @@ export class DocumentManager {
     });
 
     this.eventManager = new EventManager(this.opts.subscribers);
-    this.container = new Container(this.opts.container);
   }
 
   // -------------------------------------------------------------------------
