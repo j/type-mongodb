@@ -224,11 +224,17 @@ describe('DocumentManager', () => {
     @Document()
     class Default {
       @Field()
+      _id: ObjectId;
+
+      @Field()
       field: string;
     }
 
     @Document({ connection: 'two' })
     class Connection2 {
+      @Field()
+      _id: ObjectId;
+
       @Field()
       field: string;
     }
@@ -236,11 +242,17 @@ describe('DocumentManager', () => {
     @Document({ connection: 'two', database: 'test3' })
     class Connection2DiffDb {
       @Field()
+      _id: ObjectId;
+
+      @Field()
       field: string;
     }
 
     @Document({ connection: 'two', collection: 'diff_collection' })
     class Connection2DiffCollection {
+      @Field()
+      _id: ObjectId;
+
       @Field()
       field: string;
     }
