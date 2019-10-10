@@ -31,7 +31,7 @@
   },
   "devDependencies": {
     "@types/jest": "^24.0.18",
-    "@types/mongodb": "^3.3.1",
+    "@types/mongodb": "^3.3.6",
     "husky": "^3.0.5",
     "jest": "^24.9.0",
     "mongodb-runner": "^4.7.2",

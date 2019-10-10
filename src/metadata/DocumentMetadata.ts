@@ -1,5 +1,5 @@
 import { Collection, Db } from 'mongodb';
-import { DocumentType } from '../common/types';
+import { DocumentClass } from '../types';
 import {
   AbstractDocumentMetadata,
   FieldsMetadata
@@ -8,7 +8,7 @@ import { Connection } from '../connection/Connection';
 import { Repository } from '../repository/Repository';
 
 export interface DocumentMetadataOpts<T = any> {
-  DocumentClass: DocumentType<T>;
+  DocumentClass: DocumentClass<T>;
   fields: FieldsMetadata;
   connection: Connection;
   db: Db;
@@ -22,7 +22,7 @@ export interface DocumentMetadataOpts<T = any> {
  */
 export class DocumentMetadata<T = any> extends AbstractDocumentMetadata<
   T,
-  DocumentType
+  DocumentClass
 > {
   public readonly connection: Connection;
   public readonly db: Db;

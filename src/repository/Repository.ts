@@ -1,33 +1,32 @@
+import { Cursor, ObjectId } from 'mongodb';
 import {
-  Cursor,
   Collection,
   Db,
   OptionalId,
-  InsertOneOptions,
-  InsertOneResult,
-  InsertManyOptions,
-  InsertManyResult,
+  InsertOneWriteOpResult,
+  CommonOptions,
   FilterQuery,
-  FindOptions,
-  FindOneOptions,
-  FindOneAndDeleteOptions,
-  FindOneAndUpdateOptions,
   UpdateQuery,
-  FindOneAndReplaceOptions,
-  UpdateManyResult,
   UpdateManyOptions,
-  UpdateOneResult,
   UpdateOneOptions,
-  ReplaceOneResult,
   ReplaceOneOptions,
-  DeleteOptions,
-  DeleteResult,
   PropsOf,
-  ObjectId
-} from '../common/types';
+  CollectionInsertOneOptions,
+  InsertWriteOpResult,
+  CollectionInsertManyOptions
+} from '../types';
 import { DocumentMetadata } from '../metadata/DocumentMetadata';
 import { DocumentNotFound } from '../errors';
 import { DocumentManager } from '../DocumentManager';
+import {
+  FindOneOptions,
+  FindOneAndUpdateOption,
+  FindOneAndReplaceOption,
+  FindOneAndDeleteOption,
+  UpdateWriteOpResult,
+  ReplaceWriteOpResult,
+  DeleteWriteOpResultObject
+} from 'mongodb';
 
 /**
  * Repository for documents
@@ -98,8 +97,8 @@ export class Repository<T> {
   }
 
   find(query?: FilterQuery<T>): Cursor<T>;
-  find(query: FilterQuery<T>, options?: FindOptions): Cursor<T>;
-  find(query: FilterQuery<T>, opts?: FindOptions): Cursor<T> {
+  find(query: FilterQuery<T>, options?: FindOneOptions): Cursor<T>;
+  find(query: FilterQuery<T>, opts?: FindOneOptions): Cursor<T> {
     const cursor = this.collection.find(query, opts);
     cursor.map((doc: any) => this.fromDB(doc));
 
@@ -138,14 +137,17 @@ export class Repository<T> {
     );
   }
 
-  create(props: OptionalId<PropsOf<T>>, opts?: InsertOneOptions): Promise<T>;
+  create(
+    props: OptionalId<PropsOf<T>>,
+    opts?: CollectionInsertOneOptions
+  ): Promise<T>;
   create(
     props: OptionalId<PropsOf<T>>[],
-    opts?: InsertManyOptions
+    opts?: CollectionInsertManyOptions
   ): Promise<T[]>;
   async create(
     props: OptionalId<PropsOf<T>> | OptionalId<PropsOf<T>>[],
-    opts?: InsertOneOptions | InsertManyOptions
+    opts?: CollectionInsertOneOptions | CollectionInsertManyOptions
   ): Promise<T | T[]> {
     return Array.isArray(props)
       ? this.createMany(props, opts)
@@ -154,7 +156,7 @@ export class Repository<T> {
 
   async createOne(
     props: OptionalId<PropsOf<T>>,
-    opts?: InsertOneOptions
+    opts?: CollectionInsertOneOptions
   ): Promise<T> {
     const model = this.init(props);
 
@@ -165,7 +167,7 @@ export class Repository<T> {
 
   async createMany(
     props: OptionalId<PropsOf<T>>[],
-    opts?: InsertManyOptions
+    opts?: CollectionInsertManyOptions
   ): Promise<T[]> {
     const models = props.map(p => this.init(p));
     const { insertedIds } = await this.insertMany(models, opts);
@@ -175,15 +177,15 @@ export class Repository<T> {
 
   async insertOne(
     model: OptionalId<T>,
-    opts?: InsertOneOptions
-  ): Promise<InsertOneResult> {
+    opts?: CollectionInsertOneOptions
+  ): Promise<InsertOneWriteOpResult> {
     return this.collection.insertOne(this.toDB(model as T), opts);
   }
 
   async insertMany(
     models: OptionalId<T>[],
-    opts?: InsertManyOptions
-  ): Promise<InsertManyResult> {
+    opts?: CollectionInsertManyOptions
+  ): Promise<InsertWriteOpResult> {
     return this.collection.insertMany(
       models.map(model => this.toDB(model as T)),
       opts
@@ -193,7 +195,7 @@ export class Repository<T> {
   async findOneAndUpdate(
     filter: FilterQuery<T>,
     update: UpdateQuery<T>,
-    opts: FindOneAndUpdateOptions = {}
+    opts: FindOneAndUpdateOption = {}
   ): Promise<T | null> {
     return this.findOneAnd('Update', filter, update, {
       returnOriginal: false,
@@ -204,7 +206,7 @@ export class Repository<T> {
   async findOneAndReplace(
     filter: FilterQuery<T>,
     props: OptionalId<PropsOf<T>>,
-    opts?: FindOneAndReplaceOptions
+    opts?: FindOneAndReplaceOption
   ): Promise<T | null> {
     return this.findOneAnd('Replace', filter, props, {
       returnOriginal: false,
@@ -214,7 +216,7 @@ export class Repository<T> {
 
   async findOneAndDelete(
     filter: FilterQuery<T>,
-    opts?: FindOneAndDeleteOptions
+    opts?: FindOneAndDeleteOption
   ): Promise<T | null> {
     return this.findOneAnd('Delete', filter, opts);
   }
@@ -223,7 +225,7 @@ export class Repository<T> {
     filter: FilterQuery<T>,
     update: UpdateQuery<T>,
     opts?: UpdateOneOptions
-  ): Promise<UpdateOneResult> {
+  ): Promise<UpdateWriteOpResult> {
     return this.collection.updateOne(filter, update, opts);
   }
 
@@ -231,7 +233,7 @@ export class Repository<T> {
     filter: FilterQuery<T>,
     update: UpdateQuery<T>,
     opts?: UpdateManyOptions
-  ): Promise<UpdateManyResult> {
+  ): Promise<UpdateWriteOpResult> {
     return this.collection.updateMany(filter, update, opts);
   }
 
@@ -239,7 +241,7 @@ export class Repository<T> {
     filter: FilterQuery<T>,
     props: OptionalId<PropsOf<T>>,
     opts?: ReplaceOneOptions
-  ): Promise<ReplaceOneResult> {
+  ): Promise<ReplaceWriteOpResult> {
     return this.collection.replaceOne(
       filter,
       this.toDB(this.init(props)),
@@ -249,7 +251,7 @@ export class Repository<T> {
 
   async deleteOne(
     filter: FilterQuery<T>,
-    opts?: DeleteOptions & { bypassDocumentValidation?: boolean }
+    opts?: CommonOptions & { bypassDocumentValidation?: boolean }
   ): Promise<boolean> {
     const result = await this.collection.deleteOne(filter, opts);
 
@@ -258,8 +260,8 @@ export class Repository<T> {
 
   async deleteMany(
     filter: FilterQuery<T>,
-    opts?: DeleteOptions
-  ): Promise<DeleteResult> {
+    opts?: CommonOptions
+  ): Promise<DeleteWriteOpResultObject> {
     return this.collection.deleteMany(filter, opts);
   }
 

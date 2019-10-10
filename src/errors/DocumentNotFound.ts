@@ -1,6 +1,6 @@
-import { FilterQuery } from 'mongodb';
+import { FilterQuery } from '../types';
 import { BaseError } from './BaseError';
-import { DocumentMetadata } from 'src/metadata/DocumentMetadata';
+import { DocumentMetadata } from '../metadata/DocumentMetadata';
 
 export class DocumentNotFound extends BaseError {
   constructor(meta: DocumentMetadata, filter: FilterQuery<any>) {

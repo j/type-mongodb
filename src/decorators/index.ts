@@ -1,6 +1,6 @@
 import { FieldDefinition } from '../metadata/definitions';
 import { definitionStorage } from '../utils/definitionStorage';
-import { Newable } from '../common';
+import { Newable } from '../types';
 import { Repository } from '../repository';
 
 interface DocumentOptions {

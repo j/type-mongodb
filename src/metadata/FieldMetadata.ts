@@ -1,4 +1,4 @@
-import { Newable } from '../common/types';
+import { Newable } from '../types';
 import { EmbeddedDocumentMetadata } from './EmbeddedDocumentMetadata';
 import { FieldDefinition } from './definitions';
 

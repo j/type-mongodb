@@ -1,6 +1,6 @@
 import { DocumentMetadata } from './DocumentMetadata';
 import { FieldMetadata } from './FieldMetadata';
-import { DocumentType } from '../common/types';
+import { DocumentClass } from '../types';
 import { definitionStorage } from '../utils/definitionStorage';
 import { DocumentManager } from '../DocumentManager';
 import { EmbeddedDocumentMetadata } from './EmbeddedDocumentMetadata';
@@ -8,14 +8,14 @@ import { FieldsMetadata } from './AbstractDocumentMetadata';
 
 export interface BuildMetadataStorageOptions {
   dm: DocumentManager;
-  documents: DocumentType<any>[];
+  documents: DocumentClass<any>[];
 }
 
 /**
  * DocumentMetadataFactory builds and validates all the Document's metadata.
  */
 export class DocumentMetadataFactory {
-  public loadedMetadata: Map<DocumentType, DocumentMetadata<any>> = new Map();
+  public loadedMetadata: Map<DocumentClass, DocumentMetadata<any>> = new Map();
 
   private isBuilt: boolean = false;
 
@@ -38,7 +38,7 @@ export class DocumentMetadataFactory {
   /**
    * Gets the DocumentMetadata for the given class.
    */
-  getMetadataFor<T>(DocumentClass: DocumentType<T>): DocumentMetadata<T> {
+  getMetadataFor<T>(DocumentClass: DocumentClass<T>): DocumentMetadata<T> {
     this.assertMetadataIsBuilt();
 
     return this.loadedMetadata.get(DocumentClass);
@@ -79,7 +79,7 @@ export class DocumentMetadataFactory {
    * Builds the DocumentMetadata and it's fields for the given class.
    */
   protected buildMetadataForDocument(
-    DocumentClass: DocumentType
+    DocumentClass: DocumentClass
   ): DocumentMetadata {
     if (!definitionStorage.documents.has(DocumentClass)) {
       throw new Error(`"${DocumentClass.name}" is not a decorated @Document()`);
@@ -111,7 +111,7 @@ export class DocumentMetadataFactory {
   }
 
   protected buildEmbeddedDocumentMetadata(
-    DocumentClass: DocumentType
+    DocumentClass: DocumentClass
   ): EmbeddedDocumentMetadata {
     return new EmbeddedDocumentMetadata(
       DocumentClass,
@@ -123,7 +123,7 @@ export class DocumentMetadataFactory {
    * Recursively adds fields to the DocumentMetadata.
    */
   protected buildFields(
-    target: DocumentType,
+    target: DocumentClass,
     fields?: FieldsMetadata
   ): FieldsMetadata {
     if (!definitionStorage.fields.has(target)) {

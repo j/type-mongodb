@@ -1,11 +1,11 @@
-import { PropsOf, OptionalId, WithId, DocumentType, Newable } from '../common';
+import { PropsOf, OptionalId, WithId, DocumentClass, Newable } from '../types';
 import { AbstractDocumentMetadata } from '../metadata/AbstractDocumentMetadata';
 
 export class DocumentTransformer {
   /**
    * Creates a model from model properties.
    */
-  static init<T, D extends Newable = DocumentType>(
+  static init<T, D extends Newable = DocumentClass>(
     meta: AbstractDocumentMetadata<T, D>,
     props: PropsOf<OptionalId<T>>
   ): T {
@@ -20,7 +20,7 @@ export class DocumentTransformer {
   /**
    * Maps model fields to a mongodb document.
    */
-  static toDB<T, D extends Newable = DocumentType>(
+  static toDB<T, D extends Newable = DocumentClass>(
     meta: AbstractDocumentMetadata<T, D>,
     model: T
   ): PropsOf<T> {
@@ -35,7 +35,7 @@ export class DocumentTransformer {
   /**
    * Maps mongodb document(s) to a model.
    */
-  static fromDB<T, D extends Newable = DocumentType>(
+  static fromDB<T, D extends Newable = DocumentClass>(
     meta: AbstractDocumentMetadata<T, D>,
     doc: PropsOf<T> | any
   ): T {

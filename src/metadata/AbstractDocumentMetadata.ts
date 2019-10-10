@@ -1,5 +1,5 @@
 import { ObjectId } from 'mongodb';
-import { PropsOf, OptionalId, Newable } from '../common/types';
+import { PropsOf, OptionalId, Newable } from '../types';
 import { FieldMetadata } from './FieldMetadata';
 import { DocumentTransformer } from '../document/DocumentTransformer';
 

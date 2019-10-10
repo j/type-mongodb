@@ -1,10 +1,10 @@
-import { DocumentType } from '../common';
+import { DocumentClass } from '../types';
 import { DocumentDefinition, FieldDefinition } from '../metadata/definitions';
 
 type FieldName = string;
 
-type DocumentStorage = Map<DocumentType<any>, DocumentDefinition>;
-type FieldStorage = Map<DocumentType<any>, Map<FieldName, FieldDefinition>>;
+type DocumentStorage = Map<DocumentClass<any>, DocumentDefinition>;
+type FieldStorage = Map<DocumentClass<any>, Map<FieldName, FieldDefinition>>;
 
 export const definitionStorage: {
   documents: DocumentStorage;
