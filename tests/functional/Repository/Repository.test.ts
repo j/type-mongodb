@@ -140,6 +140,22 @@ describe('DocumentManager -> queries, inserts, & updates', () => {
     expect(spies.fromDB).toHaveBeenCalledTimes(1);
   });
 
+  test('findByIds() -> gets users', async () => {
+    expect(
+      await manager
+        .getRepository(User)
+        .findByIds([fixtures.john._id, fixtures.mary._id])
+        .sort({ _id: 1 })
+        .toArray()
+    ).toStrictEqual([fixtures.john, fixtures.mary]);
+    expect(spies.find).toHaveBeenCalledTimes(1);
+    expect(spies.find).toHaveBeenCalledWith(
+      { _id: { $in: [fixtures.john._id, fixtures.mary._id] } },
+      undefined
+    );
+    expect(spies.fromDB).toHaveBeenCalledTimes(2);
+  });
+
   test('findByIdOrFail() -> fails when not found', async () => {
     const _id = new ObjectId();
     await expect(
@@ -268,6 +284,18 @@ describe('DocumentManager -> queries, inserts, & updates', () => {
     );
   });
 
+  test('findByIdAndDelete() -> with id', async () => {
+    const john = await manager
+      .getRepository(User)
+      .findByIdAndDelete(fixtures.john._id, { maxTimeMS: 5000 });
+    expect(john).toStrictEqual(fixtures.john);
+    expect(spies.findOneAndDelete).toHaveBeenCalledTimes(1);
+    expect(spies.findOneAndDelete).toHaveBeenCalledWith(
+      { _id: fixtures.john._id },
+      { maxTimeMS: 5000 }
+    );
+  });
+
   test('findOneAndUpdate() -> without opts', async () => {
     const john = await manager
       .getRepository(User)
@@ -291,6 +319,23 @@ describe('DocumentManager -> queries, inserts, & updates', () => {
       .getRepository(User)
       .findOneAndUpdate(
         { _id: fixtures.john._id },
+        { $set: { name: 'Johnny' } },
+        { returnOriginal: true }
+      );
+    expect(john).toStrictEqual(Object.assign(fixtures.john));
+    expect(spies.findOneAndUpdate).toHaveBeenCalledTimes(1);
+    expect(spies.findOneAndUpdate).toHaveBeenCalledWith(
+      { _id: fixtures.john._id },
+      { $set: { name: 'Johnny' } },
+      { returnOriginal: true }
+    );
+  });
+
+  test('findByIdAndUpdate() -> with id', async () => {
+    const john = await manager
+      .getRepository(User)
+      .findByIdAndUpdate(
+        fixtures.john._id,
         { $set: { name: 'Johnny' } },
         { returnOriginal: true }
       );
@@ -341,6 +386,25 @@ describe('DocumentManager -> queries, inserts, & updates', () => {
     );
   });
 
+  test('findByIdAndReplace() -> with id', async () => {
+    const replacement = {
+      ...docs.mary,
+      _id: docs.john._id
+    };
+    const result = await manager
+      .getRepository(User)
+      .findByIdAndReplace(fixtures.john._id, replacement, {
+        returnOriginal: true
+      });
+    expect(result).toStrictEqual(fixtures.john);
+    expect(spies.findOneAndReplace).toHaveBeenCalledTimes(1);
+    expect(spies.findOneAndReplace).toHaveBeenCalledWith(
+      { _id: fixtures.john._id },
+      { ...docs.mary, _id: fixtures.john._id },
+      { returnOriginal: true }
+    );
+  });
+
   test('updateMany() -> without opts', async () => {
     const result = await manager
       .getRepository(User)
@@ -363,6 +427,24 @@ describe('DocumentManager -> queries, inserts, & updates', () => {
       .getRepository(User)
       .updateMany(
         { _id: { $in: [fixtures.john._id, fixtures.mary._id] } },
+        { $set: { name: 'New Name' } },
+        { w: 1 }
+      );
+    expect(result.modifiedCount).toBe(2);
+    expect(spies.updateMany).toHaveBeenCalledTimes(1);
+    expect(spies.updateMany).toHaveBeenCalledWith(
+      { _id: { $in: [fixtures.john._id, fixtures.mary._id] } },
+      { $set: { name: 'New Name' } },
+      { w: 1 }
+    );
+    expect(spies.updateMany.mock.results[0].value).resolves.toBe(result);
+  });
+
+  test('updateByIds() -> with opts', async () => {
+    const result = await manager
+      .getRepository(User)
+      .updateByIds(
+        [fixtures.john._id, fixtures.mary._id],
         { $set: { name: 'New Name' } },
         { w: 1 }
       );
@@ -406,6 +488,19 @@ describe('DocumentManager -> queries, inserts, & updates', () => {
     expect(spies.updateOne.mock.results[0].value).resolves.toBe(result);
   });
 
+  test('updateById() -> using id', async () => {
+    const result = await manager
+      .getRepository(User)
+      .updateById(fixtures.john._id, { $set: { name: 'Johnny' } });
+    expect(spies.updateOne).toHaveBeenCalledTimes(1);
+    expect(spies.updateOne).toHaveBeenCalledWith(
+      { _id: fixtures.john._id },
+      { $set: { name: 'Johnny' } },
+      undefined
+    );
+    expect(spies.updateOne.mock.results[0].value).resolves.toBe(result);
+  });
+
   test('replaceOne() -> without opts', async () => {
     const replacement = { ...docs.mary, _id: docs.john._id };
     const result = await manager
@@ -425,6 +520,20 @@ describe('DocumentManager -> queries, inserts, & updates', () => {
     const result = await manager
       .getRepository(User)
       .replaceOne({ _id: fixtures.john._id }, replacement, { w: 1 });
+    expect(spies.replaceOne).toHaveBeenCalledTimes(1);
+    expect(spies.replaceOne).toHaveBeenCalledWith(
+      { _id: fixtures.john._id },
+      replacement,
+      { w: 1 }
+    );
+    expect(spies.replaceOne.mock.results[0].value).resolves.toBe(result);
+  });
+
+  test('replaceOne() -> using id', async () => {
+    const replacement = Object.assign({}, { ...docs.mary, _id: docs.john._id });
+    const result = await manager
+      .getRepository(User)
+      .replaceById(fixtures.john._id, replacement, { w: 1 });
     expect(spies.replaceOne).toHaveBeenCalledTimes(1);
     expect(spies.replaceOne).toHaveBeenCalledWith(
       { _id: fixtures.john._id },
@@ -458,6 +567,18 @@ describe('DocumentManager -> queries, inserts, & updates', () => {
     );
   });
 
+  test('deleteById() -> using id', async () => {
+    const result = await manager
+      .getRepository(User)
+      .deleteById(fixtures.john._id, { w: 1 });
+    expect(result).toBeTruthy();
+    expect(spies.deleteOne).toHaveBeenCalledTimes(1);
+    expect(spies.deleteOne).toHaveBeenCalledWith(
+      { _id: fixtures.john._id },
+      { w: 1 }
+    );
+  });
+
   test('deleteMany() -> without opts', async () => {
     const result = await manager.getRepository(User).deleteMany({
       _id: { $in: [fixtures.john._id, fixtures.mary._id] }
@@ -478,6 +599,19 @@ describe('DocumentManager -> queries, inserts, & updates', () => {
         { _id: { $in: [fixtures.john._id, fixtures.mary._id] } },
         { w: 1 }
       );
+    expect(result.deletedCount).toBe(2);
+    expect(spies.deleteMany).toHaveBeenCalledTimes(1);
+    expect(spies.deleteMany).toHaveBeenCalledWith(
+      { _id: { $in: [fixtures.john._id, fixtures.mary._id] } },
+      { w: 1 }
+    );
+    expect(spies.deleteMany.mock.results[0].value).resolves.toBe(result);
+  });
+
+  test('deleteByIds() -> with opts', async () => {
+    const result = await manager
+      .getRepository(User)
+      .deleteByIds([fixtures.john._id, fixtures.mary._id], { w: 1 });
     expect(result.deletedCount).toBe(2);
     expect(spies.deleteMany).toHaveBeenCalledTimes(1);
     expect(spies.deleteMany).toHaveBeenCalledWith(

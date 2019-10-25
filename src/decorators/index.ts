@@ -4,7 +4,6 @@ import { Newable } from '../types';
 import { Repository } from '../repository';
 
 interface DocumentOptions {
-  connection?: string;
   database?: string;
   collection?: string;
   extensions?: Record<any, any>;
@@ -17,7 +16,6 @@ export function Document(options: DocumentOptions = {}): ClassDecorator {
       ...options,
       DocumentClass: target,
       RepositoryClass: options.repository || Repository,
-      connection: options.connection || 'default',
       database: options.database,
       collection: options.collection || target.name
     });

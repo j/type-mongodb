@@ -1,4 +1,4 @@
-import { PropsOf, OptionalId, WithId, DocumentClass, Newable } from '../types';
+import { OptionalId, WithId, DocumentClass, Newable } from '../types';
 import { AbstractDocumentMetadata } from '../metadata/AbstractDocumentMetadata';
 
 export class DocumentTransformer {
@@ -7,7 +7,7 @@ export class DocumentTransformer {
    */
   static init<T, D extends Newable = DocumentClass>(
     meta: AbstractDocumentMetadata<T, D>,
-    props: PropsOf<OptionalId<T>>
+    props: Partial<T>
   ): T {
     return this.mapDataInto(
       meta,
@@ -23,7 +23,7 @@ export class DocumentTransformer {
   static toDB<T, D extends Newable = DocumentClass>(
     meta: AbstractDocumentMetadata<T, D>,
     model: T
-  ): PropsOf<T> {
+  ): OptionalId<T> {
     return this.mapDataInto(
       meta,
       {},
@@ -37,7 +37,7 @@ export class DocumentTransformer {
    */
   static fromDB<T, D extends Newable = DocumentClass>(
     meta: AbstractDocumentMetadata<T, D>,
-    doc: PropsOf<T> | any
+    doc: Partial<T> | any
   ): T {
     return this.mapDataInto(
       meta,

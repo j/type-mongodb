@@ -53,6 +53,15 @@ export class DocumentMetadataFactory {
     return Array.from(this.loadedMetadata.values()).filter(filter);
   }
 
+  /**
+   * Filters metadata by given criteria.
+   */
+  map<T>(
+    fn: (value: DocumentMetadata, index: number, array: DocumentMetadata[]) => T
+  ): T[] {
+    return Array.from(this.loadedMetadata.values()).map(fn);
+  }
+
   // -------------------------------------------------------------------------
   // Protected Methods
   // -------------------------------------------------------------------------
@@ -86,13 +95,8 @@ export class DocumentMetadataFactory {
     }
 
     const def = definitionStorage.documents.get(DocumentClass);
-    const connection = this.opts.dm.connectionManager.getConnection(
-      def.connection
-    );
-    const db = this.opts.dm.connectionManager.getDatabase(
-      connection,
-      def.database
-    );
+    const connection = this.opts.dm.connection;
+    const db = connection.getDatabase(connection, def.database);
 
     const repository = new def.RepositoryClass();
     repository.manager = this.opts.dm;

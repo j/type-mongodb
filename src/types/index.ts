@@ -3,7 +3,7 @@ export type DocumentInstance<T = any> = WithId<T>;
 export type WithId<T = any> = Omit<T, '_id'> & { _id: any };
 export type OptionalId<T = any> = Omit<T, '_id'> & { _id?: any };
 export type Newable<T = any> = new (...args: any[]) => T;
-export type PropsOf<T = any> = { [P in keyof T]: T[P] };
+export type PropsOf<T = any> = { -readonly [P in keyof T]: T[P] };
 
 /**
  * Mongo Types

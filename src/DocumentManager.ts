@@ -1,15 +1,13 @@
-import { DocumentClass, Collection, Db, PropsOf } from './types';
+import { MongoClient, SessionOptions } from 'mongodb';
+import { DocumentClass, Collection, Db, OptionalId } from './types';
 import { DocumentMetadataFactory } from './metadata/DocumentMetadataFactory';
 import { DocumentMetadata } from './metadata/DocumentMetadata';
-import {
-  ConnectionManager,
-  ConnectionManagerOptions
-} from './connection/ConnectionManager';
+import { Connection, ConnectionOptions } from './connection/Connection';
 import { Repository } from './repository/Repository';
+import { Session } from './transaction/Session';
 
 export interface DocumentManagerOptions {
-  connections?: ConnectionManagerOptions[];
-  connection?: ConnectionManagerOptions;
+  connection: ConnectionOptions;
   documents: DocumentClass<any>[];
 }
 
@@ -20,22 +18,14 @@ export interface DocumentManagerOptions {
  */
 export class DocumentManager {
   public readonly metadataFactory: DocumentMetadataFactory;
-  public readonly connectionManager: ConnectionManager;
+  public readonly connection: Connection;
 
   constructor(private readonly opts: DocumentManagerOptions) {
-    if (this.opts.connection && this.opts.connections) {
-      throw new Error(
-        'DocumentManager cannot have both "connection" and "connections" options.'
-      );
-    }
-
-    if (!this.opts.connection && !this.opts.connections) {
+    if (!this.opts.connection) {
       throw new Error('DocumentManager needs a connection.');
     }
 
-    this.connectionManager = ConnectionManager.create(
-      this.opts.connection ? [this.opts.connection] : this.opts.connections
-    );
+    this.connection = Connection.create(this.opts.connection);
 
     this.metadataFactory = new DocumentMetadataFactory({
       dm: this,
@@ -67,15 +57,15 @@ export class DocumentManager {
     return this.metadataFactory.filterMetadata(filter);
   }
 
-  init<T>(DocumentClass: DocumentClass<T>, props: PropsOf<T>): T {
+  init<T>(DocumentClass: DocumentClass<T>, props: Partial<T>): T {
     return this.metadataFactory.getMetadataFor<T>(DocumentClass).init(props);
   }
 
-  toDB<T>(DocumentClass: DocumentClass<T>, model: T): PropsOf<T> {
+  toDB<T>(DocumentClass: DocumentClass<T>, model: T): OptionalId<T> {
     return this.metadataFactory.getMetadataFor<T>(DocumentClass).toDB(model);
   }
 
-  fromDB<T>(DocumentClass: DocumentClass<T>, doc: PropsOf<T>): T {
+  fromDB<T>(DocumentClass: DocumentClass<T>, doc: Partial<T>): T {
     return this.metadataFactory.getMetadataFor<T>(DocumentClass).fromDB(doc);
   }
 
@@ -87,14 +77,21 @@ export class DocumentManager {
    * Connects to all configured MongoClients.
    */
   connect(): Promise<void> {
-    return this.connectionManager.connect();
+    return this.connection.connect();
+  }
+
+  /**
+   * Gets the mongo database for the class.
+   */
+  client(): MongoClient {
+    return this.connection.client;
   }
 
   /**
    * Closes to all MongoClients.
    */
   close(force?: boolean): Promise<void> {
-    return this.connectionManager.close(force);
+    return this.connection.close(force);
   }
 
   /**
@@ -114,6 +111,16 @@ export class DocumentManager {
   getRepository<T extends Repository<any>>(target: DocumentClass): T;
   getRepository<T>(target: DocumentClass<T>): Repository<T> {
     return this.getMetadataFor<T>(target).repository;
+  }
+
+  startSession(opts?: SessionOptions): Session {
+    const session = new Session(this);
+
+    if (opts) {
+      session.setSessionOptions(opts);
+    }
+
+    return session;
   }
 
   // -------------------------------------------------------------------------

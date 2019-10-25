@@ -1,5 +1,5 @@
 import { ObjectId } from 'mongodb';
-import { PropsOf, OptionalId, Newable } from '../types';
+import { OptionalId, Newable } from '../types';
 import { FieldMetadata } from './FieldMetadata';
 import { DocumentTransformer } from '../document/DocumentTransformer';
 
@@ -39,6 +39,13 @@ export abstract class AbstractDocumentMetadata<
   }
 
   /**
+   * Checks if given id is a valid one.
+   */
+  isValidId(id?: any): boolean {
+    return ObjectId.isValid(id);
+  }
+
+  /**
    * Creates the document _id.
    */
   hasId(): boolean {
@@ -48,21 +55,21 @@ export abstract class AbstractDocumentMetadata<
   /**
    * Maps model fields to a mongodb document.
    */
-  toDB(model: T): PropsOf<T> {
+  toDB(model: T): OptionalId<T> {
     return DocumentTransformer.toDB(this, model);
   }
 
   /**
    * Maps mongodb document(s) to a model.
    */
-  fromDB(doc: PropsOf<T> | any): T {
+  fromDB(doc: Partial<T> | any): T {
     return DocumentTransformer.fromDB(this, doc);
   }
 
   /**
    * Creates a model from model properties.
    */
-  init(props: PropsOf<OptionalId<T>>): T {
+  init(props: Partial<T>): T {
     return DocumentTransformer.init(this, props);
   }
 }

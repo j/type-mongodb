@@ -10,9 +10,8 @@ import {
 } from '../__fixtures__/User';
 import { DocumentManager } from '../../src/DocumentManager';
 import { DocumentMetadata } from '../../src/metadata/DocumentMetadata';
-import { ConnectionManager } from '../../src/connection/ConnectionManager';
 import { DocumentMetadataFactory } from '../../src/metadata/DocumentMetadataFactory';
-import { Document, Field } from '../../src';
+import { Connection } from '../../src/connection/Connection';
 
 describe('DocumentManager', () => {
   let manager: DocumentManager;
@@ -31,28 +30,9 @@ describe('DocumentManager', () => {
     await manager.close();
   });
 
-  test('throws error when DocumentManager is created with connection and connections', async () => {
-    expect(
-      DocumentManager.create({
-        connection: {
-          uri: 'mongodb://localhost:31000',
-          database: 'test'
-        },
-        connections: [
-          {
-            uri: 'mongodb://localhost:31000',
-            database: 'test'
-          }
-        ],
-        documents: [Simple, User]
-      })
-    ).rejects.toThrow(
-      'DocumentManager cannot have both "connection" and "connections" options.'
-    );
-  });
-
   test('throws error when DocumentManager is created without a connection', async () => {
     expect(
+      // @ts-ignore
       DocumentManager.create({
         documents: [Simple, User]
       })
@@ -61,8 +41,7 @@ describe('DocumentManager', () => {
 
   test('creates DocumentManager', () => {
     expect(manager).toBeInstanceOf(DocumentManager);
-    expect(manager.connectionManager).toBeInstanceOf(ConnectionManager);
-    expect(manager.connectionManager.connections.size).toBe(1);
+    expect(manager.connection).toBeInstanceOf(Connection);
     expect(manager.metadataFactory).toBeInstanceOf(DocumentMetadataFactory);
     expect(manager.metadataFactory.loadedMetadata.size).toBe(2);
   });
@@ -215,113 +194,6 @@ describe('DocumentManager', () => {
       expect(result.reviews[1]).toBeInstanceOf(Review);
       expect(result.reviews[1].product).toBeInstanceOf(Product);
       expect(result).toEqual(user);
-    });
-  });
-
-  describe('multiple connections', () => {
-    let dm: DocumentManager;
-
-    @Document()
-    class Default {
-      @Field()
-      _id: ObjectId;
-
-      @Field()
-      field: string;
-    }
-
-    @Document({ connection: 'two' })
-    class Connection2 {
-      @Field()
-      _id: ObjectId;
-
-      @Field()
-      field: string;
-    }
-
-    @Document({ connection: 'two', database: 'test3' })
-    class Connection2DiffDb {
-      @Field()
-      _id: ObjectId;
-
-      @Field()
-      field: string;
-    }
-
-    @Document({ connection: 'two', collection: 'diff_collection' })
-    class Connection2DiffCollection {
-      @Field()
-      _id: ObjectId;
-
-      @Field()
-      field: string;
-    }
-
-    beforeAll(async () => {
-      dm = await DocumentManager.create({
-        connections: [
-          {
-            uri: 'mongodb://localhost:31000',
-            database: 'test'
-          },
-          {
-            name: 'two',
-            uri: 'mongodb://localhost:31000?retryWrites=false',
-            database: 'test2'
-          }
-        ],
-        documents: [
-          Default,
-          Connection2,
-          Connection2DiffDb,
-          Connection2DiffCollection
-        ]
-      });
-    });
-
-    afterAll(async () => {
-      await dm.close();
-    });
-
-    it('works with different variants', async () => {
-      const defaultMeta = dm.getMetadataFor(Default);
-      const connectionMeta = dm.getMetadataFor(Connection2);
-      const connectionDiffDBMeta = dm.getMetadataFor(Connection2DiffDb);
-      const connectionDiffCollectionMeta = dm.getMetadataFor(
-        Connection2DiffCollection
-      );
-
-      expect(
-        defaultMeta.connection.client === connectionMeta.connection.client
-      ).toBeFalsy();
-      expect(
-        connectionMeta.connection.client ===
-          connectionDiffDBMeta.connection.client
-      ).toBeTruthy();
-      expect(
-        connectionMeta.connection.client ===
-          connectionDiffCollectionMeta.connection.client
-      ).toBeTruthy();
-      expect(defaultMeta.connection.name).toBe('default');
-      expect(defaultMeta.connection.database).toBe('test');
-      expect(defaultMeta.db.databaseName).toBe('test');
-      expect(defaultMeta.collection.collectionName).toBe('Default');
-      expect(connectionMeta.connection.name).toBe('two');
-      expect(connectionMeta.connection.database).toBe('test2');
-      expect(connectionMeta.db.databaseName).toBe('test2');
-      expect(connectionMeta.collection.collectionName).toBe('Connection2');
-      expect(connectionDiffDBMeta.connection.name).toBe('two');
-      expect(connectionDiffDBMeta.connection.database).toBe('test2');
-      expect(connectionDiffDBMeta.db.databaseName).toBe('test3');
-      expect(connectionDiffDBMeta.collection.collectionName).toBe(
-        'Connection2DiffDb'
-      );
-      expect(connectionDiffCollectionMeta.connection.name).toBe('two');
-      expect(connectionDiffCollectionMeta.connection.database).toBe('test2');
-      expect(connectionDiffCollectionMeta.db.databaseName).toBe('test2');
-      expect(connectionDiffCollectionMeta.collection.collectionName).toBe(
-        'diff_collection'
-      );
     });
   });
 });
