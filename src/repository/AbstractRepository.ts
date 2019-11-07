@@ -52,6 +52,10 @@ export abstract class AbstractRepository<T> {
     return this.metadata.init(props);
   }
 
+  merge(model: T, props: Partial<T>): T {
+    return this.metadata.merge(model, props);
+  }
+
   toDB(model: T): OptionalId<T> {
     return this.metadata.toDB(model);
   }

@@ -72,4 +72,11 @@ export abstract class AbstractDocumentMetadata<
   init(props: Partial<T>): T {
     return DocumentTransformer.init(this, props);
   }
+
+  /**
+   * Creates a model from model properties.
+   */
+  merge(model: T, props: Partial<T>): T {
+    return DocumentTransformer.merge(this, model, props);
+  }
 }

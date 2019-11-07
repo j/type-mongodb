@@ -18,6 +18,17 @@ export class DocumentTransformer {
   }
 
   /**
+   * Merges props into the given model
+   */
+  static merge<T, D extends Newable = DocumentClass>(
+    meta: AbstractDocumentMetadata<T, D>,
+    model: T,
+    props: Partial<T>
+  ): T {
+    return this.mapDataInto(meta, model, props, this.merge.bind(this));
+  }
+
+  /**
    * Maps model fields to a mongodb document.
    */
   static toDB<T, D extends Newable = DocumentClass>(
