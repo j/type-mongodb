@@ -3,12 +3,15 @@ import { DocumentClass, Collection, Db, OptionalId } from './types';
 import { DocumentMetadataFactory } from './metadata/DocumentMetadataFactory';
 import { DocumentMetadata } from './metadata/DocumentMetadata';
 import { Connection, ConnectionOptions } from './connection/Connection';
+import { EventSubscriber } from './events/interfaces';
+import { EventManager } from './events';
 import { Repository } from './repository/Repository';
 import { Session } from './transaction/Session';
 
 export interface DocumentManagerOptions {
   connection: ConnectionOptions;
   documents: DocumentClass<any>[];
+  subscribers?: EventSubscriber[];
 }
 
 /**
@@ -19,6 +22,7 @@ export interface DocumentManagerOptions {
 export class DocumentManager {
   public readonly metadataFactory: DocumentMetadataFactory;
   public readonly connection: Connection;
+  public readonly eventManager: EventManager;
 
   constructor(private readonly opts: DocumentManagerOptions) {
     if (!this.opts.connection) {
@@ -31,6 +35,8 @@ export class DocumentManager {
       dm: this,
       documents: opts.documents
     });
+
+    this.eventManager = new EventManager(this.opts.subscribers);
   }
 
   // -------------------------------------------------------------------------
@@ -39,6 +45,10 @@ export class DocumentManager {
 
   buildMetadata(): void {
     this.metadataFactory.build();
+  }
+
+  buildSubscribers(): void {
+    this.eventManager.build(this);
   }
 
   /**
@@ -131,7 +141,9 @@ export class DocumentManager {
     const dm = new DocumentManager(opts);
 
     await dm.connect();
+
     dm.buildMetadata();
+    dm.buildSubscribers();
 
     return dm;
   }

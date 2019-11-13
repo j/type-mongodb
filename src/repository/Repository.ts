@@ -28,6 +28,7 @@ import { DocumentMetadata } from '../metadata/DocumentMetadata';
 import { DocumentNotFound } from '../errors';
 import { DocumentManager } from '../DocumentManager';
 import { AbstractRepository } from './AbstractRepository';
+import { Events } from '../events';
 
 /**
  * Repository for documents
@@ -192,17 +193,55 @@ export class Repository<T> extends AbstractRepository<T> {
     model: OptionalId<T>,
     opts?: CollectionInsertOneOptions
   ): Promise<InsertOneWriteOpResult<any>> {
-    return this.collection.insertOne(this.toDB(model as T), opts);
+    const doc = this.toDB(model as T);
+
+    return this.manager.eventManager.dispatchBeforeAndAfter(
+      Events.BeforeInsert,
+      Events.AfterInsert,
+      {
+        meta: this.metadata,
+        model: model as T
+      },
+      () => this.collection.insertOne(doc, opts)
+    );
   }
 
   async insertMany(
     models: OptionalId<T>[],
     opts?: CollectionInsertManyOptions
   ): Promise<InsertWriteOpResult<any>> {
-    return this.collection.insertMany(
-      models.map(model => this.toDB(model as T)),
-      opts
-    );
+    const beforeInsertEvents: Promise<any>[] = [];
+    const afterInsertEvents: Promise<any>[] = [];
+
+    const docs = models.map(model => this.toDB(model as T));
+
+    models.forEach(model => {
+      if (!model._id) {
+        model._id = this.id();
+      }
+
+      beforeInsertEvents.push(
+        this.manager.eventManager.dispatch(Events.BeforeInsert, {
+          meta: this.metadata,
+          model: model as T
+        })
+      );
+
+      afterInsertEvents.push(
+        this.manager.eventManager.dispatch(Events.AfterInsert, {
+          meta: this.metadata,
+          model: model as T
+        })
+      );
+    });
+
+    await Promise.all(beforeInsertEvents);
+
+    const result = this.collection.insertMany(docs, opts);
+
+    await Promise.all(afterInsertEvents);
+
+    return result;
   }
 
   async findOneAndUpdate(
@@ -210,10 +249,21 @@ export class Repository<T> extends AbstractRepository<T> {
     update: UpdateQuery<T>,
     opts: FindOneAndUpdateOption = {}
   ): Promise<T | null> {
-    return this.findOneAnd('Update', filter, update, {
-      returnOriginal: false,
-      ...opts
-    });
+    return this.manager.eventManager.dispatchBeforeAndAfter(
+      Events.BeforeUpdate,
+      Events.AfterUpdate,
+      {
+        meta: this.metadata,
+        filter,
+        update
+      },
+      async () => {
+        return this.findOneAnd('Update', filter, update, {
+          returnOriginal: false,
+          ...opts
+        });
+      }
+    );
   }
 
   async findByIdAndUpdate(
@@ -247,7 +297,15 @@ export class Repository<T> extends AbstractRepository<T> {
     filter: FilterQuery<T | any>,
     opts?: FindOneAndDeleteOption
   ): Promise<T | null> {
-    return this.findOneAnd('Delete', filter, opts);
+    return this.manager.eventManager.dispatchBeforeAndAfter(
+      Events.BeforeDelete,
+      Events.AfterDelete,
+      {
+        meta: this.metadata,
+        filter
+      },
+      async () => this.findOneAnd('Delete', filter, opts)
+    );
   }
 
   async findByIdAndDelete(
@@ -262,7 +320,16 @@ export class Repository<T> extends AbstractRepository<T> {
     update: UpdateQuery<T>,
     opts?: UpdateOneOptions
   ): Promise<UpdateWriteOpResult> {
-    return this.collection.updateOne(filter, update, opts);
+    return this.manager.eventManager.dispatchBeforeAndAfter(
+      Events.BeforeUpdate,
+      Events.AfterUpdate,
+      {
+        meta: this.metadata,
+        filter,
+        update
+      },
+      () => this.collection.updateOne(filter, update, opts)
+    );
   }
 
   async updateById(
@@ -278,7 +345,16 @@ export class Repository<T> extends AbstractRepository<T> {
     update: UpdateQuery<T>,
     opts?: UpdateManyOptions
   ): Promise<UpdateWriteOpResult> {
-    return this.collection.updateMany(filter, update, opts);
+    return this.manager.eventManager.dispatchBeforeAndAfter(
+      Events.BeforeUpdateMany,
+      Events.AfterUpdateMany,
+      {
+        meta: this.metadata,
+        filter,
+        update
+      },
+      () => this.collection.updateMany(filter, update, opts)
+    );
   }
 
   async updateByIds(
@@ -317,9 +393,19 @@ export class Repository<T> extends AbstractRepository<T> {
     filter: FilterQuery<T | any>,
     opts?: CommonOptions & { bypassDocumentValidation?: boolean }
   ): Promise<boolean> {
-    const result = await this.collection.deleteOne(filter, opts);
+    return this.manager.eventManager.dispatchBeforeAndAfter(
+      Events.BeforeDelete,
+      Events.AfterDelete,
+      {
+        meta: this.metadata,
+        filter
+      },
+      async () => {
+        const result = await this.collection.deleteOne(filter, opts);
 
-    return result && result.deletedCount === 1;
+        return result && result.deletedCount === 1;
+      }
+    );
   }
 
   async deleteById(
@@ -333,7 +419,15 @@ export class Repository<T> extends AbstractRepository<T> {
     filter: FilterQuery<T | any>,
     opts?: CommonOptions
   ): Promise<DeleteWriteOpResultObject> {
-    return this.collection.deleteMany(filter, opts);
+    return this.manager.eventManager.dispatchBeforeAndAfter(
+      Events.BeforeDeleteMany,
+      Events.AfterDeleteMany,
+      {
+        meta: this.metadata,
+        filter
+      },
+      () => this.collection.deleteMany(filter, opts)
+    );
   }
 
   async deleteByIds(

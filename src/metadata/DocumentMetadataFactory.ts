@@ -164,9 +164,13 @@ export class DocumentMetadataFactory {
       }
     });
 
-    const parent = Object.getPrototypeOf(target);
-    if (parent && definitionStorage.documents.has(parent)) {
-      this.buildFields(parent, fields);
+    let parent = Object.getPrototypeOf(target);
+    while (parent && parent.prototype) {
+      if (definitionStorage.fields.has(parent)) {
+        this.buildFields(parent, fields);
+      }
+
+      parent = Object.getPrototypeOf(parent);
     }
 
     return fields;

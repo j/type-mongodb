@@ -37,9 +37,9 @@ async function assertTransactionMethod(
     expect(spy.mock.calls[0][spy.mock.calls[0].length - 1]).toHaveProperty(
       'session'
     );
-    // @ts-ignore
     expect(
       (spy.mock.calls[0][spy.mock.calls[0].length - 1] as any).session
+      // @ts-ignore
     ).toEqual(session.session);
   });
 
