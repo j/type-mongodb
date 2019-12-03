@@ -1,5 +1,5 @@
 import { MongoClient, SessionOptions } from 'mongodb';
-import { DocumentClass, Collection, Db, OptionalId } from './types';
+import { DocumentClass, Collection, Db, OptionalId, Newable } from './types';
 import { DocumentMetadataFactory } from './metadata/DocumentMetadataFactory';
 import { DocumentMetadata } from './metadata/DocumentMetadata';
 import { Connection, ConnectionOptions } from './connection/Connection';
@@ -7,6 +7,7 @@ import { EventSubscriber } from './events/interfaces';
 import { EventManager } from './events';
 import { Repository } from './repository/Repository';
 import { Session } from './transaction/Session';
+import { EmbeddedDocumentMetadata } from './metadata/EmbeddedDocumentMetadata';
 
 export interface DocumentManagerOptions {
   connection: ConnectionOptions;
@@ -59,6 +60,38 @@ export class DocumentManager {
   }
 
   /**
+   * Gets the EmbeddedDocumentMetadata for the given class.
+   */
+  getEmbeddedMetadataFor<T>(
+    EmbeddedDocumentClass: Newable<T>
+  ): EmbeddedDocumentMetadata<T> {
+    return this.metadataFactory.getEmbeddedMetadataFor<T>(
+      EmbeddedDocumentClass
+    );
+  }
+
+  /**
+   * Gets the DocumentMetadata for the given class.
+   */
+  getAnyMetadata<T>(
+    Cls: DocumentClass<T> | Newable<T>
+  ): DocumentMetadata<T> | EmbeddedDocumentMetadata<T> {
+    try {
+      return this.getMetadataFor<T>(Cls as DocumentClass<T>);
+    } catch (err) {
+      // no-op
+    }
+
+    try {
+      return this.getEmbeddedMetadataFor<T>(Cls as Newable<T>);
+    } catch (err) {
+      // no-op
+    }
+
+    throw new Error(`Missing metadata for "${Cls.name}"`);
+  }
+
+  /**
    * Filters metadata by given criteria.
    */
   filterMetadata(
@@ -67,16 +100,19 @@ export class DocumentManager {
     return this.metadataFactory.filterMetadata(filter);
   }
 
-  init<T>(DocumentClass: DocumentClass<T>, props: Partial<T>): T {
-    return this.metadataFactory.getMetadataFor<T>(DocumentClass).init(props);
+  init<T>(DocumentClass: DocumentClass<T> | Newable<T>, props: Partial<T>): T {
+    return this.getAnyMetadata<T>(DocumentClass).init(props);
   }
 
-  toDB<T>(DocumentClass: DocumentClass<T>, model: T): OptionalId<T> {
-    return this.metadataFactory.getMetadataFor<T>(DocumentClass).toDB(model);
+  toDB<T>(
+    DocumentClass: DocumentClass<T> | Newable<T>,
+    model: T
+  ): OptionalId<T> {
+    return this.getAnyMetadata<T>(DocumentClass).toDB(model);
   }
 
-  fromDB<T>(DocumentClass: DocumentClass<T>, doc: Partial<T>): T {
-    return this.metadataFactory.getMetadataFor<T>(DocumentClass).fromDB(doc);
+  fromDB<T>(DocumentClass: DocumentClass<T> | Newable<T>, doc: Partial<T>): T {
+    return this.getAnyMetadata<T>(DocumentClass).fromDB(doc);
   }
 
   // -------------------------------------------------------------------------

@@ -43,7 +43,7 @@ describe('DocumentManager', () => {
     expect(manager).toBeInstanceOf(DocumentManager);
     expect(manager.connection).toBeInstanceOf(Connection);
     expect(manager.metadataFactory).toBeInstanceOf(DocumentMetadataFactory);
-    expect(manager.metadataFactory.loadedMetadata.size).toBe(2);
+    expect(manager.metadataFactory.loadedDocumentMetadata.size).toBe(2);
   });
 
   test('gets db', () => {
@@ -115,6 +115,16 @@ describe('DocumentManager', () => {
         createdAt: user.createdAt
       });
     });
+
+    test('converts embedded document', () => {
+      const address = createUsers().john.address;
+      const result = manager.toDB(Address, address);
+      expect(result instanceof Address).toBeFalsy();
+      expect(result).toEqual({
+        city: 'San Diego',
+        state: 'CA'
+      });
+    });
   });
 
   describe('fromDB', () => {
@@ -155,6 +165,17 @@ describe('DocumentManager', () => {
       expect(result.reviews[1].product).toBeInstanceOf(Product);
       expect(result).toEqual(user);
     });
+
+    test('hydrates embedded document', () => {
+      const fields = {
+        city: 'San Diego',
+        state: 'CA'
+      };
+
+      const address = manager.fromDB(Address, fields);
+      expect(address).toBeInstanceOf(Address);
+      expect(address).toEqual(Object.assign(new Address(), fields));
+    });
   });
 
   describe('init', () => {
@@ -194,6 +215,16 @@ describe('DocumentManager', () => {
       expect(result.reviews[1]).toBeInstanceOf(Review);
       expect(result.reviews[1].product).toBeInstanceOf(Product);
       expect(result).toEqual(user);
+    });
+
+    test('inits embedded document', () => {
+      const fields = {
+        city: 'San Diego',
+        state: 'CA'
+      };
+      const address = manager.init(Address, fields);
+      expect(address).toBeInstanceOf(Address);
+      expect(address).toEqual(Object.assign(new Address(), fields));
     });
   });
 });

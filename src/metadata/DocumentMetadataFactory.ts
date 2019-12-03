@@ -1,6 +1,6 @@
 import { DocumentMetadata } from './DocumentMetadata';
 import { FieldMetadata } from './FieldMetadata';
-import { DocumentClass } from '../types';
+import { DocumentClass, Newable } from '../types';
 import { definitionStorage } from '../utils/definitionStorage';
 import { DocumentManager } from '../DocumentManager';
 import { EmbeddedDocumentMetadata } from './EmbeddedDocumentMetadata';
@@ -15,7 +15,14 @@ export interface BuildMetadataStorageOptions {
  * DocumentMetadataFactory builds and validates all the Document's metadata.
  */
 export class DocumentMetadataFactory {
-  public loadedMetadata: Map<DocumentClass, DocumentMetadata<any>> = new Map();
+  public loadedDocumentMetadata: Map<
+    DocumentClass,
+    DocumentMetadata<any>
+  > = new Map();
+  public loadedEmbeddedDocumentMetadata: Map<
+    Newable,
+    EmbeddedDocumentMetadata<any>
+  > = new Map();
 
   private isBuilt: boolean = false;
 
@@ -41,7 +48,34 @@ export class DocumentMetadataFactory {
   getMetadataFor<T>(DocumentClass: DocumentClass<T>): DocumentMetadata<T> {
     this.assertMetadataIsBuilt();
 
-    return this.loadedMetadata.get(DocumentClass);
+    const meta = this.loadedDocumentMetadata.get(DocumentClass);
+
+    if (!meta) {
+      throw new Error(
+        `DocumentMetadata for class "${DocumentClass.name}" does not exist`
+      );
+    }
+
+    return meta;
+  }
+
+  /**
+   * Gets the DocumentMetadata for the given class.
+   */
+  getEmbeddedMetadataFor<T>(
+    EmbeddedDocumentClass: Newable<T>
+  ): EmbeddedDocumentMetadata<T> {
+    this.assertMetadataIsBuilt();
+
+    const meta = this.loadedEmbeddedDocumentMetadata.get(EmbeddedDocumentClass);
+
+    if (!meta) {
+      throw new Error(
+        `EmbeddedDocumentMetadata for class "${EmbeddedDocumentClass.name}" does not exist`
+      );
+    }
+
+    return meta;
   }
 
   /**
@@ -50,7 +84,7 @@ export class DocumentMetadataFactory {
   filterMetadata(
     filter: (value: DocumentMetadata) => boolean
   ): DocumentMetadata[] {
-    return Array.from(this.loadedMetadata.values()).filter(filter);
+    return Array.from(this.loadedDocumentMetadata.values()).filter(filter);
   }
 
   /**
@@ -59,7 +93,7 @@ export class DocumentMetadataFactory {
   map<T>(
     fn: (value: DocumentMetadata, index: number, array: DocumentMetadata[]) => T
   ): T[] {
-    return Array.from(this.loadedMetadata.values()).map(fn);
+    return Array.from(this.loadedDocumentMetadata.values()).map(fn);
   }
 
   // -------------------------------------------------------------------------
@@ -77,7 +111,7 @@ export class DocumentMetadataFactory {
    */
   protected buildDocuments(): void {
     this.opts.documents.forEach(DocumentClass => {
-      this.loadedMetadata.set(
+      this.loadedDocumentMetadata.set(
         DocumentClass,
         this.buildMetadataForDocument(DocumentClass)
       );
@@ -130,39 +164,45 @@ export class DocumentMetadataFactory {
     target: DocumentClass,
     fields?: FieldsMetadata
   ): FieldsMetadata {
-    if (!definitionStorage.fields.has(target)) {
-      throw new Error(`"${target.name}" does not have any fields`);
-    }
-
     fields = fields || new Map();
 
-    definitionStorage.fields.get(target).forEach(prop => {
-      if (!prop.isEmbedded) {
-        fields.set(
-          prop.fieldName,
-          new FieldMetadata({
-            ...prop,
-            isEmbeddedArray: false
-          })
-        );
-      } else {
-        let embeddedType = prop.embedded();
-        const isEmbeddedArray = Array.isArray(embeddedType);
-        if (isEmbeddedArray) {
-          embeddedType = embeddedType[0];
-        }
+    if (definitionStorage.fields.has(target)) {
+      definitionStorage.fields.get(target).forEach(prop => {
+        if (!prop.isEmbedded) {
+          fields.set(
+            prop.fieldName,
+            new FieldMetadata({
+              ...prop,
+              isEmbeddedArray: false
+            })
+          );
+        } else {
+          let embeddedType = prop.embedded();
+          const isEmbeddedArray = Array.isArray(embeddedType);
+          if (isEmbeddedArray) {
+            embeddedType = embeddedType[0];
+          }
 
-        fields.set(
-          prop.fieldName,
-          new FieldMetadata({
-            ...prop,
-            isEmbeddedArray,
-            embeddedMetadata: this.buildEmbeddedDocumentMetadata(embeddedType),
+          const embeddedMetadata = this.buildEmbeddedDocumentMetadata(
             embeddedType
-          })
-        );
-      }
-    });
+          );
+          this.loadedEmbeddedDocumentMetadata.set(
+            embeddedType,
+            embeddedMetadata
+          );
+
+          fields.set(
+            prop.fieldName,
+            new FieldMetadata({
+              ...prop,
+              isEmbeddedArray,
+              embeddedMetadata,
+              embeddedType
+            })
+          );
+        }
+      });
+    }
 
     let parent = Object.getPrototypeOf(target);
     while (parent && parent.prototype) {
@@ -171,6 +211,10 @@ export class DocumentMetadataFactory {
       }
 
       parent = Object.getPrototypeOf(parent);
+    }
+
+    if (!fields.size) {
+      throw new Error(`"${target.name}" does not have any fields`);
     }
 
     return fields;

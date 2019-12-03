@@ -46,7 +46,7 @@ export class EventManager {
     this.documentsWithSubscribers.clear();
 
     const documents: Newable[] = Array.from(
-      dm.metadataFactory.loadedMetadata.values()
+      dm.metadataFactory.loadedDocumentMetadata.values()
     ).map(meta => meta.DocumentClass);
 
     this.subscribers.forEach(subscriber => {

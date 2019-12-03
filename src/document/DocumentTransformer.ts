@@ -82,15 +82,20 @@ export class DocumentTransformer {
   ): T {
     meta.fields.forEach(
       ({ isEmbedded, isEmbeddedArray, embeddedMetadata, fieldName }) => {
-        if (typeof data[fieldName] !== 'undefined') {
+        if (
+          typeof data !== 'undefined' &&
+          typeof data[fieldName] !== 'undefined'
+        ) {
           if (!isEmbedded) {
             into[fieldName] = data[fieldName];
           } else if (isEmbeddedArray) {
             into[fieldName] = (data[fieldName] || []).map((value: any) =>
-              map(embeddedMetadata, value)
+              value ? map(embeddedMetadata, value) : null
             );
           } else {
-            into[fieldName] = map(embeddedMetadata, data[fieldName]);
+            into[fieldName] = data[fieldName]
+              ? map(embeddedMetadata, data[fieldName])
+              : null;
           }
         }
       }
