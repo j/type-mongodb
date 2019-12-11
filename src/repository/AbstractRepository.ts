@@ -163,11 +163,23 @@ export abstract class AbstractRepository<T> {
     opts?: FindOneAndUpdateOption
   ): Promise<T | null>;
 
+  abstract async findOneAndUpdateOrFail(
+    filter: FilterQuery<T | any>,
+    update: UpdateQuery<T>,
+    opts?: FindOneAndUpdateOption
+  ): Promise<T>;
+
   abstract async findByIdAndUpdate(
     id: any,
     update: UpdateQuery<T>,
     opts?: FindOneAndUpdateOption
   ): Promise<T | null>;
+
+  abstract async findByIdAndUpdateOrFail(
+    id: any,
+    update: UpdateQuery<T>,
+    opts?: FindOneAndUpdateOption
+  ): Promise<T>;
 
   abstract async findOneAndReplace(
     filter: FilterQuery<T | any>,
@@ -175,18 +187,40 @@ export abstract class AbstractRepository<T> {
     opts?: FindOneAndReplaceOption
   ): Promise<T | null>;
 
+  abstract async findOneAndReplaceOrFail(
+    filter: FilterQuery<T | any>,
+    props: OptionalId<Partial<T>>,
+    opts?: FindOneAndReplaceOption
+  ): Promise<T>;
+
   abstract async findByIdAndReplace(
     id: any,
     props: OptionalId<Partial<T>>,
     opts?: FindOneAndReplaceOption
   ): Promise<T | null>;
 
+  abstract async findByIdAndReplaceOrFail(
+    id: any,
+    props: OptionalId<Partial<T>>,
+    opts?: FindOneAndReplaceOption
+  ): Promise<T>;
+
   abstract async findOneAndDelete(
     filter: FilterQuery<T | any>,
     opts?: FindOneAndDeleteOption
   ): Promise<T | null>;
 
+  abstract async findOneAndDeleteOrFail(
+    filter: FilterQuery<T | any>,
+    opts?: FindOneAndDeleteOption
+  ): Promise<T>;
+
   abstract async findByIdAndDelete(
+    id: any,
+    opts?: FindOneAndDeleteOption
+  ): Promise<T | null>;
+
+  abstract async findByIdAndDeleteOrFail(
     id: any,
     opts?: FindOneAndDeleteOption
   ): Promise<T | null>;

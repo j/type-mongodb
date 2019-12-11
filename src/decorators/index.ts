@@ -23,6 +23,7 @@ export function Document(options: DocumentOptions = {}): ClassDecorator {
 }
 
 interface FieldOptions {
+  name?: string;
   extensions?: Record<any, any>;
 }
 
@@ -48,7 +49,8 @@ export function Field(
     const meta: FieldDefinition = {
       ...options,
       DocumentClass: target.constructor,
-      fieldName: field,
+      propertyName: field,
+      fieldName: options.name || field,
       isEmbedded: typeof embedded !== 'undefined',
       embedded
     };

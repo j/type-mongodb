@@ -79,11 +79,11 @@ export class Repository<T> extends AbstractRepository<T> {
     return this.metadata.init(props);
   }
 
-  toDB(model: T): OptionalId<T> {
+  toDB(model: T): OptionalId<T | any> {
     return this.metadata.toDB(model);
   }
 
-  fromDB(doc: Partial<T>): T {
+  fromDB(doc: Partial<T | any>): T {
     return this.metadata.fromDB(doc);
   }
 
@@ -266,12 +266,32 @@ export class Repository<T> extends AbstractRepository<T> {
     );
   }
 
+  async findOneAndUpdateOrFail(
+    filter: FilterQuery<T | any>,
+    update: UpdateQuery<T>,
+    opts: FindOneAndUpdateOption = {}
+  ): Promise<T> {
+    return this.failIfEmpty(
+      this.metadata,
+      filter,
+      await this.findOneAndUpdate(filter, update, opts)
+    );
+  }
+
   async findByIdAndUpdate(
     id: any,
     update: UpdateQuery<T>,
     opts: FindOneAndUpdateOption = {}
   ): Promise<T | null> {
     return this.findOneAndUpdate({ _id: this.id(id) }, update, opts);
+  }
+
+  async findByIdAndUpdateOrFail(
+    id: any,
+    update: UpdateQuery<T>,
+    opts: FindOneAndUpdateOption = {}
+  ): Promise<T> {
+    return this.findOneAndUpdateOrFail({ _id: this.id(id) }, update, opts);
   }
 
   async findOneAndReplace(
@@ -285,12 +305,32 @@ export class Repository<T> extends AbstractRepository<T> {
     });
   }
 
+  async findOneAndReplaceOrFail(
+    filter: FilterQuery<T | any>,
+    props: OptionalId<Partial<T>>,
+    opts?: FindOneAndReplaceOption
+  ): Promise<T> {
+    return this.failIfEmpty(
+      this.metadata,
+      filter,
+      await this.findOneAndReplaceOrFail(filter, props, opts)
+    );
+  }
+
   async findByIdAndReplace(
     id: any,
     props: OptionalId<Partial<T>>,
     opts?: FindOneAndReplaceOption
   ): Promise<T | null> {
     return this.findOneAndReplace({ _id: this.id(id) }, props, opts);
+  }
+
+  async findByIdAndReplaceOrFail(
+    id: any,
+    props: OptionalId<Partial<T>>,
+    opts?: FindOneAndReplaceOption
+  ): Promise<T | null> {
+    return this.findOneAndReplaceOrFail({ _id: this.id(id) }, props, opts);
   }
 
   async findOneAndDelete(
@@ -308,11 +348,29 @@ export class Repository<T> extends AbstractRepository<T> {
     );
   }
 
+  async findOneAndDeleteOrFail(
+    filter: FilterQuery<T | any>,
+    opts?: FindOneAndDeleteOption
+  ): Promise<T | null> {
+    return this.failIfEmpty(
+      this.metadata,
+      filter,
+      await this.findOneAndDelete(filter, opts)
+    );
+  }
+
   async findByIdAndDelete(
     id: any,
     opts?: FindOneAndDeleteOption
   ): Promise<T | null> {
     return this.findOneAndDelete({ _id: this.id(id) }, opts);
+  }
+
+  async findByIdAndDeleteOrFail(
+    id: any,
+    opts?: FindOneAndDeleteOption
+  ): Promise<T | null> {
+    return this.findOneAndDeleteOrFail({ _id: this.id(id) }, opts);
   }
 
   async updateOne(

@@ -16,6 +16,7 @@ export interface DocumentDefinition<T = any> {
 
 export interface FieldDefinition<T = any> {
   DocumentClass: DocumentClass<T>;
+  propertyName: string;
   fieldName: string;
   isEmbedded: boolean;
   embedded?: () => any;

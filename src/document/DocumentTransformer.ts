@@ -1,4 +1,4 @@
-import { OptionalId, WithId, DocumentClass, Newable } from '../types';
+import { WithId, DocumentClass, Newable } from '../types';
 import { AbstractDocumentMetadata } from '../metadata/AbstractDocumentMetadata';
 
 export class DocumentTransformer {
@@ -9,12 +9,14 @@ export class DocumentTransformer {
     meta: AbstractDocumentMetadata<T, D>,
     props: Partial<T>
   ): T {
-    return this.mapDataInto(
+    return this.mapDataInto({
       meta,
-      this.getInstance(meta),
-      props,
-      this.init.bind(this)
-    );
+      into: this.getInstance(meta),
+      intoField: 'propertyName',
+      data: props,
+      dataField: 'propertyName',
+      map: this.init.bind(this)
+    });
   }
 
   /**
@@ -25,7 +27,14 @@ export class DocumentTransformer {
     model: T,
     props: Partial<T>
   ): T {
-    return this.mapDataInto(meta, model, props, this.merge.bind(this));
+    return this.mapDataInto({
+      meta,
+      into: model,
+      intoField: 'propertyName',
+      data: props,
+      dataField: 'propertyName',
+      map: this.merge.bind(this)
+    });
   }
 
   /**
@@ -34,13 +43,15 @@ export class DocumentTransformer {
   static toDB<T, D extends Newable = DocumentClass>(
     meta: AbstractDocumentMetadata<T, D>,
     model: T
-  ): OptionalId<T> {
-    return this.mapDataInto(
+  ): T & { [key: string]: any } {
+    return this.mapDataInto({
       meta,
-      {},
-      this.prepare(meta, model),
-      this.toDB.bind(this)
-    );
+      into: {},
+      intoField: 'fieldName',
+      data: this.prepare(meta, model),
+      dataField: 'propertyName',
+      map: this.toDB.bind(this)
+    });
   }
 
   /**
@@ -48,14 +59,16 @@ export class DocumentTransformer {
    */
   static fromDB<T, D extends Newable = DocumentClass>(
     meta: AbstractDocumentMetadata<T, D>,
-    doc: Partial<T> | any
+    doc: Partial<T & { [key: string]: any }>
   ): T {
-    return this.mapDataInto(
+    return this.mapDataInto({
       meta,
-      this.getInstance(meta, false),
-      doc,
-      this.fromDB.bind(this)
-    );
+      into: this.getInstance(meta, false),
+      intoField: 'propertyName',
+      data: doc,
+      dataField: 'fieldName',
+      map: this.fromDB.bind(this)
+    });
   }
 
   // -------------------------------------------------------------------------
@@ -74,27 +87,34 @@ export class DocumentTransformer {
   /**
    * Iterates over the fields for mapping between different types
    */
-  protected static mapDataInto<T>(
-    meta: AbstractDocumentMetadata<T>,
-    into: any,
-    data: any,
-    map: (meta: AbstractDocumentMetadata<T>, value: any) => any
-  ): T {
+  protected static mapDataInto<T>(opts: {
+    meta: AbstractDocumentMetadata<T>;
+    into: any;
+    intoField: 'fieldName' | 'propertyName';
+    data: any;
+    dataField: 'fieldName' | 'propertyName';
+    map: (meta: AbstractDocumentMetadata<T>, value: any) => any;
+  }): T {
+    const { meta, into, intoField, data, dataField, map } = opts;
+
     meta.fields.forEach(
-      ({ isEmbedded, isEmbeddedArray, embeddedMetadata, fieldName }) => {
+      ({ isEmbedded, isEmbeddedArray, embeddedMetadata, ...fieldMeta }) => {
+        const dataFieldName = fieldMeta[dataField];
+        const intoFieldName = fieldMeta[intoField];
+
         if (
           typeof data !== 'undefined' &&
-          typeof data[fieldName] !== 'undefined'
+          typeof data[dataFieldName] !== 'undefined'
         ) {
           if (!isEmbedded) {
-            into[fieldName] = data[fieldName];
+            into[intoFieldName] = data[dataFieldName];
           } else if (isEmbeddedArray) {
-            into[fieldName] = (data[fieldName] || []).map((value: any) =>
-              value ? map(embeddedMetadata, value) : null
+            into[intoFieldName] = (data[dataFieldName] || []).map(
+              (value: any) => (value ? map(embeddedMetadata, value) : null)
             );
           } else {
-            into[fieldName] = data[fieldName]
-              ? map(embeddedMetadata, data[fieldName])
+            into[intoFieldName] = data[dataFieldName]
+              ? map(embeddedMetadata, data[dataFieldName])
               : null;
           }
         }

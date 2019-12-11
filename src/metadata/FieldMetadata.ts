@@ -10,6 +10,7 @@ export interface FieldMetadataOpts<T = any> extends FieldDefinition<T> {
 
 export class FieldMetadata<T = any> {
   public readonly DocumentClass: Newable<T>;
+  public readonly propertyName: string;
   public readonly fieldName: string;
   public readonly database: string;
   public readonly embedded?: () => any;
@@ -20,6 +21,7 @@ export class FieldMetadata<T = any> {
 
   constructor(opts: FieldMetadataOpts) {
     this.DocumentClass = opts.DocumentClass;
+    this.propertyName = opts.propertyName;
     this.fieldName = opts.fieldName;
     this.embedded = opts.embedded;
     this.isEmbedded = opts.isEmbedded;

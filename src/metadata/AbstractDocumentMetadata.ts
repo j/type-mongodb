@@ -1,5 +1,5 @@
 import { ObjectId } from 'mongodb';
-import { OptionalId, Newable } from '../types';
+import { Newable } from '../types';
 import { FieldMetadata } from './FieldMetadata';
 import { DocumentTransformer } from '../document/DocumentTransformer';
 
@@ -55,14 +55,14 @@ export abstract class AbstractDocumentMetadata<
   /**
    * Maps model fields to a mongodb document.
    */
-  toDB(model: T): OptionalId<T> {
+  toDB(model: T): T & { [key: string]: any } {
     return DocumentTransformer.toDB(this, model);
   }
 
   /**
    * Maps mongodb document(s) to a model.
    */
-  fromDB(doc: Partial<T> | any): T {
+  fromDB(doc: Partial<T & { [key: string]: any }>): T {
     return DocumentTransformer.fromDB(this, doc);
   }
 

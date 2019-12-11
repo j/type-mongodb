@@ -9,9 +9,19 @@ import {
   createUsers
 } from '../__fixtures__/User';
 import { DocumentManager } from '../../src/DocumentManager';
+import { Document, Field } from '../../src/decorators';
 import { DocumentMetadata } from '../../src/metadata/DocumentMetadata';
 import { DocumentMetadataFactory } from '../../src/metadata/DocumentMetadataFactory';
 import { Connection } from '../../src/connection/Connection';
+
+@Document()
+class DocumentWithRenamedFields {
+  @Field()
+  _id: ObjectId;
+
+  @Field({ name: 'active' })
+  isActive: boolean;
+}
 
 describe('DocumentManager', () => {
   let manager: DocumentManager;
@@ -22,7 +32,7 @@ describe('DocumentManager', () => {
         uri: 'mongodb://localhost:31000',
         database: 'test'
       },
-      documents: [Simple, User]
+      documents: [Simple, User, DocumentWithRenamedFields]
     });
   });
 
@@ -43,7 +53,7 @@ describe('DocumentManager', () => {
     expect(manager).toBeInstanceOf(DocumentManager);
     expect(manager.connection).toBeInstanceOf(Connection);
     expect(manager.metadataFactory).toBeInstanceOf(DocumentMetadataFactory);
-    expect(manager.metadataFactory.loadedDocumentMetadata.size).toBe(2);
+    expect(manager.metadataFactory.loadedDocumentMetadata.size).toBe(3);
   });
 
   test('gets db', () => {
@@ -225,6 +235,33 @@ describe('DocumentManager', () => {
       const address = manager.init(Address, fields);
       expect(address).toBeInstanceOf(Address);
       expect(address).toEqual(Object.assign(new Address(), fields));
+    });
+  });
+
+  describe('field renaming', () => {
+    it('init', () => {
+      const model = manager.init(DocumentWithRenamedFields, { isActive: true });
+      expect(model.isActive).toBeTruthy();
+    });
+    it('merge', () => {
+      const first = Object.assign(new DocumentWithRenamedFields(), {
+        isActive: false
+      });
+      const model = manager.merge(DocumentWithRenamedFields, first, {
+        isActive: true
+      });
+      expect(model.isActive).toBeTruthy();
+    });
+    it('fromDB', () => {
+      const model = manager.fromDB(DocumentWithRenamedFields, { active: true });
+      expect(model.isActive).toBeTruthy();
+    });
+    it('toDb', () => {
+      const doc = manager.toDB(
+        DocumentWithRenamedFields,
+        Object.assign(new DocumentWithRenamedFields(), { isActive: true })
+      );
+      expect(doc.active).toBeTruthy();
     });
   });
 });

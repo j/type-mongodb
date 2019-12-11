@@ -1,5 +1,5 @@
 import { MongoClient, SessionOptions } from 'mongodb';
-import { DocumentClass, Collection, Db, OptionalId, Newable } from './types';
+import { DocumentClass, Collection, Db, Newable } from './types';
 import { DocumentMetadataFactory } from './metadata/DocumentMetadataFactory';
 import { DocumentMetadata } from './metadata/DocumentMetadata';
 import { Connection, ConnectionOptions } from './connection/Connection';
@@ -104,14 +104,25 @@ export class DocumentManager {
     return this.getAnyMetadata<T>(DocumentClass).init(props);
   }
 
+  merge<T>(
+    DocumentClass: DocumentClass<T> | Newable<T>,
+    model: T,
+    props: Partial<T>
+  ): T {
+    return this.getAnyMetadata<T>(DocumentClass).merge(model, props);
+  }
+
   toDB<T>(
     DocumentClass: DocumentClass<T> | Newable<T>,
     model: T
-  ): OptionalId<T> {
+  ): T & { [key: string]: any } {
     return this.getAnyMetadata<T>(DocumentClass).toDB(model);
   }
 
-  fromDB<T>(DocumentClass: DocumentClass<T> | Newable<T>, doc: Partial<T>): T {
+  fromDB<T>(
+    DocumentClass: DocumentClass<T> | Newable<T>,
+    doc: Partial<T & { [key: string]: any }>
+  ): T {
     return this.getAnyMetadata<T>(DocumentClass).fromDB(doc);
   }
 
