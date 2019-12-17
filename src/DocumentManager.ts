@@ -9,10 +9,19 @@ import { Repository } from './repository/Repository';
 import { Session } from './transaction/Session';
 import { EmbeddedDocumentMetadata } from './metadata/EmbeddedDocumentMetadata';
 
+export interface ContainerLike {
+  get: <T = any>(service: Newable<T>) => T;
+}
+
+const defaultContainer = {
+  get: <T = any>(Service: Newable<T>) => new Service()
+};
+
 export interface DocumentManagerOptions {
   connection: ConnectionOptions;
   documents: DocumentClass<any>[];
   subscribers?: EventSubscriber[];
+  container?: ContainerLike;
 }
 
 /**
@@ -24,6 +33,7 @@ export class DocumentManager {
   public readonly metadataFactory: DocumentMetadataFactory;
   public readonly connection: Connection;
   public readonly eventManager: EventManager;
+  public readonly container: ContainerLike;
 
   constructor(private readonly opts: DocumentManagerOptions) {
     if (!this.opts.connection) {
@@ -38,6 +48,7 @@ export class DocumentManager {
     });
 
     this.eventManager = new EventManager(this.opts.subscribers);
+    this.container = opts.container || defaultContainer;
   }
 
   // -------------------------------------------------------------------------

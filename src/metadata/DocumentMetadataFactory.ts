@@ -132,7 +132,7 @@ export class DocumentMetadataFactory {
     const connection = this.opts.dm.connection;
     const db = connection.getDatabase(connection, def.database);
 
-    const repository = new def.RepositoryClass();
+    const repository = this.opts.dm.container.get(def.RepositoryClass);
     repository.manager = this.opts.dm;
 
     const meta = new DocumentMetadata({
