@@ -7,7 +7,7 @@ interface DocumentOptions {
   database?: string;
   collection?: string;
   extensions?: Record<any, any>;
-  repository?: Newable<Repository<any>>;
+  repository?: () => Newable<Repository<any>>;
 }
 
 export function Document(options: DocumentOptions = {}): ClassDecorator {
@@ -15,7 +15,7 @@ export function Document(options: DocumentOptions = {}): ClassDecorator {
     definitionStorage.documents.set(target, {
       ...options,
       DocumentClass: target,
-      RepositoryClass: options.repository || Repository,
+      repository: options.repository,
       database: options.database,
       collection: options.collection || target.name
     });

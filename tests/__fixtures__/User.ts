@@ -26,7 +26,7 @@ export class Review {
   rating: number;
 }
 
-@Document({ repository: UserRepository })
+@Document({ repository: () => UserRepository })
 export class User {
   @Field()
   _id: ObjectId;

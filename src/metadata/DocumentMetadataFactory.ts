@@ -5,6 +5,7 @@ import { definitionStorage } from '../utils/definitionStorage';
 import { DocumentManager } from '../DocumentManager';
 import { EmbeddedDocumentMetadata } from './EmbeddedDocumentMetadata';
 import { FieldsMetadata } from './AbstractDocumentMetadata';
+import { Repository } from '../repository';
 
 export interface BuildMetadataStorageOptions {
   dm: DocumentManager;
@@ -132,7 +133,8 @@ export class DocumentMetadataFactory {
     const connection = this.opts.dm.connection;
     const db = connection.getDatabase(connection, def.database);
 
-    const repository = this.opts.dm.container.get(def.RepositoryClass);
+    const RepositoryClass = def.repository ? def.repository() : Repository;
+    const repository = this.opts.dm.container.get(RepositoryClass);
     repository.manager = this.opts.dm;
 
     const meta = new DocumentMetadata({

@@ -8,7 +8,7 @@ import { Repository } from '../repository/Repository';
 
 export interface DocumentDefinition<T = any> {
   DocumentClass: DocumentClass<T>;
-  RepositoryClass: Newable<Repository<T>>;
+  repository: () => Newable<Repository<T>>;
   database?: string;
   collection: string;
   extensions?: Record<any, any>;
