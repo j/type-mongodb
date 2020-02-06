@@ -155,7 +155,8 @@ export class DocumentMetadataFactory {
   ): EmbeddedDocumentMetadata {
     return new EmbeddedDocumentMetadata(
       DocumentClass,
-      this.buildFields(DocumentClass)
+      this.buildFields(DocumentClass),
+      definitionStorage.parents.get(DocumentClass)
     );
   }
 

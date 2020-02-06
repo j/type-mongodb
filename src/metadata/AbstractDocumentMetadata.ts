@@ -2,6 +2,7 @@ import { ObjectId } from 'mongodb';
 import { Newable } from '../types';
 import { FieldMetadata } from './FieldMetadata';
 import { DocumentTransformer } from '../document/DocumentTransformer';
+import { ParentDefinition } from './definitions';
 
 export type FieldsMetadata = Map<string, FieldMetadata>;
 
@@ -16,11 +17,17 @@ export abstract class AbstractDocumentMetadata<
   public readonly DocumentClass: D;
   public readonly name: string;
   public readonly fields: FieldsMetadata;
+  public readonly parent?: ParentDefinition;
 
-  constructor(DocumentClass: D, fields: FieldsMetadata) {
+  constructor(
+    DocumentClass: D,
+    fields: FieldsMetadata,
+    parent?: ParentDefinition
+  ) {
     this.DocumentClass = DocumentClass;
     this.name = DocumentClass.name;
     this.fields = fields;
+    this.parent = parent;
   }
 
   // -------------------------------------------------------------------------
@@ -62,21 +69,21 @@ export abstract class AbstractDocumentMetadata<
   /**
    * Maps mongodb document(s) to a model.
    */
-  fromDB(doc: Partial<T & { [key: string]: any }>): T {
+  fromDB(doc: Partial<T> | { [key: string]: any }): T {
     return DocumentTransformer.fromDB(this, doc);
   }
 
   /**
    * Creates a model from model properties.
    */
-  init(props: Partial<T>): T {
+  init(props: Partial<T> | { [key: string]: any }): T {
     return DocumentTransformer.init(this, props);
   }
 
   /**
    * Creates a model from model properties.
    */
-  merge(model: T, props: Partial<T>): T {
+  merge(model: T, props: Partial<T> | { [key: string]: any }): T {
     return DocumentTransformer.merge(this, model, props);
   }
 }

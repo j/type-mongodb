@@ -111,14 +111,17 @@ export class DocumentManager {
     return this.metadataFactory.filterMetadata(filter);
   }
 
-  init<T>(DocumentClass: DocumentClass<T> | Newable<T>, props: Partial<T>): T {
+  init<T>(
+    DocumentClass: DocumentClass<T> | Newable<T>,
+    props: Partial<T> | { [key: string]: any }
+  ): T {
     return this.getAnyMetadata<T>(DocumentClass).init(props);
   }
 
   merge<T>(
     DocumentClass: DocumentClass<T> | Newable<T>,
     model: T,
-    props: Partial<T>
+    props: Partial<T> | { [key: string]: any }
   ): T {
     return this.getAnyMetadata<T>(DocumentClass).merge(model, props);
   }
@@ -132,7 +135,7 @@ export class DocumentManager {
 
   fromDB<T>(
     DocumentClass: DocumentClass<T> | Newable<T>,
-    doc: Partial<T & { [key: string]: any }>
+    doc: Partial<T> | { [key: string]: any }
   ): T {
     return this.getAnyMetadata<T>(DocumentClass).fromDB(doc);
   }

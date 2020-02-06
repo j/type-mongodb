@@ -35,14 +35,12 @@ describe('DocumentManager -> queries, inserts, & updates', () => {
 
     spies.fromDB = jest.spyOn(DocumentMetadata.prototype, 'fromDB');
     spies.toDB = jest.spyOn(DocumentMetadata.prototype, 'toDB');
-    const props: Array<
-      {
-        [K in keyof Collection]: Collection[K] extends (...args: any[]) => any
-          ? K
-          : never;
-      }[keyof Collection] &
-        string
-    > = [
+    const props: Array<{
+      [K in keyof Collection]: Collection[K] extends (...args: any[]) => any
+        ? K
+        : never;
+    }[keyof Collection] &
+      string> = [
       'find',
       'findOne',
       'findOneAndUpdate',

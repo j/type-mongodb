@@ -1,4 +1,4 @@
-import { FieldDefinition } from '../metadata/definitions';
+import { FieldDefinition, ParentDefinition } from '../metadata/definitions';
 import { definitionStorage } from '../utils/definitionStorage';
 import { Newable } from '../types';
 import { Repository } from '../repository';
@@ -63,5 +63,20 @@ export function Field(
         new Map([[field, meta]])
       );
     }
+  };
+}
+
+export function Parent(): PropertyDecorator {
+  return (target: any, propertyName: string) => {
+    const meta: ParentDefinition = {
+      DocumentClass: target.constructor,
+      propertyName
+    };
+
+    if (definitionStorage.parents.has(meta.DocumentClass)) {
+      throw new Error(`Parent already exists for "${target.constructor.name}"`);
+    }
+
+    definitionStorage.parents.set(meta.DocumentClass, meta);
   };
 }

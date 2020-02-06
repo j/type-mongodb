@@ -7,7 +7,7 @@ export class DocumentTransformer {
    */
   static init<T, D extends Newable = DocumentClass>(
     meta: AbstractDocumentMetadata<T, D>,
-    props: Partial<T>
+    props: Partial<T> | { [key: string]: any }
   ): T {
     return this.mapDataInto({
       meta,
@@ -15,7 +15,7 @@ export class DocumentTransformer {
       intoField: 'propertyName',
       data: props,
       dataField: 'propertyName',
-      map: this.init.bind(this)
+      map: this.createParentMapper(this.init.bind(this))
     });
   }
 
@@ -25,7 +25,7 @@ export class DocumentTransformer {
   static merge<T, D extends Newable = DocumentClass>(
     meta: AbstractDocumentMetadata<T, D>,
     model: T,
-    props: Partial<T>
+    props: Partial<T> | { [key: string]: any }
   ): T {
     return this.mapDataInto({
       meta,
@@ -33,7 +33,7 @@ export class DocumentTransformer {
       intoField: 'propertyName',
       data: props,
       dataField: 'propertyName',
-      map: this.merge.bind(this)
+      map: this.createParentMapper(this.init.bind(this))
     });
   }
 
@@ -59,16 +59,20 @@ export class DocumentTransformer {
    */
   static fromDB<T, D extends Newable = DocumentClass>(
     meta: AbstractDocumentMetadata<T, D>,
-    doc: Partial<T & { [key: string]: any }>
+    doc: Partial<T> | { [key: string]: any }
   ): T {
-    return this.mapDataInto({
+    const instance = this.getInstance(meta, false);
+
+    const model = this.mapDataInto({
       meta,
-      into: this.getInstance(meta, false),
+      into: instance,
       intoField: 'propertyName',
       data: doc,
       dataField: 'fieldName',
-      map: this.fromDB.bind(this)
+      map: this.createParentMapper(this.fromDB.bind(this))
     });
+
+    return model;
   }
 
   // -------------------------------------------------------------------------
@@ -84,6 +88,20 @@ export class DocumentTransformer {
     return prepare ? this.prepare(meta, instance) : instance;
   }
 
+  protected static createParentMapper<T>(
+    map: (meta: AbstractDocumentMetadata<T>, value: any) => T
+  ): (meta: AbstractDocumentMetadata<T>, value: any, parent: any) => T {
+    return (m: AbstractDocumentMetadata<T>, v: any, parent: any) => {
+      const model = map.bind(this)(m, v);
+
+      if (m.parent) {
+        model[m.parent.propertyName] = parent;
+      }
+
+      return model;
+    };
+  }
+
   /**
    * Iterates over the fields for mapping between different types
    */
@@ -93,7 +111,7 @@ export class DocumentTransformer {
     intoField: 'fieldName' | 'propertyName';
     data: any;
     dataField: 'fieldName' | 'propertyName';
-    map: (meta: AbstractDocumentMetadata<T>, value: any) => any;
+    map: (meta: AbstractDocumentMetadata<T>, value: any, parent: any) => any;
   }): T {
     const { meta, into, intoField, data, dataField, map } = opts;
 
@@ -109,12 +127,14 @@ export class DocumentTransformer {
           if (!isEmbedded) {
             into[intoFieldName] = data[dataFieldName];
           } else if (isEmbeddedArray) {
-            into[intoFieldName] = (data[dataFieldName] || []).map(
-              (value: any) => (value ? map(embeddedMetadata, value) : null)
+            into[intoFieldName] = (
+              data[dataFieldName] || []
+            ).map((value: any) =>
+              value ? map(embeddedMetadata, value, into) : null
             );
           } else {
             into[intoFieldName] = data[dataFieldName]
-              ? map(embeddedMetadata, data[dataFieldName])
+              ? map(embeddedMetadata, data[dataFieldName], into)
               : null;
           }
         }

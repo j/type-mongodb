@@ -22,3 +22,8 @@ export interface FieldDefinition<T = any> {
   embedded?: () => any;
   extensions?: Record<any, any>;
 }
+
+export interface ParentDefinition<T = any> {
+  DocumentClass: DocumentClass<T>;
+  propertyName: string;
+}
