@@ -6,6 +6,7 @@ import { DocumentManager } from '../DocumentManager';
 import { EmbeddedDocumentMetadata } from './EmbeddedDocumentMetadata';
 import { FieldsMetadata } from './AbstractDocumentMetadata';
 import { Repository } from '../repository';
+import { isPromise } from '../utils/isPromise';
 
 export interface BuildMetadataStorageOptions {
   dm: DocumentManager;
@@ -33,12 +34,12 @@ export class DocumentMetadataFactory {
   // Public Methods
   // -------------------------------------------------------------------------
 
-  build() {
+  async build() {
     if (this.isBuilt) {
       throw new Error('DocumentMetadata already built');
     }
 
-    this.buildDocuments();
+    await this.buildDocuments();
 
     this.isBuilt = true;
   }
@@ -110,21 +111,30 @@ export class DocumentMetadataFactory {
   /**
    * Builds the configured documents.
    */
-  protected buildDocuments(): void {
-    this.opts.documents.forEach(DocumentClass => {
-      this.loadedDocumentMetadata.set(
-        DocumentClass,
-        this.buildMetadataForDocument(DocumentClass)
-      );
-    });
+  protected async buildDocuments(): Promise<void> {
+    await Promise.all(
+      this.opts.documents.map(DocumentClass => {
+        return new Promise(async (resolve, reject) => {
+          try {
+            this.loadedDocumentMetadata.set(
+              DocumentClass,
+              await this.buildMetadataForDocument(DocumentClass)
+            );
+            resolve();
+          } catch (err) {
+            reject(err);
+          }
+        });
+      })
+    );
   }
 
   /**
    * Builds the DocumentMetadata and it's fields for the given class.
    */
-  protected buildMetadataForDocument(
+  protected async buildMetadataForDocument(
     DocumentClass: DocumentClass
-  ): DocumentMetadata {
+  ): Promise<DocumentMetadata> {
     if (!definitionStorage.documents.has(DocumentClass)) {
       throw new Error(`"${DocumentClass.name}" is not a decorated @Document()`);
     }
@@ -135,6 +145,11 @@ export class DocumentMetadataFactory {
 
     const RepositoryClass = def.repository ? def.repository() : Repository;
     const repository = this.opts.dm.container.get(RepositoryClass);
+
+    if (isPromise(repository)) {
+      await repository;
+    }
+
     repository.manager = this.opts.dm;
 
     const meta = new DocumentMetadata({

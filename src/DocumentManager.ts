@@ -10,7 +10,7 @@ import { Session } from './transaction/Session';
 import { EmbeddedDocumentMetadata } from './metadata/EmbeddedDocumentMetadata';
 
 export interface ContainerLike {
-  get: <T = any>(service: Newable<T>) => T;
+  get: <T = any>(service: Newable<T>) => any;
 }
 
 const defaultContainer = {
@@ -55,8 +55,8 @@ export class DocumentManager {
   // Public Methods
   // -------------------------------------------------------------------------
 
-  buildMetadata(): void {
-    this.metadataFactory.build();
+  async buildMetadata(): Promise<void> {
+    await this.metadataFactory.build();
   }
 
   buildSubscribers(): void {
@@ -203,7 +203,7 @@ export class DocumentManager {
 
     await dm.connect();
 
-    dm.buildMetadata();
+    await dm.buildMetadata();
     dm.buildSubscribers();
 
     return dm;
