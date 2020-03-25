@@ -144,11 +144,10 @@ export class DocumentMetadataFactory {
     const db = connection.getDatabase(connection, def.database);
 
     const RepositoryClass = def.repository ? def.repository() : Repository;
-    const repository = this.opts.dm.container.get(RepositoryClass);
-
-    if (isPromise(repository)) {
-      await repository;
-    }
+    const repositoryOrPromise = this.opts.dm.container.get(RepositoryClass);
+    const repository = isPromise(repositoryOrPromise)
+      ? await repositoryOrPromise
+      : repositoryOrPromise;
 
     repository.manager = this.opts.dm;
 

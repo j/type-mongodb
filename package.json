@@ -1,6 +1,6 @@
 {
   "name": "type-mongodb",
-  "version": "0.0.1-beta4",
+  "version": "0.0.1-beta5",
   "description": "A simple decorator based MongoDB ODM.",
   "keywords": [],
   "author": "Jordan <j@jrdn.org>",
