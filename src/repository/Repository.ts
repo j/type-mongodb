@@ -7,7 +7,7 @@ import {
   FindOneAndDeleteOption,
   UpdateWriteOpResult,
   ReplaceWriteOpResult,
-  DeleteWriteOpResultObject
+  DeleteWriteOpResultObject,
 } from 'mongodb';
 import {
   Collection,
@@ -22,7 +22,7 @@ import {
   ReplaceOneOptions,
   CollectionInsertOneOptions,
   InsertWriteOpResult,
-  CollectionInsertManyOptions
+  CollectionInsertManyOptions,
 } from '../types';
 import { DocumentMetadata } from '../metadata/DocumentMetadata';
 import { DocumentNotFound } from '../errors';
@@ -79,11 +79,11 @@ export class Repository<T> extends AbstractRepository<T> {
     return this.metadata.init(props);
   }
 
-  toDB(model: T): OptionalId<T | any> {
+  toDB(model: Partial<T> | { [key: string]: any }): OptionalId<T | any> {
     return this.metadata.toDB(model);
   }
 
-  fromDB(doc: Partial<T | any>): T {
+  fromDB(doc: Partial<T | any> | { [key: string]: any }): T {
     return this.metadata.fromDB(doc);
   }
 
@@ -119,7 +119,7 @@ export class Repository<T> extends AbstractRepository<T> {
   findByIds(ids: any[], opts?: FindOneOptions): Cursor<T> {
     return this.find(
       {
-        _id: { $in: ids.map(id => this.id(id)) }
+        _id: { $in: ids.map((id) => this.id(id)) },
       },
       opts
     );
@@ -174,7 +174,7 @@ export class Repository<T> extends AbstractRepository<T> {
   ): Promise<T> {
     const model = this.init(props);
 
-    const { result } = await this.insertOne(model, opts);
+    const { result } = await this.insertOne(model as OptionalId<T>, opts);
 
     return result && result.ok ? model : null;
   }
@@ -183,10 +183,13 @@ export class Repository<T> extends AbstractRepository<T> {
     props: Partial<T>[],
     opts?: CollectionInsertManyOptions
   ): Promise<T[]> {
-    const models = props.map(p => this.init(p));
-    const { insertedIds } = await this.insertMany(models, opts);
+    const models = props.map((p) => this.init(p));
+    const { insertedIds } = await this.insertMany(
+      models as Array<OptionalId<T>>,
+      opts
+    );
 
-    return Object.keys(insertedIds).map(i => models[i]);
+    return Object.keys(insertedIds).map((i) => models[i]);
   }
 
   async insertOne(
@@ -200,7 +203,7 @@ export class Repository<T> extends AbstractRepository<T> {
       Events.AfterInsert,
       {
         meta: this.metadata,
-        model: model as T
+        model: model as T,
       },
       () => this.collection.insertOne(doc, opts)
     );
@@ -213,24 +216,24 @@ export class Repository<T> extends AbstractRepository<T> {
     const beforeInsertEvents: Promise<any>[] = [];
     const afterInsertEvents: Promise<any>[] = [];
 
-    const docs = models.map(model => this.toDB(model as T));
+    const docs: OptionalId<T>[] = models.map((model) => this.toDB(model as T));
 
-    models.forEach(model => {
+    models.forEach((model) => {
       if (!model._id) {
-        model._id = this.id();
+        model._id = this.id() as any;
       }
 
       beforeInsertEvents.push(
         this.manager.eventManager.dispatch(Events.BeforeInsert, {
           meta: this.metadata,
-          model: model as T
+          model: model as T,
         })
       );
 
       afterInsertEvents.push(
         this.manager.eventManager.dispatch(Events.AfterInsert, {
           meta: this.metadata,
-          model: model as T
+          model: model as T,
         })
       );
     });
@@ -255,12 +258,12 @@ export class Repository<T> extends AbstractRepository<T> {
       {
         meta: this.metadata,
         filter,
-        update
+        update,
       },
       async () => {
         return this.findOneAnd('Update', filter, update, {
           returnOriginal: false,
-          ...opts
+          ...opts,
         });
       }
     );
@@ -301,7 +304,7 @@ export class Repository<T> extends AbstractRepository<T> {
   ): Promise<T | null> {
     return this.findOneAnd('Replace', filter, props, {
       returnOriginal: false,
-      ...opts
+      ...opts,
     });
   }
 
@@ -342,7 +345,7 @@ export class Repository<T> extends AbstractRepository<T> {
       Events.AfterDelete,
       {
         meta: this.metadata,
-        filter
+        filter,
       },
       async () => this.findOneAnd('Delete', filter, opts)
     );
@@ -384,7 +387,7 @@ export class Repository<T> extends AbstractRepository<T> {
       {
         meta: this.metadata,
         filter,
-        update
+        update,
       },
       () => this.collection.updateOne(filter, update, opts)
     );
@@ -409,7 +412,7 @@ export class Repository<T> extends AbstractRepository<T> {
       {
         meta: this.metadata,
         filter,
-        update
+        update,
       },
       () => this.collection.updateMany(filter, update, opts)
     );
@@ -421,7 +424,7 @@ export class Repository<T> extends AbstractRepository<T> {
     opts?: UpdateManyOptions
   ): Promise<UpdateWriteOpResult> {
     return this.updateMany(
-      { _id: { $in: ids.map(id => this.id(id)) } },
+      { _id: { $in: ids.map((id) => this.id(id)) } },
       update,
       opts
     );
@@ -429,7 +432,7 @@ export class Repository<T> extends AbstractRepository<T> {
 
   async replaceOne(
     filter: FilterQuery<T | any>,
-    props: OptionalId<Partial<T>>,
+    props: Partial<T>,
     opts?: ReplaceOneOptions
   ): Promise<ReplaceWriteOpResult> {
     return this.collection.replaceOne(
@@ -441,7 +444,7 @@ export class Repository<T> extends AbstractRepository<T> {
 
   async replaceById(
     id: any,
-    props: OptionalId<Partial<T>>,
+    props: Partial<T>,
     opts?: ReplaceOneOptions
   ): Promise<ReplaceWriteOpResult> {
     return this.replaceOne({ _id: this.id(id) }, props, opts);
@@ -456,7 +459,7 @@ export class Repository<T> extends AbstractRepository<T> {
       Events.AfterDelete,
       {
         meta: this.metadata,
-        filter
+        filter,
       },
       async () => {
         const result = await this.collection.deleteOne(filter, opts);
@@ -482,7 +485,7 @@ export class Repository<T> extends AbstractRepository<T> {
       Events.AfterDeleteMany,
       {
         meta: this.metadata,
-        filter
+        filter,
       },
       () => this.collection.deleteMany(filter, opts)
     );
@@ -492,7 +495,10 @@ export class Repository<T> extends AbstractRepository<T> {
     ids: any[],
     opts?: CommonOptions
   ): Promise<DeleteWriteOpResultObject> {
-    return this.deleteMany({ _id: { $in: ids.map(id => this.id(id)) } }, opts);
+    return this.deleteMany(
+      { _id: { $in: ids.map((id) => this.id(id)) } },
+      opts
+    );
   }
 
   // -------------------------------------------------------------------------

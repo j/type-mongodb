@@ -1,7 +1,7 @@
+import { WithId } from 'mongodb';
+
 export type DocumentClass<T = any> = Newable<WithId<T>>;
 export type DocumentInstance<T = any> = WithId<T>;
-export type WithId<T = any> = Omit<T, '_id'> & { _id: any };
-export type OptionalId<T = any> = Omit<T, '_id'> & { _id?: any };
 export type Newable<T = any> = new (...args: any[]) => T;
 export type PropsOf<T = any> = { -readonly [P in keyof T]: T[P] };
 
@@ -10,6 +10,8 @@ export type PropsOf<T = any> = { -readonly [P in keyof T]: T[P] };
  */
 export {
   Db,
+  OptionalId,
+  WithId,
   Collection,
   CollectionInsertManyOptions,
   InsertWriteOpResult,
@@ -26,5 +28,5 @@ export {
   UpdateQuery,
   UpdateManyOptions,
   UpdateOneOptions,
-  ReplaceOneOptions
+  ReplaceOneOptions,
 } from 'mongodb';

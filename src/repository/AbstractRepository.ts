@@ -12,7 +12,7 @@ import {
   ReplaceOneOptions,
   CollectionInsertOneOptions,
   InsertWriteOpResult,
-  CollectionInsertManyOptions
+  CollectionInsertManyOptions,
 } from '../types';
 import { DocumentMetadata } from '../metadata/DocumentMetadata';
 import { DocumentNotFound } from '../errors';
@@ -24,7 +24,7 @@ import {
   FindOneAndDeleteOption,
   UpdateWriteOpResult,
   ReplaceWriteOpResult,
-  DeleteWriteOpResultObject
+  DeleteWriteOpResultObject,
 } from 'mongodb';
 
 /**
@@ -56,7 +56,7 @@ export abstract class AbstractRepository<T> {
     return this.metadata.merge(model, props);
   }
 
-  toDB(model: T): OptionalId<T> {
+  toDB(model: Partial<T> | { [key: string]: any }): Partial<T> {
     return this.metadata.toDB(model);
   }
 
@@ -251,13 +251,13 @@ export abstract class AbstractRepository<T> {
 
   abstract async replaceOne(
     filter: FilterQuery<T | any>,
-    props: OptionalId<Partial<T>>,
+    props: Partial<T>,
     opts?: ReplaceOneOptions
   ): Promise<ReplaceWriteOpResult>;
 
   abstract async replaceById(
     id: any,
-    props: OptionalId<Partial<T>>,
+    props: Partial<T>,
     opts?: ReplaceOneOptions
   ): Promise<ReplaceWriteOpResult>;
 

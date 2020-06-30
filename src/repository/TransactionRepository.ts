@@ -7,7 +7,7 @@ import {
   FindOneAndDeleteOption,
   UpdateWriteOpResult,
   ReplaceWriteOpResult,
-  DeleteWriteOpResultObject
+  DeleteWriteOpResultObject,
 } from 'mongodb';
 import {
   OptionalId,
@@ -20,7 +20,7 @@ import {
   ReplaceOneOptions,
   CollectionInsertOneOptions,
   InsertWriteOpResult,
-  CollectionInsertManyOptions
+  CollectionInsertManyOptions,
 } from '../types';
 import { Repository } from './Repository';
 import { DocumentManager } from '../DocumentManager';
@@ -243,7 +243,7 @@ export class TransactionRepository<T> extends AbstractRepository<T> {
 
   async replaceOne(
     filter: FilterQuery<T | any>,
-    props: OptionalId<Partial<T>>,
+    props: Partial<T>,
     opts?: ReplaceOneOptions
   ): Promise<ReplaceWriteOpResult> {
     return this.repository.replaceOne(filter, props, this.opts(opts));
@@ -251,7 +251,7 @@ export class TransactionRepository<T> extends AbstractRepository<T> {
 
   async replaceById(
     id: any,
-    props: OptionalId<Partial<T>>,
+    props: Partial<T>,
     opts?: ReplaceOneOptions
   ): Promise<ReplaceWriteOpResult> {
     return this.repository.replaceById(id, props, this.opts(opts));

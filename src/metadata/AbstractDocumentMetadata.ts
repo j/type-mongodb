@@ -1,5 +1,5 @@
 import { ObjectId } from 'mongodb';
-import { Newable } from '../types';
+import { Newable, OptionalId } from '../types';
 import { FieldMetadata } from './FieldMetadata';
 import { DocumentTransformer } from '../document/DocumentTransformer';
 import { ParentDefinition } from './definitions';
@@ -76,7 +76,7 @@ export abstract class AbstractDocumentMetadata<
   /**
    * Creates a model from model properties.
    */
-  init(props: Partial<T> | { [key: string]: any }): T {
+  init(props: OptionalId<Partial<T>> | { [key: string]: any }): T {
     return DocumentTransformer.init(this, props);
   }
 
