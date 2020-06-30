@@ -62,7 +62,7 @@ export abstract class AbstractDocumentMetadata<
   /**
    * Maps model fields to a mongodb document.
    */
-  toDB(model: T): T & { [key: string]: any } {
+  toDB(model: Partial<T> | { [key: string]: any }): T & { [key: string]: any } {
     return DocumentTransformer.toDB(this, model);
   }
 

@@ -128,7 +128,7 @@ export class DocumentManager {
 
   toDB<T>(
     DocumentClass: DocumentClass<T> | Newable<T>,
-    model: T
+    model: Partial<T> | { [key: string]: any }
   ): T & { [key: string]: any } {
     return this.getAnyMetadata<T>(DocumentClass).toDB(model);
   }

@@ -42,7 +42,7 @@ export class DocumentTransformer {
    */
   static toDB<T, D extends Newable = DocumentClass>(
     meta: AbstractDocumentMetadata<T, D>,
-    model: T
+    model: Partial<T> | { [key: string]: any }
   ): T & { [key: string]: any } {
     return this.mapDataInto({
       meta,
