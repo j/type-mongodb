@@ -106,7 +106,7 @@ describe('DocumentManager -> Events', () => {
   });
 
   afterAll(async () => {
-    meta.db.dropDatabase();
+    await meta.db.dropDatabase();
     await manager.close();
   });
 

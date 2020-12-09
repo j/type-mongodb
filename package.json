@@ -26,6 +26,7 @@
   "devDependencies": {
     "@types/jest": "^26.0.3",
     "@types/mongodb": "3.5.25",
+    "benchmark": "^2.1.4",
     "husky": "^4.2.5",
     "jest": "^26.1.0",
     "mongodb": "3.x.x",

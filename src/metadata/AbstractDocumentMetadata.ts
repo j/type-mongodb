@@ -17,6 +17,7 @@ export abstract class AbstractDocumentMetadata<
   public readonly DocumentClass: D;
   public readonly name: string;
   public readonly fields: FieldsMetadata;
+  public readonly transformer: DocumentTransformer;
   public readonly parent?: ParentDefinition;
 
   constructor(
@@ -28,6 +29,7 @@ export abstract class AbstractDocumentMetadata<
     this.name = DocumentClass.name;
     this.fields = fields;
     this.parent = parent;
+    this.transformer = DocumentTransformer.create(this);
   }
 
   // -------------------------------------------------------------------------
@@ -63,27 +65,27 @@ export abstract class AbstractDocumentMetadata<
    * Maps model fields to a mongodb document.
    */
   toDB(model: Partial<T> | { [key: string]: any }): T & { [key: string]: any } {
-    return DocumentTransformer.toDB(this, model);
+    return this.transformer.toDB(model);
   }
 
   /**
    * Maps mongodb document(s) to a model.
    */
   fromDB(doc: Partial<T> | { [key: string]: any }): T {
-    return DocumentTransformer.fromDB(this, doc);
+    return this.transformer.fromDB(doc);
   }
 
   /**
    * Creates a model from model properties.
    */
   init(props: OptionalId<Partial<T>> | { [key: string]: any }): T {
-    return DocumentTransformer.init(this, props);
+    return this.transformer.merge(new this.DocumentClass(), props);
   }
 
   /**
    * Creates a model from model properties.
    */
   merge(model: T, props: Partial<T> | { [key: string]: any }): T {
-    return DocumentTransformer.merge(this, model, props);
+    return this.transformer.merge(model, props);
   }
 }

@@ -1,157 +1,201 @@
-import { DocumentClass, Newable } from '../types';
+import { DocumentClass, Newable } from '..';
+import { FieldMetadata } from '../metadata/FieldMetadata';
 import { AbstractDocumentMetadata } from '../metadata/AbstractDocumentMetadata';
+import { OptionalId } from '../types';
 
-export class DocumentTransformer {
-  /**
-   * Creates a model from model properties.
-   */
-  static init<T, D extends Newable = DocumentClass>(
-    meta: AbstractDocumentMetadata<T, D>,
-    props: Partial<T> | { [key: string]: any }
-  ): T {
-    return this.mapDataInto({
-      meta,
-      into: this.getInstance(meta),
-      intoField: 'propertyName',
-      data: props,
-      dataField: 'propertyName',
-      map: this.createParentMapper(this.init.bind(this))
+export type DocumentTransformerCompiledFunction = (
+  target: any,
+  source: any,
+  parent?: any
+) => any;
+
+// simple helper to create unique variable names
+let variableCount: number = 0;
+function reserveVariable(name: string): string {
+  return `${name}_${++variableCount}`;
+}
+
+export class DocumentTransformer<T = any, D extends Newable = DocumentClass> {
+  private isCompiled: boolean = false;
+  private compiledToDB: DocumentTransformerCompiledFunction;
+  private compiledFromDB: DocumentTransformerCompiledFunction;
+  private compiledMerge: DocumentTransformerCompiledFunction;
+
+  private constructor(private meta: AbstractDocumentMetadata<T, D>) {}
+
+  static readonly transformers = new Map<any, DocumentTransformer>();
+
+  static create<T = any, D extends Newable = DocumentClass>(
+    meta: AbstractDocumentMetadata<T, D>
+  ): DocumentTransformer<T, D> {
+    // create transformer if it does not exist
+    let transformer = DocumentTransformer.transformers.get(
+      meta.DocumentClass
+    ) as DocumentTransformer<T, D>;
+    if (!transformer) {
+      transformer = new DocumentTransformer<T, D>(meta);
+    }
+
+    DocumentTransformer.transformers.set(meta.DocumentClass, transformer);
+
+    return transformer;
+  }
+
+  // compiles all of the transformers
+  static compile(): void {
+    DocumentTransformer.transformers.forEach((transformer) => {
+      transformer.compile();
     });
   }
 
-  /**
-   * Merges props into the given model
-   */
-  static merge<T, D extends Newable = DocumentClass>(
-    meta: AbstractDocumentMetadata<T, D>,
+  public compile(): void {
+    if (this.isCompiled) {
+      return;
+    }
+
+    this.compiledToDB = this.createCompiler(false, true);
+    this.compiledFromDB = this.createCompiler(true, false);
+    this.compiledMerge = this.createCompiler(false, false);
+
+    this.isCompiled = true;
+  }
+
+  public init(
+    props: OptionalId<Partial<T>> | { [key: string]: any },
+    parent?: any
+  ): T {
+    this.assertIsCompiled();
+
+    return this.compiledMerge(
+      this.prepare(new this.meta.DocumentClass()),
+      props,
+      parent
+    );
+  }
+
+  public merge(
     model: T,
-    props: Partial<T> | { [key: string]: any }
+    props: Partial<T> | { [key: string]: any },
+    parent?: any
   ): T {
-    return this.mapDataInto({
-      meta,
-      into: model,
-      intoField: 'propertyName',
-      data: props,
-      dataField: 'propertyName',
-      map: this.createParentMapper(this.init.bind(this))
-    });
+    this.assertIsCompiled();
+
+    return this.compiledMerge(this.prepare(model), props, parent);
   }
 
-  /**
-   * Maps model fields to a mongodb document.
-   */
-  static toDB<T, D extends Newable = DocumentClass>(
-    meta: AbstractDocumentMetadata<T, D>,
+  public fromDB(doc: Partial<T> | { [key: string]: any }, parent?: any): T {
+    this.assertIsCompiled();
+
+    return this.compiledFromDB(new this.meta.DocumentClass(), doc, parent);
+  }
+
+  public toDB(
     model: Partial<T> | { [key: string]: any }
   ): T & { [key: string]: any } {
-    return this.mapDataInto({
-      meta,
-      into: {},
-      intoField: 'fieldName',
-      data: this.prepare(meta, model),
-      dataField: 'propertyName',
-      map: this.toDB.bind(this)
-    });
+    this.assertIsCompiled();
+
+    return this.compiledToDB({}, this.prepare(model));
   }
 
-  /**
-   * Maps mongodb document(s) to a model.
-   */
-  static fromDB<T, D extends Newable = DocumentClass>(
-    meta: AbstractDocumentMetadata<T, D>,
-    doc: Partial<T> | { [key: string]: any }
-  ): T {
-    const instance = this.getInstance(meta, false);
+  private createCompiler(
+    isFromDB: boolean,
+    isToDB: boolean
+  ): DocumentTransformerCompiledFunction {
+    const context = new Map<any, any>();
 
-    const model = this.mapDataInto({
-      meta,
-      into: instance,
-      intoField: 'propertyName',
-      data: doc,
-      dataField: 'fieldName',
-      map: this.createParentMapper(this.fromDB.bind(this))
-    });
-
-    return model;
-  }
-
-  // -------------------------------------------------------------------------
-  // Protected Methods
-  // -------------------------------------------------------------------------
-
-  protected static getInstance<T>(
-    meta: AbstractDocumentMetadata<T>,
-    prepare: boolean = true
-  ): T {
-    const instance = new meta.DocumentClass();
-
-    return prepare ? this.prepare(meta, instance) : instance;
-  }
-
-  protected static createParentMapper<T>(
-    map: (meta: AbstractDocumentMetadata<T>, value: any) => T
-  ): (meta: AbstractDocumentMetadata<T>, value: any, parent: any) => T {
-    return (m: AbstractDocumentMetadata<T>, v: any, parent: any) => {
-      const model = map.bind(this)(m, v);
-
-      if (m.parent) {
-        model[m.parent.propertyName] = parent;
-      }
-
-      return model;
+    const has = (accessor: string): string => {
+      return `(source && "${accessor}" in source)`;
     };
-  }
 
-  /**
-   * Iterates over the fields for mapping between different types
-   */
-  protected static mapDataInto<T>(opts: {
-    meta: AbstractDocumentMetadata<T>;
-    into: any;
-    intoField: 'fieldName' | 'propertyName';
-    data: any;
-    dataField: 'fieldName' | 'propertyName';
-    map: (meta: AbstractDocumentMetadata<T>, value: any, parent: any) => any;
-  }): T {
-    const { meta, into, intoField, data, dataField, map } = opts;
+    const getComparator = (
+      fieldMetadata: FieldMetadata,
+      accessor: string,
+      setter: string
+    ): string => {
+      const {
+        embeddedMetadata,
+        fieldName,
+        isEmbeddedArray,
+        isEmbedded
+      } = fieldMetadata;
 
-    meta.fields.forEach(
-      ({ isEmbedded, isEmbeddedArray, embeddedMetadata, ...fieldMeta }) => {
-        const dataFieldName = fieldMeta[dataField];
-        const intoFieldName = fieldMeta[intoField];
-
-        if (
-          typeof data !== 'undefined' &&
-          typeof data[dataFieldName] !== 'undefined'
-        ) {
-          if (!isEmbedded) {
-            into[intoFieldName] = data[dataFieldName];
-          } else if (isEmbeddedArray) {
-            into[intoFieldName] = (
-              data[dataFieldName] || []
-            ).map((value: any) =>
-              value ? map(embeddedMetadata, value, into) : null
-            );
-          } else {
-            into[intoFieldName] = data[dataFieldName]
-              ? map(embeddedMetadata, data[dataFieldName], into)
-              : null;
+      // simple getter/setter
+      if (!isEmbedded) {
+        return `
+          if (${has(accessor)}) {
+            target["${setter}"] = source["${accessor}"];
           }
-        }
+        `;
       }
-    );
 
-    return into;
+      const embeddedTransformer = DocumentTransformer.create(embeddedMetadata);
+      const transformerFnVar = reserveVariable(`${fieldName}_transformer`);
+      const transformerFn = isToDB
+        ? embeddedTransformer.toDB
+        : embeddedTransformer.fromDB;
+      context.set(transformerFnVar, transformerFn.bind(embeddedTransformer));
+
+      if (isEmbeddedArray) {
+        return `
+          if (${has(accessor)} && Array.isArray(source["${accessor}"])) {
+            target["${setter}"] = source["${accessor}"].map(v => ${transformerFnVar}(v, target));
+          }
+        `;
+      }
+
+      return `
+        if (${has(accessor)}) {
+          target["${setter}"] = ${transformerFnVar}(source["${accessor}"], target);
+        }
+      `;
+    };
+
+    const props: string[] = [];
+    for (const fieldMetadata of this.meta.fields.values()) {
+      const { fieldName, propertyName } = fieldMetadata;
+
+      const accessor = isFromDB ? fieldName : propertyName;
+      const setter = isToDB ? fieldName : propertyName;
+
+      props.push(getComparator(fieldMetadata, accessor, setter));
+    }
+
+    const parentMapper = () => {
+      if (isToDB || !this.meta.parent) {
+        return '';
+      }
+
+      return `
+        target["${this.meta.parent.propertyName}"] = parent;
+      `;
+    };
+
+    const functionCode = `
+        return function(target, source, parent) {
+          ${props.join('\n')}
+          
+          ${parentMapper()}
+
+          return target;
+        }
+        `;
+
+    const compiled = new Function(...context.keys(), functionCode);
+
+    return compiled(...context.values());
   }
 
-  protected static prepare<T>(
-    meta: AbstractDocumentMetadata<T>,
-    object: any
-  ): T {
-    if (meta.hasId()) {
-      object._id = meta.id(object._id);
+  private prepare<T = any>(object: any): T {
+    if (this.meta.hasId()) {
+      object._id = this.meta.id(object._id);
     }
 
     return object;
+  }
+
+  private assertIsCompiled() {
+    if (!this.isCompiled) {
+      throw new Error('DocumentTransformers are not compiled');
+    }
   }
 }

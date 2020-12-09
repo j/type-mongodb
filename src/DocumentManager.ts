@@ -8,6 +8,7 @@ import { EventManager } from './events';
 import { Repository } from './repository/Repository';
 import { Session } from './transaction/Session';
 import { EmbeddedDocumentMetadata } from './metadata/EmbeddedDocumentMetadata';
+import { DocumentTransformer } from './document/DocumentTransformer';
 
 export interface ContainerLike {
   get: <T = any>(service: Newable<T>) => any;
@@ -35,7 +36,7 @@ export class DocumentManager {
   public readonly eventManager: EventManager;
   public readonly container: ContainerLike;
 
-  constructor(private readonly opts: DocumentManagerOptions) {
+  private constructor(private readonly opts: DocumentManagerOptions) {
     if (!this.opts.connection) {
       throw new Error('DocumentManager needs a connection.');
     }
@@ -205,6 +206,8 @@ export class DocumentManager {
 
     await dm.buildMetadata();
     dm.buildSubscribers();
+
+    DocumentTransformer.compile();
 
     return dm;
   }
