@@ -7,7 +7,7 @@ import {
   FindOneAndDeleteOption,
   UpdateWriteOpResult,
   ReplaceWriteOpResult,
-  DeleteWriteOpResultObject,
+  DeleteWriteOpResultObject
 } from 'mongodb';
 import {
   OptionalId,
@@ -20,7 +20,7 @@ import {
   ReplaceOneOptions,
   CollectionInsertOneOptions,
   InsertWriteOpResult,
-  CollectionInsertManyOptions,
+  CollectionInsertManyOptions
 } from '../types';
 import { Repository } from './Repository';
 import { DocumentManager } from '../DocumentManager';

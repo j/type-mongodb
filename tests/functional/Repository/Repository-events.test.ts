@@ -35,7 +35,7 @@ describe('DocumentManager -> Events', () => {
 
   const assertEventsCalled = (events: jest.SpyInstance[], n: number = 1) => {
     Object.entries(spies).forEach(([key, spy]) => {
-      const foundIndex = events.findIndex(e => e === spy);
+      const foundIndex = events.findIndex((e) => e === spy);
       if (foundIndex >= 0) {
         if (spy.mock.calls.length !== n) {
           throw new Error(
@@ -102,7 +102,7 @@ describe('DocumentManager -> Events', () => {
       'afterDeleteMany'
     );
 
-    Object.values(spies).forEach(spy => spy.mockClear());
+    Object.values(spies).forEach((spy) => spy.mockClear());
   });
 
   afterAll(async () => {
@@ -112,7 +112,7 @@ describe('DocumentManager -> Events', () => {
 
   beforeEach(async () => {
     meta.collection.deleteMany({});
-    Object.values(spies).forEach(spy => spy.mockClear());
+    Object.values(spies).forEach((spy) => spy.mockClear());
   });
 
   test('create() -> single document', async () => {

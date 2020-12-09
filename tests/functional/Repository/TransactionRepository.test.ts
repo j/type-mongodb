@@ -121,7 +121,7 @@ describe('TransactionRepository -> queries, inserts, & updates', () => {
     ['deleteById', docs.john._id, { opt: true }],
     ['deleteMany', {}, { opt: true }],
     ['deleteByIds', [docs.john._id], { opt: true }]
-  ].forEach(t => {
+  ].forEach((t) => {
     const [method, ...args] = t;
 
     test(`TransactionRepository.prototype.${method} proxies calls to Repository`, async () => {

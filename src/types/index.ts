@@ -28,5 +28,5 @@ export {
   UpdateQuery,
   UpdateManyOptions,
   UpdateOneOptions,
-  ReplaceOneOptions,
+  ReplaceOneOptions
 } from 'mongodb';

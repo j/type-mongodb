@@ -113,7 +113,7 @@ export class DocumentMetadataFactory {
    */
   protected async buildDocuments(): Promise<void> {
     await Promise.all(
-      this.opts.documents.map(DocumentClass => {
+      this.opts.documents.map((DocumentClass) => {
         return new Promise(async (resolve, reject) => {
           try {
             this.loadedDocumentMetadata.set(
@@ -184,7 +184,7 @@ export class DocumentMetadataFactory {
     fields = fields || new Map();
 
     if (definitionStorage.fields.has(target)) {
-      definitionStorage.fields.get(target).forEach(prop => {
+      definitionStorage.fields.get(target).forEach((prop) => {
         if (!prop.isEmbedded) {
           fields.set(
             prop.fieldName,

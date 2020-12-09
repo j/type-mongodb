@@ -12,7 +12,7 @@ import {
   ReplaceOneOptions,
   CollectionInsertOneOptions,
   InsertWriteOpResult,
-  CollectionInsertManyOptions,
+  CollectionInsertManyOptions
 } from '../types';
 import { DocumentMetadata } from '../metadata/DocumentMetadata';
 import { DocumentNotFound } from '../errors';
@@ -24,7 +24,7 @@ import {
   FindOneAndDeleteOption,
   UpdateWriteOpResult,
   ReplaceWriteOpResult,
-  DeleteWriteOpResultObject,
+  DeleteWriteOpResultObject
 } from 'mongodb';
 
 /**

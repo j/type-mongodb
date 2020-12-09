@@ -5,7 +5,7 @@ export async function removeDocuments(dm: DocumentManager): Promise<void> {
 
   await Promise.all(
     dm
-      .filterMetadata(meta => !!meta.collection)
-      .map(meta => meta.collection.deleteMany({}))
+      .filterMetadata((meta) => !!meta.collection)
+      .map((meta) => meta.collection.deleteMany({}))
   );
 }

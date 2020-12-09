@@ -66,7 +66,7 @@ describe('DocumentManager', () => {
 
   test('filters metadata', () => {
     expect(
-      manager.filterMetadata(value => value.fields.has('reviews'))
+      manager.filterMetadata((value) => value.fields.has('reviews'))
     ).toStrictEqual([manager.getMetadataFor(User)]);
   });
 

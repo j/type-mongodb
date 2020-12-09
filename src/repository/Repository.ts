@@ -7,7 +7,7 @@ import {
   FindOneAndDeleteOption,
   UpdateWriteOpResult,
   ReplaceWriteOpResult,
-  DeleteWriteOpResultObject,
+  DeleteWriteOpResultObject
 } from 'mongodb';
 import {
   Collection,
@@ -22,7 +22,7 @@ import {
   ReplaceOneOptions,
   CollectionInsertOneOptions,
   InsertWriteOpResult,
-  CollectionInsertManyOptions,
+  CollectionInsertManyOptions
 } from '../types';
 import { DocumentMetadata } from '../metadata/DocumentMetadata';
 import { DocumentNotFound } from '../errors';
@@ -119,7 +119,7 @@ export class Repository<T> extends AbstractRepository<T> {
   findByIds(ids: any[], opts?: FindOneOptions): Cursor<T> {
     return this.find(
       {
-        _id: { $in: ids.map((id) => this.id(id)) },
+        _id: { $in: ids.map((id) => this.id(id)) }
       },
       opts
     );
@@ -203,7 +203,7 @@ export class Repository<T> extends AbstractRepository<T> {
       Events.AfterInsert,
       {
         meta: this.metadata,
-        model: model as T,
+        model: model as T
       },
       () => this.collection.insertOne(doc, opts)
     );
@@ -226,14 +226,14 @@ export class Repository<T> extends AbstractRepository<T> {
       beforeInsertEvents.push(
         this.manager.eventManager.dispatch(Events.BeforeInsert, {
           meta: this.metadata,
-          model: model as T,
+          model: model as T
         })
       );
 
       afterInsertEvents.push(
         this.manager.eventManager.dispatch(Events.AfterInsert, {
           meta: this.metadata,
-          model: model as T,
+          model: model as T
         })
       );
     });
@@ -258,12 +258,12 @@ export class Repository<T> extends AbstractRepository<T> {
       {
         meta: this.metadata,
         filter,
-        update,
+        update
       },
       async () => {
         return this.findOneAnd('Update', filter, update, {
           returnOriginal: false,
-          ...opts,
+          ...opts
         });
       }
     );
@@ -304,7 +304,7 @@ export class Repository<T> extends AbstractRepository<T> {
   ): Promise<T | null> {
     return this.findOneAnd('Replace', filter, props, {
       returnOriginal: false,
-      ...opts,
+      ...opts
     });
   }
 
@@ -345,7 +345,7 @@ export class Repository<T> extends AbstractRepository<T> {
       Events.AfterDelete,
       {
         meta: this.metadata,
-        filter,
+        filter
       },
       async () => this.findOneAnd('Delete', filter, opts)
     );
@@ -387,7 +387,7 @@ export class Repository<T> extends AbstractRepository<T> {
       {
         meta: this.metadata,
         filter,
-        update,
+        update
       },
       () => this.collection.updateOne(filter, update, opts)
     );
@@ -412,7 +412,7 @@ export class Repository<T> extends AbstractRepository<T> {
       {
         meta: this.metadata,
         filter,
-        update,
+        update
       },
       () => this.collection.updateMany(filter, update, opts)
     );
@@ -459,7 +459,7 @@ export class Repository<T> extends AbstractRepository<T> {
       Events.AfterDelete,
       {
         meta: this.metadata,
-        filter,
+        filter
       },
       async () => {
         const result = await this.collection.deleteOne(filter, opts);
@@ -485,7 +485,7 @@ export class Repository<T> extends AbstractRepository<T> {
       Events.AfterDeleteMany,
       {
         meta: this.metadata,
-        filter,
+        filter
       },
       () => this.collection.deleteMany(filter, opts)
     );

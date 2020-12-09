@@ -12,7 +12,7 @@ export function assertNotBuiltIn(type: any) {
   if (isBuiltin(type)) {
     throw new Error(
       `No need to set field type on for: ObjectId, ${builtins
-        .map(type => type.name)
+        .map((type) => type.name)
         .join(', ')}`
     );
   }

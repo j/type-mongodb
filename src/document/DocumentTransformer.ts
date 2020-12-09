@@ -15,7 +15,7 @@ export class DocumentTransformer {
       intoField: 'propertyName',
       data: props,
       dataField: 'propertyName',
-      map: this.createParentMapper(this.init.bind(this)),
+      map: this.createParentMapper(this.init.bind(this))
     });
   }
 
@@ -33,7 +33,7 @@ export class DocumentTransformer {
       intoField: 'propertyName',
       data: props,
       dataField: 'propertyName',
-      map: this.createParentMapper(this.init.bind(this)),
+      map: this.createParentMapper(this.init.bind(this))
     });
   }
 
@@ -50,7 +50,7 @@ export class DocumentTransformer {
       intoField: 'fieldName',
       data: this.prepare(meta, model),
       dataField: 'propertyName',
-      map: this.toDB.bind(this),
+      map: this.toDB.bind(this)
     });
   }
 
@@ -69,7 +69,7 @@ export class DocumentTransformer {
       intoField: 'propertyName',
       data: doc,
       dataField: 'fieldName',
-      map: this.createParentMapper(this.fromDB.bind(this)),
+      map: this.createParentMapper(this.fromDB.bind(this))
     });
 
     return model;

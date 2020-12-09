@@ -47,15 +47,15 @@ export class EventManager {
 
     const documents: Newable[] = Array.from(
       dm.metadataFactory.loadedDocumentMetadata.values()
-    ).map(meta => meta.DocumentClass);
+    ).map((meta) => meta.DocumentClass);
 
-    this.subscribers.forEach(subscriber => {
+    this.subscribers.forEach((subscriber) => {
       const subscribedDocuments =
         typeof subscriber.getSubscribedDocuments === 'function'
           ? subscriber.getSubscribedDocuments(dm)
           : null;
 
-      documents.forEach(DocumentClass => {
+      documents.forEach((DocumentClass) => {
         if (!subscribedDocuments) {
           this.attachSubscriberToDocument(DocumentClass, subscriber);
         } else if (subscribedDocuments.includes(DocumentClass)) {
@@ -151,7 +151,7 @@ export class EventManager {
 
     const subscribers = this.documentsWithSubscribers.get(DocumentClass);
 
-    Object.keys(Events).forEach(event => {
+    Object.keys(Events).forEach((event) => {
       const fn = Events[event];
 
       if (typeof subscriber[fn] === 'function') {
