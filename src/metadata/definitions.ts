@@ -27,3 +27,10 @@ export interface ParentDefinition<T = any> {
   DocumentClass: DocumentClass<T>;
   propertyName: string;
 }
+
+export interface DiscriminatorDefinition<T = any> {
+  DocumentClass: DocumentClass<T>;
+  propertyName: string;
+  fieldName: string;
+  map: { [type: string]: () => Newable };
+}

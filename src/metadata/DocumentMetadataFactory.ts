@@ -4,9 +4,14 @@ import { DocumentClass, Newable } from '../types';
 import { definitionStorage } from '../utils/definitionStorage';
 import { DocumentManager } from '../DocumentManager';
 import { EmbeddedDocumentMetadata } from './EmbeddedDocumentMetadata';
-import { FieldsMetadata } from './AbstractDocumentMetadata';
+import {
+  AbstractDocumentMetadata,
+  FieldsMetadata
+} from './AbstractDocumentMetadata';
 import { Repository } from '../repository';
 import { isPromise } from '../utils/isPromise';
+import { DiscriminatorMetadata } from './DiscriminatorMetadata';
+import { ParentDefinition } from './definitions';
 
 export interface BuildMetadataStorageOptions {
   dm: DocumentManager;
@@ -167,11 +172,20 @@ export class DocumentMetadataFactory {
   protected buildEmbeddedDocumentMetadata(
     DocumentClass: DocumentClass
   ): EmbeddedDocumentMetadata {
-    return new EmbeddedDocumentMetadata(
+    if (this.loadedEmbeddedDocumentMetadata.has(DocumentClass)) {
+      return this.loadedEmbeddedDocumentMetadata.get(DocumentClass);
+    }
+
+    const embeddedMetadata = new EmbeddedDocumentMetadata(
       DocumentClass,
       this.buildFields(DocumentClass),
-      definitionStorage.parents.get(DocumentClass)
+      this.locateParentDefinition(DocumentClass),
+      this.buildDiscriminatorMetadata(DocumentClass)
     );
+
+    this.loadedEmbeddedDocumentMetadata.set(DocumentClass, embeddedMetadata);
+
+    return embeddedMetadata;
   }
 
   /**
@@ -203,10 +217,6 @@ export class DocumentMetadataFactory {
           const embeddedMetadata = this.buildEmbeddedDocumentMetadata(
             embeddedType
           );
-          this.loadedEmbeddedDocumentMetadata.set(
-            embeddedType,
-            embeddedMetadata
-          );
 
           fields.set(
             prop.fieldName,
@@ -221,19 +231,61 @@ export class DocumentMetadataFactory {
       });
     }
 
-    let parent = Object.getPrototypeOf(target);
-    while (parent && parent.prototype) {
-      if (definitionStorage.fields.has(parent)) {
-        this.buildFields(parent, fields);
+    // locate inherited decorated fields
+    let proto = Object.getPrototypeOf(target);
+    while (proto && proto.prototype) {
+      if (definitionStorage.fields.has(proto)) {
+        this.buildFields(proto, fields);
       }
 
-      parent = Object.getPrototypeOf(parent);
+      proto = Object.getPrototypeOf(proto);
     }
 
     if (!fields.size) {
+      // make the error more clear for discriminator mapped classes
+      if (definitionStorage.discriminators.has(target)) {
+        DiscriminatorMetadata.assertValid(
+          definitionStorage.discriminators.get(target)
+        );
+      }
+
       throw new Error(`"${target.name}" does not have any fields`);
     }
 
     return fields;
+  }
+
+  private locateParentDefinition(
+    target: DocumentClass
+  ): ParentDefinition | undefined {
+    if (definitionStorage.parents.get(target)) {
+      return definitionStorage.parents.get(target);
+    }
+
+    // locate inherited `Parent()`
+    let proto = Object.getPrototypeOf(target);
+    while (proto && proto.prototype) {
+      if (definitionStorage.parents.get(proto)) {
+        return definitionStorage.parents.get(proto);
+      }
+
+      proto = Object.getPrototypeOf(proto);
+    }
+  }
+
+  private buildDiscriminatorMetadata(
+    target: DocumentClass
+  ): DiscriminatorMetadata | undefined {
+    if (!definitionStorage.discriminators.has(target)) {
+      return;
+    }
+
+    const def = definitionStorage.discriminators.get(target);
+    const map = new Map<string, AbstractDocumentMetadata<any>>();
+    Object.keys(def.map).forEach((type) => {
+      map.set(type, this.buildEmbeddedDocumentMetadata(def.map[type]()));
+    });
+
+    return new DiscriminatorMetadata(def, map);
   }
 }

@@ -3,6 +3,7 @@ import { Newable, OptionalId } from '../types';
 import { FieldMetadata } from './FieldMetadata';
 import { DocumentTransformer } from '../document/DocumentTransformer';
 import { ParentDefinition } from './definitions';
+import { DiscriminatorMetadata } from './DiscriminatorMetadata';
 
 export type FieldsMetadata = Map<string, FieldMetadata>;
 
@@ -19,16 +20,19 @@ export abstract class AbstractDocumentMetadata<
   public readonly fields: FieldsMetadata;
   public readonly transformer: DocumentTransformer;
   public readonly parent?: ParentDefinition;
+  public readonly discriminator?: DiscriminatorMetadata;
 
   constructor(
     DocumentClass: D,
     fields: FieldsMetadata,
-    parent?: ParentDefinition
+    parent?: ParentDefinition,
+    discriminator?: DiscriminatorMetadata
   ) {
     this.DocumentClass = DocumentClass;
     this.name = DocumentClass.name;
     this.fields = fields;
     this.parent = parent;
+    this.discriminator = discriminator;
     this.transformer = DocumentTransformer.create(this);
   }
 
@@ -79,7 +83,7 @@ export abstract class AbstractDocumentMetadata<
    * Creates a model from model properties.
    */
   init(props: OptionalId<Partial<T>> | { [key: string]: any }): T {
-    return this.transformer.merge(new this.DocumentClass(), props);
+    return this.transformer.init(props);
   }
 
   /**

@@ -80,3 +80,20 @@ export function Parent(): PropertyDecorator {
     definitionStorage.parents.set(meta.DocumentClass, meta);
   };
 }
+
+export interface DiscriminatorOptions {
+  field: string;
+  property?: string;
+  map: { [type: string]: () => Newable };
+}
+
+export function Discriminator(options: DiscriminatorOptions): ClassDecorator {
+  return (target: any) => {
+    definitionStorage.discriminators.set(target, {
+      DocumentClass: target,
+      fieldName: options.field,
+      propertyName: options.property || options.field,
+      map: options.map || {}
+    });
+  };
+}

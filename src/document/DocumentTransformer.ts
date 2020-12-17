@@ -19,6 +19,7 @@ export class DocumentTransformer<T = any, D extends Newable = DocumentClass> {
   private isCompiled: boolean = false;
   private compiledToDB: DocumentTransformerCompiledFunction;
   private compiledFromDB: DocumentTransformerCompiledFunction;
+  private compiledInit: DocumentTransformerCompiledFunction;
   private compiledMerge: DocumentTransformerCompiledFunction;
 
   private constructor(private meta: AbstractDocumentMetadata<T, D>) {}
@@ -53,9 +54,10 @@ export class DocumentTransformer<T = any, D extends Newable = DocumentClass> {
       return;
     }
 
-    this.compiledToDB = this.createCompiler(false, true);
-    this.compiledFromDB = this.createCompiler(true, false);
-    this.compiledMerge = this.createCompiler(false, false);
+    this.compiledToDB = this.createCompiler('toDB', false, true);
+    this.compiledFromDB = this.createCompiler('fromDB', true, false);
+    this.compiledInit = this.createCompiler('init', false, false);
+    this.compiledMerge = this.createCompiler('merge', false, false);
 
     this.isCompiled = true;
   }
@@ -66,7 +68,15 @@ export class DocumentTransformer<T = any, D extends Newable = DocumentClass> {
   ): T {
     this.assertIsCompiled();
 
-    return this.compiledMerge(
+    if (this.meta.discriminator) {
+      const { propertyName, mapping } = this.meta.discriminator;
+
+      return props[propertyName] && mapping.has(props[propertyName])
+        ? mapping.get(props[propertyName]).transformer.init(props, parent)
+        : undefined;
+    }
+
+    return this.compiledInit(
       this.prepare(new this.meta.DocumentClass()),
       props,
       parent
@@ -80,11 +90,41 @@ export class DocumentTransformer<T = any, D extends Newable = DocumentClass> {
   ): T {
     this.assertIsCompiled();
 
+    if (!model) {
+      return this.init(props, parent);
+    }
+
+    model = this.prepare(model);
+
+    if (this.meta.discriminator) {
+      const { propertyName, mapping } = this.meta.discriminator;
+
+      if (!props[propertyName] || !mapping.has(props[propertyName])) {
+        return;
+      }
+
+      const { DocumentClass, transformer } = mapping.get(props[propertyName]);
+
+      // when a discriminator type changes, it is brand new, so lets create
+      // it from scratch.
+      return model instanceof DocumentClass
+        ? transformer.merge(model, props, parent)
+        : transformer.init(props, parent);
+    }
+
     return this.compiledMerge(this.prepare(model), props, parent);
   }
 
   public fromDB(doc: Partial<T> | { [key: string]: any }, parent?: any): T {
     this.assertIsCompiled();
+
+    if (this.meta.discriminator) {
+      const { fieldName, mapping } = this.meta.discriminator;
+
+      return doc[fieldName] && mapping.has(doc[fieldName])
+        ? mapping.get(doc[fieldName]).transformer.fromDB(doc, parent)
+        : undefined;
+    }
 
     return this.compiledFromDB(new this.meta.DocumentClass(), doc, parent);
   }
@@ -94,10 +134,19 @@ export class DocumentTransformer<T = any, D extends Newable = DocumentClass> {
   ): T & { [key: string]: any } {
     this.assertIsCompiled();
 
+    if (this.meta.discriminator) {
+      const { propertyName, mapping } = this.meta.discriminator;
+
+      return model[propertyName] && mapping.has(model[propertyName])
+        ? mapping.get(model[propertyName]).transformer.toDB(model)
+        : undefined;
+    }
+
     return this.compiledToDB({}, this.prepare(model));
   }
 
   private createCompiler(
+    transformerFnName: 'toDB' | 'fromDB' | 'init' | 'merge',
     isFromDB: boolean,
     isToDB: boolean
   ): DocumentTransformerCompiledFunction {
@@ -130,22 +179,36 @@ export class DocumentTransformer<T = any, D extends Newable = DocumentClass> {
 
       const embeddedTransformer = DocumentTransformer.create(embeddedMetadata);
       const transformerFnVar = reserveVariable(`${fieldName}_transformer`);
-      const transformerFn = isToDB
-        ? embeddedTransformer.toDB
-        : embeddedTransformer.fromDB;
+      const initTransformerFnVar = reserveVariable(
+        `${fieldName}_init_transformer`
+      );
+      const transformerFn = embeddedTransformer[transformerFnName];
+
       context.set(transformerFnVar, transformerFn.bind(embeddedTransformer));
+      context.set(
+        initTransformerFnVar,
+        embeddedTransformer.init.bind(embeddedTransformer)
+      );
 
       if (isEmbeddedArray) {
         return `
           if (${has(accessor)} && Array.isArray(source["${accessor}"])) {
-            target["${setter}"] = source["${accessor}"].map(v => ${transformerFnVar}(v, target));
+            ${
+              transformerFnName === 'merge'
+                ? `target["${setter}"] = source["${accessor}"].map(v => ${transformerFnVar}(undefined, v, target));`
+                : `target["${setter}"] = source["${accessor}"].map(v => ${transformerFnVar}(v, target));`
+            }
           }
         `;
       }
 
       return `
         if (${has(accessor)}) {
-          target["${setter}"] = ${transformerFnVar}(source["${accessor}"], target);
+          ${
+            transformerFnName === 'merge'
+              ? `target["${setter}"] = ${transformerFnVar}(target["${setter}"], source["${accessor}"], target);`
+              : `target["${setter}"] = ${transformerFnVar}(source["${accessor}"], target);`
+          }
         }
       `;
     };
