@@ -14,9 +14,13 @@ export class DiscriminatorMetadata {
   ) {
     this.DocumentClass = definition.DocumentClass;
     this.propertyName = definition.propertyName;
-    this.fieldName = definition.fieldName;
 
     DiscriminatorMetadata.assertValid(definition);
+
+    // get fieldName from fields storage
+    this.fieldName = definitionStorage.fields
+      .get(this.DocumentClass)
+      .get(this.propertyName).fieldName;
   }
 
   static assertValid(definition: DiscriminatorDefinition) {

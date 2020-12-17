@@ -1,15 +1,16 @@
 import 'reflect-metadata';
 import { ObjectId } from 'mongodb';
 import { DocumentManager } from '../../src/DocumentManager';
-import { Discriminator, Document, Field, Parent } from '../../src/decorators';
+import {
+  Discriminator,
+  Document,
+  Field,
+  MappedDiscriminator,
+  Parent
+} from '../../src/decorators';
 
 @Discriminator({
-  field: 'type',
-  property: 'type',
-  map: {
-    dog: () => Dog,
-    cat: () => Cat
-  }
+  property: 'type'
 })
 abstract class Pet {
   @Parent()
@@ -30,6 +31,7 @@ class Leash {
   length: number;
 }
 
+@MappedDiscriminator('dog', () => Pet)
 class Dog extends Pet {
   type: string = 'dog';
 
@@ -42,6 +44,7 @@ class Litter {
   brand: string;
 }
 
+@MappedDiscriminator('cat', () => Pet)
 class Cat extends Pet {
   type: string = 'cat';
 
@@ -153,6 +156,57 @@ describe('Discriminator', () => {
       expect(result.pets[1]).toBeInstanceOf(Cat);
       expect(result.favoritePet).toBeInstanceOf(Dog);
       expect(result.favoritePet.owner).toBe(result);
+    });
+
+    test('inserts document into database correctly', async () => {
+      const { person } = createFixtures();
+
+      const people = manager.getRepository(Person);
+
+      const props = {
+        _id: new ObjectId(person._id),
+        pets: [
+          {
+            type: 'dog',
+            leash: {
+              brand: 'Petco',
+              length: 48
+            }
+          },
+          {
+            type: 'cat',
+            litter: { brand: 'Costco' }
+          }
+        ],
+        favoritePet: {
+          type: 'dog',
+          leash: {
+            brand: 'Petco',
+            length: 48
+          }
+        }
+      };
+
+      const result = await people.create(props);
+
+      expect(result).toEqual(person);
+      expect(result).toBeInstanceOf(Person);
+      expect(result.pets[0]).toBeInstanceOf(Dog);
+      expect(result.pets[1]).toBeInstanceOf(Cat);
+      expect(result.favoritePet).toBeInstanceOf(Dog);
+      expect(result.favoritePet.owner).toBe(result);
+
+      const foundModel = await people.findOne({ _id: result._id });
+      expect(foundModel).toEqual(person);
+      expect(foundModel).toBeInstanceOf(Person);
+      expect(foundModel.pets[0]).toBeInstanceOf(Dog);
+      expect(foundModel.pets[1]).toBeInstanceOf(Cat);
+      expect(foundModel.favoritePet).toBeInstanceOf(Dog);
+      expect(foundModel.favoritePet.owner).toBe(foundModel);
+
+      // raw document
+      const foundRaw = await people.collection.findOne({ _id: result._id });
+      expect(foundRaw).toEqual(props);
     });
   });
 

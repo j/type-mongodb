@@ -1,4 +1,8 @@
-import { FieldDefinition, ParentDefinition } from '../metadata/definitions';
+import {
+  DiscriminatorDefinition,
+  FieldDefinition,
+  ParentDefinition
+} from '../metadata/definitions';
 import { definitionStorage } from '../utils/definitionStorage';
 import { Newable } from '../types';
 import { Repository } from '../repository';
@@ -82,18 +86,44 @@ export function Parent(): PropertyDecorator {
 }
 
 export interface DiscriminatorOptions {
-  field: string;
-  property?: string;
-  map: { [type: string]: () => Newable };
+  property: string;
 }
 
 export function Discriminator(options: DiscriminatorOptions): ClassDecorator {
   return (target: any) => {
-    definitionStorage.discriminators.set(target, {
+    const mapping: DiscriminatorDefinition = {
       DocumentClass: target,
-      fieldName: options.field,
-      propertyName: options.property || options.field,
-      map: options.map || {}
+      propertyName: options.property,
+      isMapped: true,
+      map: {}
+    };
+
+    definitionStorage.discriminators.set(target, {
+      ...(definitionStorage.discriminators.get(target) || {}),
+      ...mapping
+    });
+  };
+}
+
+export function MappedDiscriminator(
+  type: string,
+  discriminator: () => any
+): ClassDecorator {
+  return (target: any) => {
+    const DocumentClass = discriminator();
+
+    const def: DiscriminatorDefinition = definitionStorage.discriminators.has(
+      DocumentClass
+    )
+      ? definitionStorage.discriminators.get(DocumentClass)
+      : { DocumentClass, map: {} };
+
+    definitionStorage.discriminators.set(DocumentClass, {
+      ...def,
+      map: {
+        ...def.map,
+        [type]: () => target
+      }
     });
   };
 }
