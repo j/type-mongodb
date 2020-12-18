@@ -140,26 +140,3 @@ export function Discriminator(
     }
   };
 }
-
-export function MappedDiscriminator(
-  type: string,
-  discriminator: () => any
-): ClassDecorator {
-  return (target: any) => {
-    const DocumentClass = discriminator();
-
-    const def: DiscriminatorDefinition = definitionStorage.discriminators.has(
-      DocumentClass
-    )
-      ? definitionStorage.discriminators.get(DocumentClass)
-      : { DocumentClass, map: {} };
-
-    definitionStorage.discriminators.set(DocumentClass, {
-      ...def,
-      map: {
-        ...def.map,
-        [type]: () => target
-      }
-    });
-  };
-}
