@@ -85,23 +85,59 @@ export function Parent(): PropertyDecorator {
   };
 }
 
-export interface DiscriminatorOptions {
+export interface AbstractDiscriminatorOptions {
   property: string;
 }
 
-export function Discriminator(options: DiscriminatorOptions): ClassDecorator {
-  return (target: any) => {
-    const mapping: DiscriminatorDefinition = {
-      DocumentClass: target,
-      propertyName: options.property,
-      isMapped: true,
-      map: {}
-    };
+export interface DiscriminatorOptions {
+  value: string;
+}
 
-    definitionStorage.discriminators.set(target, {
-      ...(definitionStorage.discriminators.get(target) || {}),
-      ...mapping
-    });
+export function Discriminator(
+  options: AbstractDiscriminatorOptions | DiscriminatorOptions
+): ClassDecorator {
+  return (target: any) => {
+    if ((options as AbstractDiscriminatorOptions).property) {
+      // this is the base abstract discriminator
+      const opts = options as AbstractDiscriminatorOptions;
+
+      const mapping: DiscriminatorDefinition = {
+        DocumentClass: target,
+        propertyName: opts.property,
+        isMapped: true,
+        map: {}
+      };
+
+      definitionStorage.discriminators.set(target, {
+        ...(definitionStorage.discriminators.get(target) || {}),
+        ...mapping
+      });
+    } else {
+      const opts = options as DiscriminatorOptions;
+
+      let definition: DiscriminatorDefinition;
+
+      // locate abstract class
+      let proto = Object.getPrototypeOf(target);
+      while (proto && proto.prototype) {
+        definition = definitionStorage.discriminators.get(proto);
+        if (definition) {
+          console.log(definition);
+
+          break;
+        }
+
+        proto = Object.getPrototypeOf(proto);
+      }
+
+      if (!definition) {
+        throw new Error(
+          `Discriminator value "${target.name}" does not have a properly mapped base "@Discriminator()"`
+        );
+      }
+
+      definition.map[opts.value] = () => target;
+    }
   };
 }
 

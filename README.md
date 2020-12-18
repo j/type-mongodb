@@ -87,7 +87,7 @@ to define the field to map the document to. From there, you create `@MappedDiscr
 classes and `type-mongodb` takes care of the mapping to and from the database.
 
 ```typescript
-import { Discriminator, MappedDiscriminator, Field } from 'type-mongodb';
+import { Discriminator, Field } from 'type-mongodb';
 
 @Discriminator({ property: 'type' })
 abstract class Pet {
@@ -102,7 +102,7 @@ abstract class Pet {
   }
 }
 
-@MappedDiscriminator('dog', () => Pet)
+@Discriminator({ value: 'dog' })
 class Dog extends Pet {
   type: string = 'dog';
   sound: string = 'ruff';
@@ -110,7 +110,7 @@ class Dog extends Pet {
   // dog specific fields & methods
 }
 
-@MappedDiscriminator('cat', () => Pet)
+@Discriminator({ value: 'cat' })
 class Cat extends Pet {
   type: string = 'cat';
   sound: string = 'meow';

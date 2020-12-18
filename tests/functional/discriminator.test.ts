@@ -1,17 +1,9 @@
 import 'reflect-metadata';
 import { ObjectId } from 'mongodb';
 import { DocumentManager } from '../../src/DocumentManager';
-import {
-  Discriminator,
-  Document,
-  Field,
-  MappedDiscriminator,
-  Parent
-} from '../../src/decorators';
+import { Discriminator, Document, Field, Parent } from '../../src/decorators';
 
-@Discriminator({
-  property: 'type'
-})
+@Discriminator({ property: 'type' })
 abstract class Pet {
   @Parent()
   owner: any;
@@ -31,7 +23,7 @@ class Leash {
   length: number;
 }
 
-@MappedDiscriminator('dog', () => Pet)
+@Discriminator({ value: 'dog' })
 class Dog extends Pet {
   type: string = 'dog';
 
@@ -44,7 +36,7 @@ class Litter {
   brand: string;
 }
 
-@MappedDiscriminator('cat', () => Pet)
+@Discriminator({ value: 'cat' })
 class Cat extends Pet {
   type: string = 'cat';
 
