@@ -82,9 +82,9 @@ class Address {
 ```
 
 `type-mongodb` also has support for discriminator mapping (polymorphism). You do this
-by creating a base class mapped by `@Discriminator(...)` and at least an abstract `@Field()`
-to define the field to map the document to. From there, you create `@MappedDiscriminator(...)`
-classes and `type-mongodb` takes care of the mapping to and from the database.
+by creating a base class mapped by `@Discriminator({ property: '...' })` with a `@Field()` with the
+name of the "property". Then decorate discriminator types with `@Discriminator({ value: '...' })`
+and `type-mongodb` takes care of the rest.
 
 ```typescript
 import { Discriminator, Field } from 'type-mongodb';
