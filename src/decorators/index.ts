@@ -122,8 +122,6 @@ export function Discriminator(
       while (proto && proto.prototype) {
         definition = definitionStorage.discriminators.get(proto);
         if (definition) {
-          console.log(definition);
-
           break;
         }
 

@@ -21,6 +21,8 @@ class NoopListener implements EventSubscriber<any> {
   afterUpdate() {}
   beforeDelete() {}
   afterDelete() {}
+  beforeReplace() {}
+  afterReplace() {}
   beforeUpdateMany() {}
   afterUpdateMany() {}
   beforeDeleteMany() {}
@@ -59,7 +61,7 @@ describe('DocumentManager -> Events', () => {
       Object.keys(data).length
     );
     Object.entries(data).forEach(([key, value]) => {
-      expect(spy.mock.calls[call - 1][0][key]).toBe(value);
+      expect(spy.mock.calls[call - 1][0][key]).toEqual(value);
     });
   };
 
@@ -83,6 +85,8 @@ describe('DocumentManager -> Events', () => {
     spies.afterUpdate = jest.spyOn(NoopListener.prototype, 'afterUpdate');
     spies.beforeDelete = jest.spyOn(NoopListener.prototype, 'beforeDelete');
     spies.afterDelete = jest.spyOn(NoopListener.prototype, 'afterDelete');
+    spies.beforeReplace = jest.spyOn(NoopListener.prototype, 'beforeReplace');
+    spies.afterReplace = jest.spyOn(NoopListener.prototype, 'afterReplace');
 
     // many documents
     spies.beforeUpdateMany = jest.spyOn(
@@ -261,10 +265,38 @@ describe('DocumentManager -> Events', () => {
     });
   });
 
-  test('replaceOne() -> does not have events', async () => {
+  test('replaceOne() -> beforeReplace & afterReplace called', async () => {
+    const filter = {};
     const model = Object.assign(new Event(), { field: 'event' });
-    await repository.replaceOne({}, model);
-    assertEventsCalled([]);
+    await repository.replaceOne(filter, model);
+    assertEventsCalled([spies.beforeReplace, spies.afterReplace]);
+    assertEventCalledWith(spies.beforeReplace, 1, {
+      meta,
+      model,
+      filter
+    });
+    assertEventCalledWith(spies.afterReplace, 1, {
+      meta,
+      model,
+      filter
+    });
+  });
+
+  test('replaceById() -> beforeReplace & afterReplace called', async () => {
+    const id = repository.id();
+    const model = Object.assign(new Event(), { _id: id, field: 'event' });
+    await repository.replaceById(id, model);
+    assertEventsCalled([spies.beforeReplace, spies.afterReplace]);
+    assertEventCalledWith(spies.beforeReplace, 1, {
+      meta,
+      model,
+      filter: { _id: id }
+    });
+    assertEventCalledWith(spies.afterReplace, 1, {
+      meta,
+      model,
+      filter: { _id: id }
+    });
   });
 
   test('deleteOne()', async () => {
