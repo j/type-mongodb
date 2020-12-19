@@ -3,7 +3,8 @@ import {
   EventSubscriber,
   InsertEvent,
   UpdateEvent,
-  DeleteEvent
+  DeleteEvent,
+  ReplaceEvent
 } from './interfaces';
 import { Newable } from '../types';
 import { DocumentManager } from '../DocumentManager';
@@ -84,6 +85,12 @@ export class EventManager {
     run: () => Promise<T2>
   ): Promise<T2>;
   dispatchBeforeAndAfter<T1 = any, T2 = any>(
+    before: Events.BeforeReplace,
+    after: Events.AfterReplace,
+    e: ReplaceEvent<T1>,
+    run: () => Promise<T2>
+  ): Promise<T2>;
+  dispatchBeforeAndAfter<T1 = any, T2 = any>(
     before: Events.BeforeUpdateMany,
     after: Events.AfterUpdateMany,
     e: UpdateEvent<T1>,
@@ -98,7 +105,7 @@ export class EventManager {
   async dispatchBeforeAndAfter<T1 = any, T2 = any>(
     before: Events,
     after: Events,
-    e: InsertEvent<T1> | UpdateEvent<T1> | DeleteEvent<T1>,
+    e: InsertEvent<T1> | UpdateEvent<T1> | DeleteEvent<T1> | ReplaceEvent<T1>,
     run: () => Promise<T2>
   ): Promise<T2> {
     await this.dispatch(before, e);
@@ -113,7 +120,7 @@ export class EventManager {
    */
   async dispatch<T = any>(
     type: Events,
-    e: InsertEvent<T> | UpdateEvent<T> | DeleteEvent<T>
+    e: InsertEvent<T> | UpdateEvent<T> | DeleteEvent<T> | ReplaceEvent<T>
   ): Promise<void> {
     if (!this.documentsWithSubscribers.has(e.meta.DocumentClass)) {
       return;

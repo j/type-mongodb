@@ -432,13 +432,25 @@ export class Repository<T> extends AbstractRepository<T> {
 
   async replaceOne(
     filter: FilterQuery<T | any>,
-    props: Partial<T>,
+    props: T | Partial<T>,
     opts?: ReplaceOneOptions
   ): Promise<ReplaceWriteOpResult> {
-    return this.collection.replaceOne(
-      filter,
-      this.toDB(this.init(props)) as T,
-      opts
+    const model =
+      props instanceof this.metadata.DocumentClass
+        ? (props as T)
+        : this.init(props);
+
+    return this.manager.eventManager.dispatchBeforeAndAfter(
+      Events.BeforeReplace,
+      Events.AfterReplace,
+      {
+        meta: this.metadata,
+        filter,
+        model
+      },
+      async () => {
+        return this.collection.replaceOne(filter, this.toDB(model), opts);
+      }
     );
   }
 

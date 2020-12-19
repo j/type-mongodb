@@ -10,6 +10,8 @@ export enum Events {
   AfterUpdate = 'afterUpdate',
   BeforeDelete = 'beforeDelete',
   AfterDelete = 'afterDelete',
+  BeforeReplace = 'beforeReplace',
+  AfterReplace = 'afterReplace',
 
   // events on many documents
   BeforeUpdateMany = 'beforeUpdateMany',
@@ -35,6 +37,11 @@ export interface DeleteEvent<T = any> extends Event<T> {
   filter: FilterQuery<T>;
 }
 
+export interface ReplaceEvent<T = any> extends Event<T> {
+  filter: FilterQuery<T>;
+  model: T;
+}
+
 export interface EventSubscriber<T = any> {
   getSubscribedDocuments?(dm: DocumentManager): any[];
 
@@ -45,6 +52,8 @@ export interface EventSubscriber<T = any> {
   afterUpdate?(e: UpdateEvent<T>): Promise<void> | void;
   beforeDelete?(e: DeleteEvent<T>): Promise<void> | void;
   afterDelete?(e: DeleteEvent<T>): Promise<void> | void;
+  beforeReplace?(e: ReplaceEvent<T>): Promise<void> | void;
+  afterReplace?(e: ReplaceEvent<T>): Promise<void> | void;
 
   // events on many documents
   beforeUpdateMany?(e: UpdateEvent<T>): Promise<void> | void;
