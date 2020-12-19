@@ -449,7 +449,10 @@ export class Repository<T> extends AbstractRepository<T> {
         model
       },
       async () => {
-        return this.collection.replaceOne(filter, this.toDB(model), opts);
+        const doc = this.toDB(model);
+        delete doc._id;
+
+        return this.collection.replaceOne(filter, doc, opts);
       }
     );
   }
