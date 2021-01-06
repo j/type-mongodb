@@ -506,6 +506,8 @@ describe('DocumentManager -> queries, inserts, & updates', () => {
     const result = await manager
       .getRepository(User)
       .replaceOne({ _id: fixtures.john._id }, replacement);
+
+    delete replacement._id;
     expect(spies.replaceOne).toHaveBeenCalledTimes(1);
     expect(spies.replaceOne).toHaveBeenCalledWith(
       { _id: fixtures.john._id },
@@ -520,6 +522,8 @@ describe('DocumentManager -> queries, inserts, & updates', () => {
     const result = await manager
       .getRepository(User)
       .replaceOne({ _id: fixtures.john._id }, replacement, { w: 1 });
+
+    delete replacement._id;
     expect(spies.replaceOne).toHaveBeenCalledTimes(1);
     expect(spies.replaceOne).toHaveBeenCalledWith(
       { _id: fixtures.john._id },
@@ -534,6 +538,8 @@ describe('DocumentManager -> queries, inserts, & updates', () => {
     const result = await manager
       .getRepository(User)
       .replaceById(fixtures.john._id, replacement, { w: 1 });
+
+    delete replacement._id;
     expect(spies.replaceOne).toHaveBeenCalledTimes(1);
     expect(spies.replaceOne).toHaveBeenCalledWith(
       { _id: fixtures.john._id },
