@@ -16,17 +16,17 @@ export abstract class Type<M = any, D = M> {
   /**
    * Converts the document instance value to the database value.
    */
-  abstract convertToDB(value: M): D;
+  protected abstract convertToDB(value: M): D;
 
   /**
    * Converts the database value to the document instance value.
    */
-  abstract convertFromDB(value: D): M;
+  protected abstract convertFromDB(value: D): M;
 
   /**
    * Populates the document instance value.
    */
-  touch(value: M): M {
+  touch(value?: M): M {
     return value;
   }
 

@@ -283,7 +283,7 @@ describe('DocumentManager -> Events', () => {
   });
 
   test('replaceById() -> beforeReplace & afterReplace called', async () => {
-    const id = repository.id();
+    const id = repository.id.touch();
     const model = Object.assign(new Event(), { _id: id, field: 'event' });
     await repository.replaceById(id, model);
     assertEventsCalled([spies.beforeReplace, spies.afterReplace]);

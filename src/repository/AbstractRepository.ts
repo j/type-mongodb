@@ -26,6 +26,7 @@ import {
   ReplaceWriteOpResult,
   DeleteWriteOpResultObject
 } from 'mongodb';
+import { Type } from '../types';
 
 /**
  * Repository for documents
@@ -48,6 +49,13 @@ export abstract class AbstractRepository<T> {
     return this.metadata.collection;
   }
 
+  /**
+   * Gets the _id field's type
+   */
+  get id(): Type {
+    return this.metadata.idField.type;
+  }
+
   init(props: Partial<T>): T {
     return this.metadata.init(props);
   }
@@ -67,20 +75,6 @@ export abstract class AbstractRepository<T> {
   // -------------------------------------------------------------------------
   // MongoDB specific methods
   // -------------------------------------------------------------------------
-
-  /**
-   * Creates the document id.
-   */
-  id<T1 = any, T2 = any>(id?: T1): T2 {
-    return this.metadata.id(id);
-  }
-
-  /**
-   * Creates the document id.
-   */
-  isValidId(id?: any): boolean {
-    return this.metadata.isValidId(id);
-  }
 
   // -------------------------------------------------------------------------
   // Protected Methods
