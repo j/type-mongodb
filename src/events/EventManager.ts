@@ -6,7 +6,7 @@ import {
   DeleteEvent,
   ReplaceEvent
 } from './interfaces';
-import { Newable } from '../types';
+import { Newable } from '../typings';
 import { DocumentManager } from '../DocumentManager';
 
 type EventSubscribers = Map<Events, EventSubscriber[]>;

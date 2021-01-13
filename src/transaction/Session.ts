@@ -5,7 +5,7 @@ import {
   MongoClient,
   WithTransactionCallback
 } from 'mongodb';
-import { DocumentClass } from '../types';
+import { DocumentClass } from '../typings';
 import { DocumentManager } from '../DocumentManager';
 import { TransactionRepository } from '../repository/TransactionRepository';
 

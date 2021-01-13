@@ -1,5 +1,5 @@
 import { MongoClient, SessionOptions } from 'mongodb';
-import { DocumentClass, Collection, Db, Newable } from './types';
+import { DocumentClass, Collection, Db, Newable } from './typings';
 import { DocumentMetadataFactory } from './metadata/DocumentMetadataFactory';
 import { DocumentMetadata } from './metadata/DocumentMetadata';
 import { Connection, ConnectionOptions } from './connection/Connection';

@@ -1,5 +1,6 @@
-import { DocumentClass, Newable } from '../types';
+import { DocumentClass, Newable } from '../typings';
 import { Repository } from '../repository/Repository';
+import { Type } from '../types';
 
 /**
  * Definitions provide the metadata classes with the data to
@@ -16,6 +17,7 @@ export interface DocumentDefinition<T = any> {
 
 export interface FieldDefinition<T = any> {
   DocumentClass: DocumentClass<T>;
+  type: Type;
   propertyName: string;
   fieldName: string;
   isEmbedded: boolean;

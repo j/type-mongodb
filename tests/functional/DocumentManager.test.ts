@@ -1,5 +1,7 @@
 import 'reflect-metadata';
-import { ObjectId } from 'mongodb';
+import { ObjectId, Binary } from 'mongodb';
+import * as uuid from 'uuid';
+import { from } from 'uuid-mongodb';
 import { Simple } from '../__fixtures__/Simple';
 import {
   User,
@@ -13,6 +15,7 @@ import { Document, Field } from '../../src/decorators';
 import { DocumentMetadata } from '../../src/metadata/DocumentMetadata';
 import { DocumentMetadataFactory } from '../../src/metadata/DocumentMetadataFactory';
 import { Connection } from '../../src/connection/Connection';
+import { UUIDType } from '../../src/types/UUIDType';
 
 @Document()
 class DocumentWithRenamedFields {
@@ -21,6 +24,15 @@ class DocumentWithRenamedFields {
 
   @Field({ name: 'active' })
   isActive: boolean;
+}
+
+@Document()
+class DocumentWithCustomTypes {
+  @Field({ type: UUIDType })
+  _id: string;
+
+  @Field({ type: UUIDType })
+  field: string;
 }
 
 describe('DocumentManager', () => {
@@ -32,7 +44,12 @@ describe('DocumentManager', () => {
         uri: 'mongodb://localhost:31000',
         database: 'test'
       },
-      documents: [Simple, User, DocumentWithRenamedFields]
+      documents: [
+        Simple,
+        User,
+        DocumentWithRenamedFields,
+        DocumentWithCustomTypes
+      ]
     });
   });
 
@@ -53,7 +70,7 @@ describe('DocumentManager', () => {
     expect(manager).toBeInstanceOf(DocumentManager);
     expect(manager.connection).toBeInstanceOf(Connection);
     expect(manager.metadataFactory).toBeInstanceOf(DocumentMetadataFactory);
-    expect(manager.metadataFactory.loadedDocumentMetadata.size).toBe(3);
+    expect(manager.metadataFactory.loadedDocumentMetadata.size).toBe(4);
   });
 
   test('gets db', () => {
@@ -262,6 +279,82 @@ describe('DocumentManager', () => {
         Object.assign(new DocumentWithRenamedFields(), { isActive: true })
       );
       expect(doc.active).toBeTruthy();
+    });
+  });
+
+  describe('document with uuid', () => {
+    it('init', () => {
+      const model = manager.init(DocumentWithCustomTypes, { field: uuid.v4() });
+      expect(uuid.validate(model._id)).toBeTruthy();
+      expect(uuid.validate(model.field)).toBeTruthy();
+    });
+    it('merge', () => {
+      const ids = [uuid.v4(), uuid.v4()];
+
+      const first = Object.assign(new DocumentWithCustomTypes(), {
+        _id: ids[0]
+      });
+      const model = manager.merge(DocumentWithCustomTypes, first, {
+        field: ids[1]
+      });
+      expect(model._id).toBe(ids[0]);
+      expect(model.field).toBe(ids[1]);
+    });
+    it('fromDB', () => {
+      const _id = '393967e0-8de1-11e8-9eb6-529269fb1459';
+      const field = '393967e0-8de1-11e8-9eb6-529269fb1460';
+
+      const model = manager.fromDB(DocumentWithCustomTypes, {
+        _id: from(_id),
+        field: from(field)
+      });
+      expect(uuid.validate(model._id)).toBeTruthy();
+      expect(uuid.validate(model.field)).toBeTruthy();
+      expect(model._id).toEqual(_id);
+      expect(model.field).toEqual(field);
+    });
+    it('toDb', () => {
+      const doc = manager.toDB(
+        DocumentWithCustomTypes,
+        Object.assign(new DocumentWithCustomTypes(), {})
+      );
+      expect(doc._id).toBeInstanceOf(Binary);
+      expect(doc.field).toBeUndefined();
+    });
+
+    it('throws errors on invalid uuids', () => {
+      // init
+      expect(() => {
+        manager.init(DocumentWithCustomTypes, { _id: 'invalid id' });
+      }).toThrowError(
+        'The js value of "invalid id" is invalid for type UUIDType.'
+      );
+
+      // merge
+      expect(() => {
+        manager.merge(DocumentWithCustomTypes, new DocumentWithCustomTypes(), {
+          _id: 'invalid id'
+        });
+      }).toThrowError(
+        'The js value of "invalid id" is invalid for type UUIDType.'
+      );
+
+      // fromDB
+      expect(() => {
+        manager.fromDB(DocumentWithCustomTypes, { _id: 'invalid id' });
+      }).toThrowError(
+        'The db value of "invalid id" is invalid for type UUIDType.'
+      );
+
+      // toDB
+      expect(() => {
+        manager.toDB(
+          DocumentWithCustomTypes,
+          Object.assign(new DocumentWithCustomTypes(), { _id: 'invalid id' })
+        );
+      }).toThrowError(
+        'The js value of "invalid id" is invalid for type UUIDType.'
+      );
     });
   });
 });

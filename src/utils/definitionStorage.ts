@@ -1,4 +1,4 @@
-import { DocumentClass } from '../types';
+import { DocumentClass } from '../typings';
 import {
   DocumentDefinition,
   FieldDefinition,

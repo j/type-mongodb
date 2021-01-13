@@ -1,5 +1,4 @@
-import { ObjectId } from 'mongodb';
-import { Newable, OptionalId } from '../types';
+import { Newable, OptionalId } from '../typings';
 import { FieldMetadata } from './FieldMetadata';
 import { DocumentTransformer } from '../document/DocumentTransformer';
 import { ParentDefinition } from './definitions';
@@ -36,34 +35,14 @@ export abstract class AbstractDocumentMetadata<
     this.transformer = DocumentTransformer.create(this);
   }
 
+  /**
+   * For detecting whether this metadata is for a root document.
+   */
+  abstract isRoot(): boolean;
+
   // -------------------------------------------------------------------------
   // Public Methods
   // -------------------------------------------------------------------------
-
-  addField(prop: FieldMetadata): void {
-    this.fields.set(prop.fieldName, prop);
-  }
-
-  /**
-   * Creates the document _id.
-   */
-  id(id?: string | ObjectId): ObjectId {
-    return new ObjectId(id);
-  }
-
-  /**
-   * Checks if given id is a valid one.
-   */
-  isValidId(id?: any): boolean {
-    return ObjectId.isValid(id);
-  }
-
-  /**
-   * Creates the document _id.
-   */
-  hasId(): boolean {
-    return this.fields.has('_id');
-  }
 
   /**
    * Maps model fields to a mongodb document.

@@ -4,8 +4,9 @@ import {
   ParentDefinition
 } from '../metadata/definitions';
 import { definitionStorage } from '../utils/definitionStorage';
-import { Newable } from '../types';
+import { Newable } from '../typings';
 import { Repository } from '../repository';
+import { ObjectIdType, Type } from '../types';
 
 interface DocumentOptions {
   database?: string;
@@ -28,6 +29,7 @@ export function Document(options: DocumentOptions = {}): ClassDecorator {
 
 interface FieldOptions {
   name?: string;
+  type?: Newable<Type> | Type;
   extensions?: Record<any, any>;
 }
 
@@ -50,24 +52,36 @@ export function Field(
       options = embeddedOrOptions || {};
     }
 
-    const meta: FieldDefinition = {
+    let type: Type;
+    if (typeof options.type !== 'undefined') {
+      type =
+        options.type instanceof Type
+          ? options.type
+          : Type.getType(options.type);
+    }
+    // default `_id` fields to ObjectIdType if the type is undefined
+    else if (field === '_id') {
+      type = Type.getType(ObjectIdType);
+    }
+
+    addFieldDefinition(field, {
       ...options,
       DocumentClass: target.constructor,
+      type,
       propertyName: field,
       fieldName: options.name || field,
       isEmbedded: typeof embedded !== 'undefined',
       embedded
-    };
-
-    if (definitionStorage.fields.has(meta.DocumentClass)) {
-      definitionStorage.fields.get(meta.DocumentClass).set(field, meta);
-    } else {
-      definitionStorage.fields.set(
-        meta.DocumentClass,
-        new Map([[field, meta]])
-      );
-    }
+    });
   };
+}
+
+function addFieldDefinition(field: string, def: FieldDefinition) {
+  if (definitionStorage.fields.has(def.DocumentClass)) {
+    definitionStorage.fields.get(def.DocumentClass).set(field, def);
+  } else {
+    definitionStorage.fields.set(def.DocumentClass, new Map([[field, def]]));
+  }
 }
 
 export function Parent(): PropertyDecorator {

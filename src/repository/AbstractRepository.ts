@@ -1,4 +1,4 @@
-import { Cursor, ObjectId } from 'mongodb';
+import { Cursor } from 'mongodb';
 import {
   Collection,
   Db,
@@ -13,7 +13,7 @@ import {
   CollectionInsertOneOptions,
   InsertWriteOpResult,
   CollectionInsertManyOptions
-} from '../types';
+} from '../typings';
 import { DocumentMetadata } from '../metadata/DocumentMetadata';
 import { DocumentNotFound } from '../errors';
 import { DocumentManager } from '../DocumentManager';
@@ -71,7 +71,7 @@ export abstract class AbstractRepository<T> {
   /**
    * Creates the document id.
    */
-  id(id?: string | ObjectId): ObjectId {
+  id<T1 = any, T2 = any>(id?: T1): T2 {
     return this.metadata.id(id);
   }
 

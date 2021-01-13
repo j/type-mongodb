@@ -21,7 +21,7 @@ import {
   CollectionInsertOneOptions,
   InsertWriteOpResult,
   CollectionInsertManyOptions
-} from '../types';
+} from '../typings';
 import { Repository } from './Repository';
 import { DocumentManager } from '../DocumentManager';
 import { DocumentMetadata } from '../metadata/DocumentMetadata';

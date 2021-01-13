@@ -1,6 +1,6 @@
 import { DocumentMetadata } from '../metadata/DocumentMetadata';
 import { DocumentManager } from '../DocumentManager';
-import { FilterQuery, UpdateQuery } from '../types';
+import { FilterQuery, UpdateQuery } from '../typings';
 
 export enum Events {
   // events on single document

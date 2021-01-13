@@ -1,7 +1,7 @@
 import { DocumentClass, Newable } from '..';
 import { FieldMetadata } from '../metadata/FieldMetadata';
 import { AbstractDocumentMetadata } from '../metadata/AbstractDocumentMetadata';
-import { OptionalId } from '../types';
+import { OptionalId } from '../typings';
 
 export type DocumentTransformerCompiledFunction = (
   target: any,
@@ -146,7 +146,7 @@ export class DocumentTransformer<T = any, D extends Newable = DocumentClass> {
   }
 
   private createCompiler(
-    transformerFnName: 'toDB' | 'fromDB' | 'init' | 'merge',
+    type: 'toDB' | 'fromDB' | 'init' | 'merge',
     isFromDB: boolean,
     isToDB: boolean
   ): DocumentTransformerCompiledFunction {
@@ -168,33 +168,45 @@ export class DocumentTransformer<T = any, D extends Newable = DocumentClass> {
         isEmbedded
       } = fieldMetadata;
 
-      // simple getter/setter
       if (!isEmbedded) {
+        const fieldType = fieldMetadata.type;
+
+        // trust values if field type is undefined
+        if (!fieldType) {
+          return `
+            if (${has(accessor)}) {
+              target["${setter}"] = source["${accessor}"];
+            }
+          `;
+        }
+
+        const setterVar = reserveVariable(`${fieldName}_setter`);
+        context.set(
+          setterVar,
+          fieldType[type === 'init' || type === 'merge' ? 'touch' : type].bind(
+            fieldType
+          )
+        );
+
         return `
           if (${has(accessor)}) {
-            target["${setter}"] = source["${accessor}"];
+            target["${setter}"] = ${setterVar}(source["${accessor}"]);
           }
         `;
       }
 
       const embeddedTransformer = DocumentTransformer.create(embeddedMetadata);
       const transformerFnVar = reserveVariable(`${fieldName}_transformer`);
-      const initTransformerFnVar = reserveVariable(
-        `${fieldName}_init_transformer`
-      );
-      const transformerFn = embeddedTransformer[transformerFnName];
-
-      context.set(transformerFnVar, transformerFn.bind(embeddedTransformer));
       context.set(
-        initTransformerFnVar,
-        embeddedTransformer.init.bind(embeddedTransformer)
+        transformerFnVar,
+        embeddedTransformer[type].bind(embeddedTransformer)
       );
 
       if (isEmbeddedArray) {
         return `
           if (${has(accessor)} && Array.isArray(source["${accessor}"])) {
             ${
-              transformerFnName === 'merge'
+              type === 'merge'
                 ? `target["${setter}"] = source["${accessor}"].map(v => ${transformerFnVar}(undefined, v, target));`
                 : `target["${setter}"] = source["${accessor}"].map(v => ${transformerFnVar}(v, target));`
             }
@@ -205,7 +217,7 @@ export class DocumentTransformer<T = any, D extends Newable = DocumentClass> {
       return `
         if (${has(accessor)}) {
           ${
-            transformerFnName === 'merge'
+            type === 'merge'
               ? `target["${setter}"] = ${transformerFnVar}(target["${setter}"], source["${accessor}"], target);`
               : `target["${setter}"] = ${transformerFnVar}(source["${accessor}"], target);`
           }
@@ -249,8 +261,9 @@ export class DocumentTransformer<T = any, D extends Newable = DocumentClass> {
   }
 
   private prepare<T = any>(object: any): T {
-    if (this.meta.hasId()) {
-      object._id = this.meta.id(object._id);
+    // only prepare ids for root documents
+    if (this.meta.isRoot() && (this.meta as any).hasId()) {
+      object._id = (this.meta as any).id(object._id);
     }
 
     return object;

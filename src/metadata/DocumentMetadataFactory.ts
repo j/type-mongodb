@@ -1,6 +1,6 @@
 import { DocumentMetadata } from './DocumentMetadata';
 import { FieldMetadata } from './FieldMetadata';
-import { DocumentClass, Newable } from '../types';
+import { DocumentClass, Newable } from '../typings';
 import { definitionStorage } from '../utils/definitionStorage';
 import { DocumentManager } from '../DocumentManager';
 import { EmbeddedDocumentMetadata } from './EmbeddedDocumentMetadata';

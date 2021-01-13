@@ -1,6 +1,5 @@
 import {
   Cursor,
-  ObjectId,
   FindOneOptions,
   FindOneAndUpdateOption,
   FindOneAndReplaceOption,
@@ -23,7 +22,7 @@ import {
   CollectionInsertOneOptions,
   InsertWriteOpResult,
   CollectionInsertManyOptions
-} from '../types';
+} from '../typings';
 import { DocumentMetadata } from '../metadata/DocumentMetadata';
 import { DocumentNotFound } from '../errors';
 import { DocumentManager } from '../DocumentManager';
@@ -94,7 +93,7 @@ export class Repository<T> extends AbstractRepository<T> {
   /**
    * Creates the document id.
    */
-  id(id?: string | ObjectId): ObjectId {
+  id<T1 = any, T2 = any>(id?: T1): T2 {
     return this.metadata.id(id);
   }
 

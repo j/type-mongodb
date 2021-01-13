@@ -1,4 +1,4 @@
-import { FilterQuery } from '../types';
+import { FilterQuery } from '../typings';
 import { BaseError } from './BaseError';
 import { DocumentMetadata } from '../metadata/DocumentMetadata';
 

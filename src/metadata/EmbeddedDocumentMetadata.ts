@@ -5,4 +5,8 @@ import { AbstractDocumentMetadata } from './AbstractDocumentMetadata';
  */
 export class EmbeddedDocumentMetadata<
   T = any
-> extends AbstractDocumentMetadata<T> {}
+> extends AbstractDocumentMetadata<T> {
+  isRoot(): boolean {
+    return false;
+  }
+}
