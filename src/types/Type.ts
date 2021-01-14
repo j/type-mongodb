@@ -6,7 +6,7 @@ export abstract class Type<M = any, D = M> {
   /**
    * Returns if document instance value is valid
    */
-  abstract isValidJSValue(value: M): boolean;
+  abstract isValidJSValue(value: M | any): boolean;
 
   /**
    * Returns if database value is valid
@@ -16,7 +16,7 @@ export abstract class Type<M = any, D = M> {
   /**
    * Converts the document instance value to the database value.
    */
-  protected abstract convertToDB(value: M): D;
+  protected abstract convertToDB(value: M | any): D;
 
   /**
    * Converts the database value to the document instance value.
@@ -26,19 +26,17 @@ export abstract class Type<M = any, D = M> {
   /**
    * Populates the document instance value.
    */
-  touch(value?: M): M {
+  touch(value?: M | any): M {
     return value;
   }
 
   /**
    * Returns "convertToDB" result if value is defined.
    */
-  toDB(value: M): D {
+  toDB(value?: M | any): D {
     if (typeof value === 'undefined') {
       return;
     }
-
-    this.assertValidJSValue(value);
 
     return this.convertToDB(value);
   }
@@ -46,17 +44,15 @@ export abstract class Type<M = any, D = M> {
   /**
    * Returns "convertFromDB" result if value is defined.
    */
-  fromDB(value: D): M {
+  fromDB(value?: D): M {
     if (typeof value === 'undefined') {
       return;
     }
 
-    this.assertValidDBValue(value);
-
     return this.convertFromDB(value);
   }
 
-  protected assertValidJSValue(value: M) {
+  protected assertValidJSValue(value: M | any) {
     if (!this.isValidJSValue(value)) {
       throw new InvalidTypeError((this as any).constructor, value, 'js');
     }

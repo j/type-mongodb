@@ -13,19 +13,23 @@ export class UUIDType extends Type<string, Binary> {
     return uuid;
   }
 
-  convertToDB(uuid: string): Binary {
-    return new Binary(Buffer.from(parse(uuid)), Binary.SUBTYPE_UUID);
-  }
-
-  convertFromDB(uuid: Binary): string {
-    return stringify(uuid.buffer);
-  }
-
   isValidDBValue(uuid: Binary): boolean {
     return uuid && uuid.sub_type === Binary.SUBTYPE_UUID;
   }
 
   isValidJSValue(uuid: string): boolean {
     return typeof uuid === 'string' && validate(uuid);
+  }
+
+  protected convertToDB(uuid: string): Binary {
+    this.assertValidJSValue(uuid);
+
+    return new Binary(Buffer.from(parse(uuid)), Binary.SUBTYPE_UUID);
+  }
+
+  protected convertFromDB(uuid: Binary): string {
+    this.assertValidDBValue(uuid);
+
+    return stringify(uuid.buffer);
   }
 }
