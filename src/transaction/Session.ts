@@ -8,6 +8,7 @@ import {
 import { DocumentClass } from '../typings';
 import { DocumentManager } from '../DocumentManager';
 import { TransactionRepository } from '../repository/TransactionRepository';
+import { InternalError } from '../errors';
 
 declare module 'mongodb' {
   interface MongoError {
@@ -83,20 +84,20 @@ export class Session {
     );
   }
 
-  protected assertTransactionState(state: SessionState) {
+  protected assertTransactionState(state: SessionState): void {
     if (state === this.state) {
       return;
     }
 
     switch (this.state) {
       case SessionState.Pending:
-        throw new Error('Transaction not yet started');
+        return InternalError.throw('Transaction not yet started');
       case SessionState.InProgress:
-        throw new Error('Transaction currently in progress');
+        return InternalError.throw('Transaction currently in progress');
       case SessionState.Done:
-        throw new Error('Transaction already completed');
+        return InternalError.throw('Transaction already completed');
       default:
-        throw new Error('Unknown transaction state');
+        return InternalError.throw('Unknown transaction state');
     }
   }
 }

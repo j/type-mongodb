@@ -3,11 +3,12 @@ import { FieldMetadata } from './FieldMetadata';
 import { DocumentTransformer } from '../document/DocumentTransformer';
 import { ParentDefinition } from './definitions';
 import { DiscriminatorMetadata } from './DiscriminatorMetadata';
+import { InternalError } from '../errors';
 
 export type FieldsMetadata = Map<string, FieldMetadata>;
 
 /**
- * BaseDocumentMetadata contains all the needed info for Document and embedded
+ * AbstractDocumentMetadata contains all the needed info for Document and embedded
  * documents.
  */
 export abstract class AbstractDocumentMetadata<
@@ -17,6 +18,7 @@ export abstract class AbstractDocumentMetadata<
   public readonly DocumentClass: D;
   public readonly name: string;
   public readonly fields: FieldsMetadata;
+  public readonly idField: FieldMetadata;
   public readonly transformer: DocumentTransformer;
   public readonly parent?: ParentDefinition;
   public readonly discriminator?: DiscriminatorMetadata;
@@ -33,6 +35,16 @@ export abstract class AbstractDocumentMetadata<
     this.parent = parent;
     this.discriminator = discriminator;
     this.transformer = DocumentTransformer.create(this);
+
+    // set the idField property if it exists
+    this.idField = this.fields.get('_id');
+
+    // root documents must have an `_id` field.
+    if (this.isRoot() && !this.idField) {
+      InternalError.throw(
+        `The "${this.DocumentClass.name}" document is missing a decorated "_id" property`
+      );
+    }
   }
 
   /**

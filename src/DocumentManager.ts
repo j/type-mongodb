@@ -9,6 +9,7 @@ import { Repository } from './repository/Repository';
 import { Session } from './transaction/Session';
 import { EmbeddedDocumentMetadata } from './metadata/EmbeddedDocumentMetadata';
 import { DocumentTransformer } from './document/DocumentTransformer';
+import { InternalError } from './errors';
 
 export interface ContainerLike {
   get: <T = any>(service: Newable<T>) => any;
@@ -38,7 +39,7 @@ export class DocumentManager {
 
   private constructor(private readonly opts: DocumentManagerOptions) {
     if (!this.opts.connection) {
-      throw new Error('DocumentManager needs a connection.');
+      InternalError.throw('DocumentManager needs a connection.');
     }
 
     this.connection = Connection.create(this.opts.connection);
@@ -100,7 +101,7 @@ export class DocumentManager {
       // no-op
     }
 
-    throw new Error(`Missing metadata for "${Cls.name}"`);
+    InternalError.throw(`Missing metadata for "${Cls.name}"`);
   }
 
   /**

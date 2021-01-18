@@ -2,6 +2,7 @@ import { DiscriminatorDefinition } from './definitions';
 import { AbstractDocumentMetadata } from './AbstractDocumentMetadata';
 import { DocumentClass } from '../typings';
 import { definitionStorage } from '../utils/definitionStorage';
+import { InternalError } from '../errors';
 
 export class DiscriminatorMetadata {
   readonly DocumentClass: DocumentClass;
@@ -28,7 +29,7 @@ export class DiscriminatorMetadata {
 
     const fieldsDef = definitionStorage.fields.get(DocumentClass);
     if (!fieldsDef || !fieldsDef.has(propertyName)) {
-      throw new Error(
+      InternalError.throw(
         `@Discriminator() classes must have a decorated @Field() property with name "${propertyName}"`
       );
     }

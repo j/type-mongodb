@@ -24,7 +24,7 @@ import {
   CollectionInsertManyOptions
 } from '../typings';
 import { DocumentMetadata } from '../metadata/DocumentMetadata';
-import { DocumentNotFound } from '../errors';
+import { InternalError, ValidationError } from '../errors';
 import { DocumentManager } from '../DocumentManager';
 import { AbstractRepository } from './AbstractRepository';
 import { Events } from '../events';
@@ -42,7 +42,7 @@ export class Repository<T> extends AbstractRepository<T> {
 
   set manager(manager: DocumentManager) {
     if (this._manager) {
-      throw new Error('Cannot set DocumentManager for repository');
+      InternalError.throw('Cannot set DocumentManager for repository');
     }
 
     this._manager = manager;
@@ -54,7 +54,7 @@ export class Repository<T> extends AbstractRepository<T> {
 
   set metadata(metadata: DocumentMetadata<T>) {
     if (this._metadata) {
-      throw new Error('Cannot set DocumentMetadata for repository');
+      InternalError.throw('Cannot set DocumentMetadata for repository');
     }
 
     this._metadata = metadata;
@@ -104,14 +104,14 @@ export class Repository<T> extends AbstractRepository<T> {
   findByIds(ids: any[], opts?: FindOneOptions): Cursor<T> {
     return this.find(
       {
-        _id: { $in: ids.map((id) => this.id.toDB(id)) }
+        _id: { $in: ids.map((id) => this.id.convertToDatabaseValue(id)) }
       },
       opts
     );
   }
 
   async findById(id: any, opts?: FindOneOptions): Promise<T | null> {
-    return this.findOne({ _id: this.id.toDB(id) }, opts);
+    return this.findOne({ _id: this.id.convertToDatabaseValue(id) }, opts);
   }
 
   async findByIdOrFail(id: any, opts?: FindOneOptions): Promise<T> {
@@ -205,7 +205,7 @@ export class Repository<T> extends AbstractRepository<T> {
 
     models.forEach((model) => {
       if (!model._id) {
-        model._id = this.id.touch();
+        model._id = this.id.createJSValue();
       }
 
       beforeInsertEvents.push(
@@ -271,7 +271,11 @@ export class Repository<T> extends AbstractRepository<T> {
     update: UpdateQuery<T>,
     opts: FindOneAndUpdateOption = {}
   ): Promise<T | null> {
-    return this.findOneAndUpdate({ _id: this.id.toDB(id) }, update, opts);
+    return this.findOneAndUpdate(
+      { _id: this.id.convertToDatabaseValue(id) },
+      update,
+      opts
+    );
   }
 
   async findByIdAndUpdateOrFail(
@@ -279,7 +283,11 @@ export class Repository<T> extends AbstractRepository<T> {
     update: UpdateQuery<T>,
     opts: FindOneAndUpdateOption = {}
   ): Promise<T> {
-    return this.findOneAndUpdateOrFail({ _id: this.id.toDB(id) }, update, opts);
+    return this.findOneAndUpdateOrFail(
+      { _id: this.id.convertToDatabaseValue(id) },
+      update,
+      opts
+    );
   }
 
   async findOneAndReplace(
@@ -310,7 +318,11 @@ export class Repository<T> extends AbstractRepository<T> {
     props: OptionalId<Partial<T>>,
     opts?: FindOneAndReplaceOption
   ): Promise<T | null> {
-    return this.findOneAndReplace({ _id: this.id.toDB(id) }, props, opts);
+    return this.findOneAndReplace(
+      { _id: this.id.convertToDatabaseValue(id) },
+      props,
+      opts
+    );
   }
 
   async findByIdAndReplaceOrFail(
@@ -318,7 +330,11 @@ export class Repository<T> extends AbstractRepository<T> {
     props: OptionalId<Partial<T>>,
     opts?: FindOneAndReplaceOption
   ): Promise<T | null> {
-    return this.findOneAndReplaceOrFail({ _id: this.id.toDB(id) }, props, opts);
+    return this.findOneAndReplaceOrFail(
+      { _id: this.id.convertToDatabaseValue(id) },
+      props,
+      opts
+    );
   }
 
   async findOneAndDelete(
@@ -351,14 +367,20 @@ export class Repository<T> extends AbstractRepository<T> {
     id: any,
     opts?: FindOneAndDeleteOption
   ): Promise<T | null> {
-    return this.findOneAndDelete({ _id: this.id.toDB(id) }, opts);
+    return this.findOneAndDelete(
+      { _id: this.id.convertToDatabaseValue(id) },
+      opts
+    );
   }
 
   async findByIdAndDeleteOrFail(
     id: any,
     opts?: FindOneAndDeleteOption
   ): Promise<T | null> {
-    return this.findOneAndDeleteOrFail({ _id: this.id.toDB(id) }, opts);
+    return this.findOneAndDeleteOrFail(
+      { _id: this.id.convertToDatabaseValue(id) },
+      opts
+    );
   }
 
   async updateOne(
@@ -383,7 +405,11 @@ export class Repository<T> extends AbstractRepository<T> {
     update: UpdateQuery<T>,
     opts?: UpdateOneOptions
   ): Promise<UpdateWriteOpResult> {
-    return this.updateOne({ _id: this.id.toDB(id) }, update, opts);
+    return this.updateOne(
+      { _id: this.id.convertToDatabaseValue(id) },
+      update,
+      opts
+    );
   }
 
   async updateMany(
@@ -409,7 +435,7 @@ export class Repository<T> extends AbstractRepository<T> {
     opts?: UpdateManyOptions
   ): Promise<UpdateWriteOpResult> {
     return this.updateMany(
-      { _id: { $in: ids.map((id) => this.id.toDB(id)) } },
+      { _id: { $in: ids.map((id) => this.id.convertToDatabaseValue(id)) } },
       update,
       opts
     );
@@ -447,7 +473,11 @@ export class Repository<T> extends AbstractRepository<T> {
     props: Partial<T>,
     opts?: ReplaceOneOptions
   ): Promise<ReplaceWriteOpResult> {
-    return this.replaceOne({ _id: this.id.toDB(id) }, props, opts);
+    return this.replaceOne(
+      { _id: this.id.convertToDatabaseValue(id) },
+      props,
+      opts
+    );
   }
 
   async deleteOne(
@@ -473,7 +503,7 @@ export class Repository<T> extends AbstractRepository<T> {
     id: any,
     opts?: CommonOptions & { bypassDocumentValidation?: boolean }
   ): Promise<boolean> {
-    return this.deleteOne({ _id: this.id.toDB(id) }, opts);
+    return this.deleteOne({ _id: this.id.convertToDatabaseValue(id) }, opts);
   }
 
   async deleteMany(
@@ -496,7 +526,7 @@ export class Repository<T> extends AbstractRepository<T> {
     opts?: CommonOptions
   ): Promise<DeleteWriteOpResultObject> {
     return this.deleteMany(
-      { _id: { $in: ids.map((id) => this.id.toDB(id)) } },
+      { _id: { $in: ids.map((id) => this.id.convertToDatabaseValue(id)) } },
       opts
     );
   }
@@ -511,7 +541,7 @@ export class Repository<T> extends AbstractRepository<T> {
     value: any
   ) {
     if (!value) {
-      throw new DocumentNotFound(meta, filter);
+      ValidationError.documentNotFound(meta, filter);
     }
 
     return value;

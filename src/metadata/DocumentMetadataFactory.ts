@@ -12,6 +12,7 @@ import { Repository } from '../repository';
 import { isPromise } from '../utils/isPromise';
 import { DiscriminatorMetadata } from './DiscriminatorMetadata';
 import { ParentDefinition } from './definitions';
+import { InternalError } from '../errors';
 
 export interface BuildMetadataStorageOptions {
   dm: DocumentManager;
@@ -41,7 +42,7 @@ export class DocumentMetadataFactory {
 
   async build() {
     if (this.isBuilt) {
-      throw new Error('DocumentMetadata already built');
+      InternalError.throw('DocumentMetadata already built');
     }
 
     await this.buildDocuments();
@@ -58,7 +59,7 @@ export class DocumentMetadataFactory {
     const meta = this.loadedDocumentMetadata.get(DocumentClass);
 
     if (!meta) {
-      throw new Error(
+      InternalError.throw(
         `DocumentMetadata for class "${DocumentClass.name}" does not exist`
       );
     }
@@ -77,7 +78,7 @@ export class DocumentMetadataFactory {
     const meta = this.loadedEmbeddedDocumentMetadata.get(EmbeddedDocumentClass);
 
     if (!meta) {
-      throw new Error(
+      InternalError.throw(
         `EmbeddedDocumentMetadata for class "${EmbeddedDocumentClass.name}" does not exist`
       );
     }
@@ -109,7 +110,7 @@ export class DocumentMetadataFactory {
 
   protected assertMetadataIsBuilt() {
     if (!this.isBuilt) {
-      throw new Error('DocumentMetadata is not initialized');
+      InternalError.throw('DocumentMetadata is not initialized');
     }
   }
 
@@ -141,7 +142,9 @@ export class DocumentMetadataFactory {
     DocumentClass: DocumentClass
   ): Promise<DocumentMetadata> {
     if (!definitionStorage.documents.has(DocumentClass)) {
-      throw new Error(`"${DocumentClass.name}" is not a decorated @Document()`);
+      InternalError.throw(
+        `"${DocumentClass.name}" is not a decorated @Document()`
+      );
     }
 
     const def = definitionStorage.documents.get(DocumentClass);
@@ -249,7 +252,7 @@ export class DocumentMetadataFactory {
         );
       }
 
-      throw new Error(`"${target.name}" does not have any fields`);
+      InternalError.throw(`"${target.name}" does not have any fields`);
     }
 
     return fields;

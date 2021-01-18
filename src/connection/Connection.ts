@@ -1,4 +1,5 @@
 import { MongoClient, MongoClientOptions, Db } from 'mongodb';
+import { InternalError } from '../errors';
 
 export interface ConnectionOptions {
   database: string;
@@ -37,7 +38,9 @@ export class Connection {
 
   static create(opts: ConnectionOptions) {
     if (!opts.client && !opts.uri) {
-      throw new Error('Invalid connection config.  Missing "uri" or "client".');
+      InternalError.throw(
+        'Invalid connection config.  Missing "uri" or "client".'
+      );
     }
 
     const client =

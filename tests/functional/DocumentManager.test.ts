@@ -16,6 +16,7 @@ import { DocumentMetadata } from '../../src/metadata/DocumentMetadata';
 import { DocumentMetadataFactory } from '../../src/metadata/DocumentMetadataFactory';
 import { Connection } from '../../src/connection/Connection';
 import { UUIDType } from '../../src/types/UUIDType';
+import { ValidationError } from '../../src/errors';
 
 @Document()
 class DocumentWithRenamedFields {
@@ -152,6 +153,22 @@ describe('DocumentManager', () => {
         state: 'CA'
       });
     });
+
+    test('ignores undefined embedded documents', () => {
+      const user = manager.init(User, {
+        _id: new ObjectId(),
+        name: 'John',
+        // before, this would be populated as an empty address object
+        address: undefined
+      });
+      const result = manager.toDB(User, user);
+      expect(result).toEqual({
+        _id: user._id,
+        name: 'John'
+      });
+
+      expect(typeof user.address === 'undefined').toBe(true);
+    });
   });
 
   describe('fromDB', () => {
@@ -165,6 +182,17 @@ describe('DocumentManager', () => {
       const simple = manager.fromDB(Simple, fields);
       expect(simple).toBeInstanceOf(Simple);
       expect(simple).toEqual(Object.assign(new Simple(), fields));
+    });
+
+    test('hydrates document into Simple ignoring constructed properties', () => {
+      const fields = {
+        _id: new ObjectId()
+      };
+      const simple = manager.fromDB(Simple, fields);
+      expect(simple).toBeInstanceOf(Simple);
+      expect(simple._id).toBeInstanceOf(ObjectId);
+      expect(typeof simple.date === 'undefined').toBe(true);
+      expect(typeof simple.boolean === 'undefined').toBe(true);
     });
 
     test('hydrates document into User', () => {
@@ -323,38 +351,61 @@ describe('DocumentManager', () => {
     });
 
     it('throws errors on invalid uuids', () => {
+      let errors: ValidationError[] = [];
+
       // init
-      expect(() => {
-        manager.init(DocumentWithCustomTypes, { _id: 'invalid id' });
-      }).toThrowError(
-        'The js value of "invalid id" is invalid for type UUIDType.'
-      );
+      try {
+        manager.init(DocumentWithCustomTypes, { _id: 'invalid init id' });
+      } catch (err) {
+        errors.push(err);
+      }
 
       // merge
-      expect(() => {
+      try {
         manager.merge(DocumentWithCustomTypes, new DocumentWithCustomTypes(), {
-          _id: 'invalid id'
+          _id: 'invalid mege id'
         });
-      }).toThrowError(
-        'The js value of "invalid id" is invalid for type UUIDType.'
-      );
-
-      // fromDB
-      expect(() => {
-        manager.fromDB(DocumentWithCustomTypes, { _id: 'invalid id' });
-      }).toThrowError(
-        'The db value of "invalid id" is invalid for type UUIDType.'
-      );
+      } catch (err) {
+        errors.push(err);
+      }
 
       // toDB
-      expect(() => {
+      try {
         manager.toDB(
           DocumentWithCustomTypes,
-          Object.assign(new DocumentWithCustomTypes(), { _id: 'invalid id' })
+          Object.assign(new DocumentWithCustomTypes(), {
+            _id: 'invalid toDB id'
+          })
         );
-      }).toThrowError(
-        'The js value of "invalid id" is invalid for type UUIDType.'
-      );
+      } catch (err) {
+        errors.push(err);
+      }
+
+      // fromDB
+      try {
+        manager.fromDB(DocumentWithCustomTypes, { _id: 'invalid fromDB id' });
+      } catch (err) {
+        errors.push(err);
+      }
+
+      expect(errors).toEqual([
+        new ValidationError('Invalid UUID', {
+          value: 'invalid init id',
+          mode: 'js'
+        }),
+        new ValidationError('Invalid UUID', {
+          value: 'invalid merge id',
+          mode: 'js'
+        }),
+        new ValidationError('Invalid UUID', {
+          value: 'invalid toDB id',
+          mode: 'js'
+        }),
+        new ValidationError('Invalid UUID', {
+          value: 'invalid fromDB id',
+          mode: 'database'
+        })
+      ]);
     });
   });
 });

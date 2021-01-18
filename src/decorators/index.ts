@@ -1,3 +1,4 @@
+import 'reflect-metadata';
 import {
   DiscriminatorDefinition,
   FieldDefinition,
@@ -6,7 +7,9 @@ import {
 import { definitionStorage } from '../utils/definitionStorage';
 import { Newable } from '../typings';
 import { Repository } from '../repository';
-import { ObjectIdType, Type } from '../types';
+import { Type } from '../types';
+import { fieldToType } from '../utils/reflection';
+import { InternalError } from '../errors';
 
 interface DocumentOptions {
   database?: string;
@@ -52,22 +55,10 @@ export function Field(
       options = embeddedOrOptions || {};
     }
 
-    let type: Type;
-    if (typeof options.type !== 'undefined') {
-      type =
-        options.type instanceof Type
-          ? options.type
-          : Type.getType(options.type);
-    }
-    // default `_id` fields to ObjectIdType if the type is undefined
-    else if (field === '_id') {
-      type = Type.getType(ObjectIdType);
-    }
-
     addFieldDefinition(field, {
       ...options,
       DocumentClass: target.constructor,
-      type,
+      type: fieldToType(target, field, options.type),
       propertyName: field,
       fieldName: options.name || field,
       isEmbedded: typeof embedded !== 'undefined',
@@ -92,7 +83,9 @@ export function Parent(): PropertyDecorator {
     };
 
     if (definitionStorage.parents.has(meta.DocumentClass)) {
-      throw new Error(`Parent already exists for "${target.constructor.name}"`);
+      InternalError.throw(
+        `Parent already exists for "${target.constructor.name}"`
+      );
     }
 
     definitionStorage.parents.set(meta.DocumentClass, meta);
@@ -143,7 +136,7 @@ export function Discriminator(
       }
 
       if (!definition) {
-        throw new Error(
+        InternalError.throw(
           `Discriminator value "${target.name}" does not have a properly mapped base "@Discriminator()"`
         );
       }

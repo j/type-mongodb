@@ -1,28 +1,46 @@
 import { ObjectId } from 'mongodb';
 import { Type } from './Type';
 
-export class ObjectIdType extends Type<ObjectId, ObjectId> {
-  touch(id?: string | ObjectId): ObjectId {
+export class ObjectIdType extends Type<ObjectId, ObjectId, string> {
+  get name(): string {
+    return 'ObjectId';
+  }
+
+  createJSValue(id?: ObjectId | string): ObjectId {
+    if (typeof id === 'undefined') {
+      return new ObjectId();
+    }
+
+    this.assertValidJSValue(id as ObjectId);
+
     return new ObjectId(id);
   }
 
-  isValidDBValue(id: ObjectId | string): boolean {
+  convertToDatabaseValue(id?: ObjectId | string): ObjectId | undefined {
+    if (typeof id === 'undefined') {
+      return;
+    }
+
+    this.assertValidJSValue(id as ObjectId);
+
+    return new ObjectId(id);
+  }
+
+  convertToJSValue(id: ObjectId): ObjectId | undefined {
+    if (typeof id === 'undefined') {
+      return;
+    }
+
+    this.assertValidDatabaseValue(id);
+
+    return new ObjectId(id);
+  }
+
+  isValidDatabaseValue(id: ObjectId | string): boolean {
     return ObjectId.isValid(id);
   }
 
   isValidJSValue(id: ObjectId | string): boolean {
     return ObjectId.isValid(id);
-  }
-
-  protected convertToDB(id: ObjectId | string): ObjectId {
-    this.assertValidJSValue(id);
-
-    return new ObjectId(id);
-  }
-
-  protected convertFromDB(id: ObjectId): ObjectId {
-    this.assertValidDBValue(id);
-
-    return new ObjectId(id);
   }
 }

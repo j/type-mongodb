@@ -2,6 +2,7 @@ import { Newable } from '../typings';
 import { EmbeddedDocumentMetadata } from './EmbeddedDocumentMetadata';
 import { FieldDefinition } from './definitions';
 import { Type } from '../types';
+import { InternalError } from '../errors';
 
 export interface FieldMetadataOpts<T = any> extends FieldDefinition<T> {
   isEmbeddedArray?: boolean;
@@ -31,17 +32,13 @@ export class FieldMetadata<T = any> {
     this.embeddedType = opts.embeddedType;
     this.embeddedMetadata = opts.embeddedMetadata;
     this.type = opts.type;
+
+    if (this.type && !(this.type instanceof Type)) {
+      InternalError.throw(`Invalid type for property "${this.propertyName}"`);
+    }
   }
 
-  init<T1 = any, T2 = T1>(value?: T1): T2 {
-    return this.type.touch(value);
-  }
-
-  toDB<T1 = any, T2 = T1>(value: T1): T2 {
-    return this.type.toDB(value);
-  }
-
-  fromDB<T1 = any, T2 = T1>(value: T1): T2 {
-    return this.type.fromDB(value);
+  createJSValue(value?: any): any {
+    return this.type ? this.type.createJSValue(value) : value;
   }
 }

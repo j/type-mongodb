@@ -1,69 +1,82 @@
 import { Newable } from '../typings';
-import { InvalidTypeError } from '../errors';
+import { ValidationError } from '../errors';
 
-export abstract class Type<M = any, D = M> {
+export enum Mode {
+  DATABASE,
+  JS
+}
+
+export class Type<JSType = any, DBType = JSType, ConvertibleTypes = JSType> {
   private static readonly types = new Map<string, Type>();
-  /**
-   * Returns if document instance value is valid
-   */
-  abstract isValidJSValue(value: M | any): boolean;
 
   /**
-   * Returns if database value is valid
+   * The name of the field type.
    */
-  abstract isValidDBValue(value: D): boolean;
-
-  /**
-   * Converts the document instance value to the database value.
-   */
-  protected abstract convertToDB(value: M | any): D;
-
-  /**
-   * Converts the database value to the document instance value.
-   */
-  protected abstract convertFromDB(value: D): M;
-
-  /**
-   * Populates the document instance value.
-   */
-  touch(value?: M | any): M {
-    return value;
+  get name(): string {
+    return 'raw';
   }
 
   /**
-   * Returns "convertToDB" result if value is defined.
+   * Creates the JS value.  Normally you want to support potential JSON values
+   * to create the type's value from it's JSON representation.
    */
-  toDB(value?: M | any): D {
-    if (typeof value === 'undefined') {
-      return;
-    }
-
-    return this.convertToDB(value);
+  createJSValue(value?: JSType | DBType | ConvertibleTypes): JSType {
+    return value as JSType;
   }
 
   /**
-   * Returns "convertFromDB" result if value is defined.
+   * Converts between the database/JS representation to the database representation.
    */
-  fromDB(value?: D): M {
-    if (typeof value === 'undefined') {
-      return;
-    }
-
-    return this.convertFromDB(value);
+  convertToDatabaseValue(
+    value?: JSType | DBType | ConvertibleTypes
+  ): DBType | undefined {
+    return value as DBType;
   }
 
-  protected assertValidJSValue(value: M | any) {
+  /**
+   * Converts between the JS/database representation to the JS representation.
+   */
+  convertToJSValue(
+    value?: JSType | DBType | ConvertibleTypes
+  ): JSType | undefined {
+    return value as JSType;
+  }
+
+  /**
+   * Checks if JS representation is valid.
+   */
+  isValidJSValue(_value?: JSType | ConvertibleTypes): boolean {
+    return true;
+  }
+
+  /**
+   * Checks if database representation is valid.
+   */
+  isValidDatabaseValue(_value?: DBType | ConvertibleTypes): boolean {
+    return true;
+  }
+
+  /**
+   * Throws error if JS representation is invalid.
+   */
+  assertValidJSValue(value: JSType, mode: Mode = Mode.JS): void {
     if (!this.isValidJSValue(value)) {
-      throw new InvalidTypeError((this as any).constructor, value, 'js');
+      ValidationError.invalidType(this, value, mode);
     }
   }
 
-  protected assertValidDBValue(value: D) {
-    if (!this.isValidDBValue(value)) {
-      throw new InvalidTypeError((this as any).constructor, value, 'db');
+  /**
+   * Throws error if DB representation is invalid.
+   */
+  assertValidDatabaseValue(value: DBType, mode: Mode = Mode.DATABASE): void {
+    if (!this.isValidDatabaseValue(value)) {
+      ValidationError.invalidType(this, value, mode);
     }
   }
 
+  /**
+   * Returns or creates a type by the given constructor.
+   */
   static getType<M, D>(Ctor: Newable<Type<M, D>>): Type<M, D> {
     const key = Ctor.name;
 

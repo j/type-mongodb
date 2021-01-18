@@ -4,7 +4,6 @@ import {
   AbstractDocumentMetadata,
   FieldsMetadata
 } from './AbstractDocumentMetadata';
-import { FieldMetadata } from './FieldMetadata';
 import { Connection } from '../connection/Connection';
 import { Repository } from '../repository/Repository';
 
@@ -30,7 +29,6 @@ export class DocumentMetadata<T = any> extends AbstractDocumentMetadata<
   public readonly collection: Collection;
   public readonly extensions: Record<any, any>;
   public readonly repository: Repository<T>;
-  public readonly idField: FieldMetadata;
 
   constructor(opts: DocumentMetadataOpts<T>) {
     super(opts.DocumentClass, opts.fields);
@@ -40,35 +38,9 @@ export class DocumentMetadata<T = any> extends AbstractDocumentMetadata<
     this.extensions = opts.extensions || {};
     this.repository = opts.repository;
     this.repository.metadata = this;
-
-    if (!opts.fields.has('_id')) {
-      throw new Error(`@Document() class is missing an "_id" @Field()!`);
-    }
-    this.idField = opts.fields.get('_id');
   }
 
   isRoot(): boolean {
     return true;
-  }
-
-  /**
-   * Creates the document _id.
-   */
-  id<T1 = any, T2 = any>(id?: T1): T2 {
-    return this.idField.init(id);
-  }
-
-  /**
-   * Checks if given id is a valid one.
-   */
-  isValidId(id?: any): boolean {
-    return this.idField.type.isValidJSValue(id);
-  }
-
-  /**
-   * Creates the document _id.
-   */
-  hasId(): boolean {
-    return this.fields.has('_id');
   }
 }

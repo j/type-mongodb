@@ -3,7 +3,11 @@ import { v4, stringify, parse, validate } from 'uuid';
 import { Type } from './Type';
 
 export class UUIDType extends Type<string, Binary> {
-  touch(uuid?: string): string {
+  get name(): string {
+    return 'UUID';
+  }
+
+  createJSValue(uuid?: string): string {
     if (typeof uuid === 'undefined') {
       return v4();
     }
@@ -13,23 +17,40 @@ export class UUIDType extends Type<string, Binary> {
     return uuid;
   }
 
-  isValidDBValue(uuid: Binary): boolean {
+  convertToDatabaseValue(uuid?: Binary | string): Binary | undefined {
+    if (
+      typeof uuid === 'undefined' ||
+      this.isValidDatabaseValue(uuid as Binary)
+    ) {
+      return uuid as Binary;
+    }
+
+    this.assertValidJSValue(uuid as string);
+
+    return new Binary(Buffer.from(parse(uuid as string)), Binary.SUBTYPE_UUID);
+  }
+
+  convertToJSValue(uuid?: Binary): string | undefined {
+    if (typeof uuid === 'undefined') {
+      return;
+    }
+
+    if (typeof uuid === 'string') {
+      this.assertValidJSValue(uuid);
+
+      return uuid as string;
+    }
+
+    this.assertValidDatabaseValue(uuid);
+
+    return stringify(uuid.buffer);
+  }
+
+  isValidDatabaseValue(uuid: Binary): boolean {
     return uuid && uuid.sub_type === Binary.SUBTYPE_UUID;
   }
 
   isValidJSValue(uuid: string): boolean {
     return typeof uuid === 'string' && validate(uuid);
-  }
-
-  protected convertToDB(uuid: string): Binary {
-    this.assertValidJSValue(uuid);
-
-    return new Binary(Buffer.from(parse(uuid)), Binary.SUBTYPE_UUID);
-  }
-
-  protected convertFromDB(uuid: Binary): string {
-    this.assertValidDBValue(uuid);
-
-    return stringify(uuid.buffer);
   }
 }

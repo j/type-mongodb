@@ -2,6 +2,7 @@ import { DocumentClass, Newable } from '..';
 import { FieldMetadata } from '../metadata/FieldMetadata';
 import { AbstractDocumentMetadata } from '../metadata/AbstractDocumentMetadata';
 import { OptionalId } from '../typings';
+import { InternalError } from '../errors';
 
 export type DocumentTransformerCompiledFunction = (
   target: any,
@@ -126,7 +127,11 @@ export class DocumentTransformer<T = any, D extends Newable = DocumentClass> {
         : undefined;
     }
 
-    return this.compiledFromDB(new this.meta.DocumentClass(), doc, parent);
+    return this.compiledFromDB(
+      Object.create(this.meta.DocumentClass.prototype),
+      doc,
+      parent
+    );
   }
 
   public toDB(
@@ -153,7 +158,7 @@ export class DocumentTransformer<T = any, D extends Newable = DocumentClass> {
     const context = new Map<any, any>();
 
     const has = (accessor: string): string => {
-      return `(source && "${accessor}" in source)`;
+      return `(source && typeof source["${accessor}"] !== "undefined")`;
     };
 
     const getComparator = (
@@ -180,17 +185,14 @@ export class DocumentTransformer<T = any, D extends Newable = DocumentClass> {
           `;
         }
 
-        const setterVar = reserveVariable(`${fieldName}_setter`);
-        context.set(
-          setterVar,
-          fieldType[type === 'init' || type === 'merge' ? 'touch' : type].bind(
-            fieldType
-          )
-        );
+        const typeVar = reserveVariable(`${fieldName}_type`);
+        context.set(typeVar, fieldType);
 
         return `
           if (${has(accessor)}) {
-            target["${setter}"] = ${setterVar}(source["${accessor}"]);
+            target["${setter}"] = ${typeVar}.${
+          isToDB ? 'convertToDatabaseValue' : 'convertToJSValue'
+        }(source["${accessor}"]);
           }
         `;
       }
@@ -260,10 +262,15 @@ export class DocumentTransformer<T = any, D extends Newable = DocumentClass> {
     return compiled(...context.values());
   }
 
+  /**
+   * Initializes "_id" field if it's a valid type.
+   */
   private prepare<T = any>(object: any): T {
-    // only prepare ids for root documents
-    if (this.meta.isRoot() && (this.meta as any).hasId()) {
-      object._id = (this.meta as any).id(object._id);
+    if (
+      typeof object._id === 'undefined' &&
+      typeof this.meta.idField !== 'undefined'
+    ) {
+      object._id = this.meta.idField.createJSValue();
     }
 
     return object;
@@ -271,7 +278,7 @@ export class DocumentTransformer<T = any, D extends Newable = DocumentClass> {
 
   private assertIsCompiled() {
     if (!this.isCompiled) {
-      throw new Error('DocumentTransformers are not compiled');
+      InternalError.throw('DocumentTransformers are not compiled');
     }
   }
 }

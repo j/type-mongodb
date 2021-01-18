@@ -15,7 +15,7 @@ import {
   CollectionInsertManyOptions
 } from '../typings';
 import { DocumentMetadata } from '../metadata/DocumentMetadata';
-import { DocumentNotFound } from '../errors';
+import { ValidationError } from '../errors';
 import { DocumentManager } from '../DocumentManager';
 import {
   FindOneOptions,
@@ -86,7 +86,7 @@ export abstract class AbstractRepository<T> {
     value: any
   ) {
     if (!value) {
-      throw new DocumentNotFound(meta, filter);
+      ValidationError.documentNotFound(meta, filter);
     }
 
     return value;
