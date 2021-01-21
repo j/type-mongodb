@@ -4,7 +4,7 @@
   "description": "A simple decorator based MongoDB ODM.",
   "keywords": [],
   "author": "Jordan <j@jrdn.org>",
-  "license": "ISC",
+  "license": "MIT",
   "files": [
     "lib/**/*"
   ],
