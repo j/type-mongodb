@@ -34,6 +34,7 @@ interface FieldOptions {
   name?: string;
   type?: Newable<Type> | Type;
   extensions?: Record<any, any>;
+  create?: boolean;
 }
 
 export function Field(options?: FieldOptions): PropertyDecorator;
@@ -62,7 +63,8 @@ export function Field(
       propertyName: field,
       fieldName: options.name || field,
       isEmbedded: typeof embedded !== 'undefined',
-      embedded
+      embedded,
+      create: options.create
     });
   };
 }

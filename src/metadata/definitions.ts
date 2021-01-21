@@ -23,6 +23,7 @@ export interface FieldDefinition<T = any> {
   isEmbedded: boolean;
   embedded?: () => any;
   extensions?: Record<any, any>;
+  create: boolean;
 }
 
 export interface ParentDefinition<T = any> {

@@ -32,8 +32,11 @@ class DocumentWithCustomTypes {
   @Field({ type: UUIDType })
   _id: string;
 
-  @Field({ type: UUIDType })
+  @Field({ type: UUIDType, create: true })
   field: string;
+
+  @Field({ type: UUIDType })
+  optional?: string;
 }
 
 describe('DocumentManager', () => {
@@ -157,9 +160,9 @@ describe('DocumentManager', () => {
     test('ignores undefined embedded documents', () => {
       const user = manager.init(User, {
         _id: new ObjectId(),
-        name: 'John',
+        name: 'John'
         // before, this would be populated as an empty address object
-        address: undefined
+        // address: undefined
       });
       const result = manager.toDB(User, user);
       expect(result).toEqual({
@@ -312,9 +315,10 @@ describe('DocumentManager', () => {
 
   describe('document with uuid', () => {
     it('init', () => {
-      const model = manager.init(DocumentWithCustomTypes, { field: uuid.v4() });
+      const model = manager.init(DocumentWithCustomTypes, {});
       expect(uuid.validate(model._id)).toBeTruthy();
       expect(uuid.validate(model.field)).toBeTruthy();
+      expect(typeof model.optional === 'undefined').toBe(true);
     });
     it('merge', () => {
       const ids = [uuid.v4(), uuid.v4()];
@@ -340,14 +344,30 @@ describe('DocumentManager', () => {
       expect(uuid.validate(model.field)).toBeTruthy();
       expect(model._id).toEqual(_id);
       expect(model.field).toEqual(field);
+      expect(typeof model.optional === 'undefined').toBe(true);
+    });
+    it('fromDB (with missing "createable" type)', () => {
+      const _id = '393967e0-8de1-11e8-9eb6-529269fb1459';
+
+      const model = manager.fromDB(DocumentWithCustomTypes, {
+        _id: from(_id)
+      });
+      expect(uuid.validate(model._id)).toBeTruthy();
+      expect(model._id).toEqual(_id);
+      expect(typeof model.field === 'undefined').toBe(true);
+      expect(typeof model.optional === 'undefined').toBe(true);
     });
     it('toDb', () => {
-      const doc = manager.toDB(
-        DocumentWithCustomTypes,
-        Object.assign(new DocumentWithCustomTypes(), {})
-      );
+      const uuid = new UUIDType();
+      const model = Object.assign(new DocumentWithCustomTypes(), {});
+      const doc = manager.toDB(DocumentWithCustomTypes, model);
       expect(doc._id).toBeInstanceOf(Binary);
-      expect(doc.field).toBeUndefined();
+      expect(doc.field).toBeInstanceOf(Binary);
+      expect(uuid.convertToJSValue((doc.field as any) as Binary)).toBe(
+        model.field
+      );
+      expect(typeof doc.optional === 'undefined').toBe(true);
+      expect(typeof model.optional === 'undefined').toBe(true);
     });
 
     it('throws errors on invalid uuids', () => {

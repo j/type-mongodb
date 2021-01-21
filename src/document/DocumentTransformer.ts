@@ -69,6 +69,8 @@ export class DocumentTransformer<T = any, D extends Newable = DocumentClass> {
   ): T {
     this.assertIsCompiled();
 
+    props = props || {};
+
     if (this.meta.discriminator) {
       const { propertyName, mapping } = this.meta.discriminator;
 
@@ -116,8 +118,16 @@ export class DocumentTransformer<T = any, D extends Newable = DocumentClass> {
     return this.compiledMerge(this.prepare(model), props, parent);
   }
 
-  public fromDB(doc: Partial<T> | { [key: string]: any }, parent?: any): T {
+  public fromDB(
+    doc?: Partial<T> | { [key: string]: any },
+    parent?: any
+  ): T | void {
     this.assertIsCompiled();
+
+    // don't attempt transforming invalid documents into models
+    if (typeof doc !== 'object') {
+      return doc;
+    }
 
     if (this.meta.discriminator) {
       const { fieldName, mapping } = this.meta.discriminator;
@@ -139,6 +149,11 @@ export class DocumentTransformer<T = any, D extends Newable = DocumentClass> {
   ): T & { [key: string]: any } {
     this.assertIsCompiled();
 
+    // don't attempt transforming invalid models into documents
+    if (typeof model !== 'object') {
+      return model;
+    }
+
     if (this.meta.discriminator) {
       const { propertyName, mapping } = this.meta.discriminator;
 
@@ -157,107 +172,169 @@ export class DocumentTransformer<T = any, D extends Newable = DocumentClass> {
   ): DocumentTransformerCompiledFunction {
     const context = new Map<any, any>();
 
-    const has = (accessor: string): string => {
-      return `(source && typeof source["${accessor}"] !== "undefined")`;
+    // gets the code for computing field values
+    const fieldCode = ({
+      fieldMetadata,
+      accessor,
+      setter
+    }: {
+      fieldMetadata: FieldMetadata;
+      accessor: string;
+      setter: string;
+    }) => {
+      const { fieldName, shouldCreateJSValue } = fieldMetadata;
+
+      // use raw value if field does not have a "type"
+      if (!fieldMetadata.type) {
+        return `
+          if (typeof source["${accessor}"] !== 'undefined') {
+            target["${setter}"] = source["${accessor}"];
+          }
+        `;
+      }
+
+      const createJsVar = reserveVariable(`${fieldName}_new_value`);
+      const typeVar = reserveVariable(`${fieldName}_type`);
+      context.set(typeVar, fieldMetadata.type);
+
+      const createJSValueCode = (variable: string) => {
+        if (!shouldCreateJSValue) {
+          return '';
+        }
+
+        return `
+          if (typeof ${variable} === 'undefined') {
+            const ${createJsVar} = ${typeVar}.createJSValue();
+            
+            if (typeof ${createJsVar} !== 'undefined') {
+              ${variable} = ${createJsVar};
+            }
+          }
+        `;
+      };
+
+      const setTargetCode = (convertFn: string = 'convertToJSValue') => {
+        return `
+          if (typeof source["${accessor}"] !== 'undefined') {
+            target["${setter}"] = ${typeVar}.${convertFn}(source["${accessor}"]);
+          }
+        `;
+      };
+
+      switch (type) {
+        case 'toDB':
+          return `
+            ${createJSValueCode(`source["${accessor}"]`)}
+            ${setTargetCode('convertToDatabaseValue')}
+          `;
+        case 'fromDB':
+          return setTargetCode();
+        case 'merge':
+          return `
+            ${createJSValueCode(`target["${setter}"]`)}
+            ${setTargetCode()}
+          `;
+        case 'init':
+          return `
+            ${createJSValueCode(`source["${accessor}"]`)}
+            ${setTargetCode()}
+          `;
+      }
     };
 
-    const getComparator = (
-      fieldMetadata: FieldMetadata,
-      accessor: string,
-      setter: string
-    ): string => {
-      const {
-        embeddedMetadata,
-        fieldName,
-        isEmbeddedArray,
-        isEmbedded
-      } = fieldMetadata;
+    // gets the code for computing embedded document values
+    const embeddedCode = ({
+      fieldMetadata,
+      accessor,
+      setter
+    }: {
+      fieldMetadata: FieldMetadata;
+      accessor: string;
+      setter: string;
+    }) => {
+      const { embeddedMetadata, isEmbeddedArray, fieldName } = fieldMetadata;
 
-      if (!isEmbedded) {
-        const fieldType = fieldMetadata.type;
-
-        // trust values if field type is undefined
-        if (!fieldType) {
-          return `
-            if (${has(accessor)}) {
-              target["${setter}"] = source["${accessor}"];
-            }
-          `;
-        }
-
-        const typeVar = reserveVariable(`${fieldName}_type`);
-        context.set(typeVar, fieldType);
-
+      // bypasses null & undefined
+      const template = (code: string) => {
         return `
-          if (${has(accessor)}) {
-            target["${setter}"] = ${typeVar}.${
-          isToDB ? 'convertToDatabaseValue' : 'convertToJSValue'
-        }(source["${accessor}"]);
+          // bypass null & undefined values
+          if (typeof source["${accessor}"] === 'undefined') {
+            // ignore undefined values
+          } else if (source["${accessor}"] === null) {
+            target["${setter}"] = null;
+          } else {
+            ${code}
           }
         `;
-      }
+      };
 
-      const embeddedTransformer = DocumentTransformer.create(embeddedMetadata);
-      const transformerFnVar = reserveVariable(`${fieldName}_transformer`);
-      context.set(
-        transformerFnVar,
-        embeddedTransformer[type].bind(embeddedTransformer)
-      );
+      const transformerVar = reserveVariable(`${fieldName}_transformer`);
+      context.set(transformerVar, DocumentTransformer.create(embeddedMetadata));
+
+      const transformCode = (source: string, target: string = 'undefined') => {
+        switch (type) {
+          case 'toDB':
+            return `${transformerVar}.toDB(${source})`;
+          case 'fromDB':
+            return `${transformerVar}.fromDB(${source}, target)`;
+          case 'merge':
+            return `${transformerVar}.merge(${target}, ${source}, target)`;
+          case 'init':
+            return `${transformerVar}.init(${source}, target)`;
+        }
+      };
 
       if (isEmbeddedArray) {
-        return `
-          if (${has(accessor)} && Array.isArray(source["${accessor}"])) {
-            ${
-              type === 'merge'
-                ? `target["${setter}"] = source["${accessor}"].map(v => ${transformerFnVar}(undefined, v, target));`
-                : `target["${setter}"] = source["${accessor}"].map(v => ${transformerFnVar}(v, target));`
-            }
+        return template(`
+          if (Array.isArray(source["${accessor}"])) {
+            target["${setter}"] = source["${accessor}"].map(value => ${transformCode(
+          'value'
+        )});
           }
-        `;
+        `);
       }
 
-      return `
-        if (${has(accessor)}) {
-          ${
-            type === 'merge'
-              ? `target["${setter}"] = ${transformerFnVar}(target["${setter}"], source["${accessor}"], target);`
-              : `target["${setter}"] = ${transformerFnVar}(source["${accessor}"], target);`
-          }
-        }
-      `;
+      return template(
+        `target["${setter}"] = ${transformCode(
+          `source["${accessor}"]`,
+          `target["${setter}"]`
+        )};`
+      );
     };
 
     const props: string[] = [];
     for (const fieldMetadata of this.meta.fields.values()) {
-      const { fieldName, propertyName } = fieldMetadata;
+      const { fieldName, propertyName, isEmbedded } = fieldMetadata;
+      const opts = {
+        fieldMetadata,
+        accessor: isFromDB ? fieldName : propertyName,
+        setter: isToDB ? fieldName : propertyName
+      };
 
-      const accessor = isFromDB ? fieldName : propertyName;
-      const setter = isToDB ? fieldName : propertyName;
-
-      props.push(getComparator(fieldMetadata, accessor, setter));
+      props.push(isEmbedded ? embeddedCode(opts) : fieldCode(opts));
     }
 
-    const parentMapper = () => {
-      if (isToDB || !this.meta.parent) {
-        return '';
-      }
-
-      return `
-        target["${this.meta.parent.propertyName}"] = parent;
-      `;
-    };
-
-    const functionCode = `
-        return function(target, source, parent) {
+    const compiled = new Function(
+      ...context.keys(),
+      `
+      return function(target, source, parent) {
+        let currentValue;
+        
+        if (source) {
           ${props.join('\n')}
-          
-          ${parentMapper()}
-
-          return target;
         }
-        `;
+        
+        ${
+          /* parent mapping */
+          !isToDB && this.meta.parent
+            ? `        target["${this.meta.parent.propertyName}"] = parent;`
+            : ''
+        }
 
-    const compiled = new Function(...context.keys(), functionCode);
+        return target;
+      }
+    `
+    );
 
     return compiled(...context.values());
   }
@@ -268,7 +345,8 @@ export class DocumentTransformer<T = any, D extends Newable = DocumentClass> {
   private prepare<T = any>(object: any): T {
     if (
       typeof object._id === 'undefined' &&
-      typeof this.meta.idField !== 'undefined'
+      typeof this.meta.idField !== 'undefined' &&
+      this.meta.idField.shouldCreateJSValue
     ) {
       object._id = this.meta.idField.createJSValue();
     }
