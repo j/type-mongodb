@@ -1,9 +1,9 @@
-import { Document, Field } from '../../src';
+import { Document, Id, Field } from '../../src';
 import { ObjectId } from 'mongodb';
 
 @Document()
 export class Simple {
-  @Field()
+  @Id()
   _id: ObjectId;
 
   @Field()

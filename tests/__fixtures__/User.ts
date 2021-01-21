@@ -1,4 +1,4 @@
-import { Document, Field } from '../../src';
+import { Document, Id, Field } from '../../src';
 import { ObjectId } from 'mongodb';
 import { UserRepository } from './UserRepository';
 
@@ -28,7 +28,7 @@ export class Review {
 
 @Document({ repository: () => UserRepository })
 export class User {
-  @Field()
+  @Id()
   _id: ObjectId;
 
   @Field()

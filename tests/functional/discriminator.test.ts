@@ -1,7 +1,13 @@
 import 'reflect-metadata';
 import { ObjectId } from 'mongodb';
 import { DocumentManager } from '../../src/DocumentManager';
-import { Discriminator, Document, Field, Parent } from '../../src/decorators';
+import {
+  Discriminator,
+  Document,
+  Id,
+  Field,
+  Parent
+} from '../../src/decorators';
 
 @Discriminator({ property: 'type' })
 abstract class Pet {
@@ -46,7 +52,7 @@ class Cat extends Pet {
 
 @Document()
 class Person {
-  @Field()
+  @Id()
   _id: ObjectId;
 
   @Field(() => [Pet])

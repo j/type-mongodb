@@ -1,10 +1,10 @@
-import { Document, Field } from '../../src';
+import { Document, Id, Field } from '../../src';
 import { ObjectId } from 'mongodb';
 import { Sibling } from './Sibling';
 
 @Document()
 export class Parent {
-  @Field()
+  @Id()
   _id: ObjectId;
 
   @Field(() => Sibling)

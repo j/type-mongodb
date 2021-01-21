@@ -1,8 +1,8 @@
-import { Document, Field } from '../../src';
+import { Document, Id, Field } from '../../src';
 import { ObjectId } from 'mongodb';
 
 export abstract class BaseBaseDocument {
-  @Field()
+  @Id()
   _id: ObjectId;
 }
 

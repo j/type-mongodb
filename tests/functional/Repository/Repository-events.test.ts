@@ -1,13 +1,13 @@
 import 'reflect-metadata';
 import { ObjectId } from 'mongodb';
-import { Document, Field, EventSubscriber } from '../../../src';
+import { Document, Id, Field, EventSubscriber } from '../../../src';
 import { DocumentManager } from '../../../src/DocumentManager';
 import { DocumentMetadata } from '../../../src/metadata/DocumentMetadata';
 import { Repository } from '../../../src/repository/Repository';
 
 @Document()
 class Event {
-  @Field()
+  @Id()
   _id: ObjectId;
 
   @Field()

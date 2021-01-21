@@ -39,10 +39,14 @@ export abstract class AbstractDocumentMetadata<
     // set the idField property if it exists
     this.idField = this.fields.get('_id');
 
-    // root documents must have an `_id` field.
-    if (this.isRoot() && !this.idField) {
+    if (
+      // root documents must have an `_id` field
+      (this.isRoot() && !this.idField) ||
+      // _id fields must be valid "IDs"
+      (this.idField && !this.idField.isId)
+    ) {
       InternalError.throw(
-        `The "${this.DocumentClass.name}" document is missing a decorated "_id" property`
+        `The "${this.DocumentClass.name}" document is missing an "@Id" decorated "_id" property`
       );
     }
   }

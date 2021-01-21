@@ -11,7 +11,7 @@ import {
   createUsers
 } from '../__fixtures__/User';
 import { DocumentManager } from '../../src/DocumentManager';
-import { Document, Field } from '../../src/decorators';
+import { Document, Id, Field } from '../../src/decorators';
 import { DocumentMetadata } from '../../src/metadata/DocumentMetadata';
 import { DocumentMetadataFactory } from '../../src/metadata/DocumentMetadataFactory';
 import { Connection } from '../../src/connection/Connection';
@@ -20,7 +20,7 @@ import { ValidationError } from '../../src/errors';
 
 @Document()
 class DocumentWithRenamedFields {
-  @Field()
+  @Id()
   _id: ObjectId;
 
   @Field({ name: 'active' })
@@ -29,13 +29,13 @@ class DocumentWithRenamedFields {
 
 @Document()
 class DocumentWithCustomTypes {
-  @Field({ type: UUIDType })
+  @Id({ type: UUIDType })
   _id: string;
 
-  @Field({ type: UUIDType, create: true })
+  @Id({ type: UUIDType })
   field: string;
 
-  @Field({ type: UUIDType })
+  @Id({ type: UUIDType, create: false })
   optional?: string;
 }
 

@@ -23,12 +23,12 @@ support their main types and not do anything fancy. Again, we wanted to keep it 
 to the core driver as possible.
 
 ```typescript
-import { Field } from 'type-mongodb';
+import { Id, Field } from 'type-mongodb';
 import { ObjectId } from 'mongodb';
 
 abstract class BaseDocument {
-  @Field()
-  _id: ObjectId = new ObjectId();
+  @Id()
+  _id: ObjectId;
 
   get id(): string {
     return this._id.toHexString();
@@ -185,6 +185,24 @@ class User extends BaseDocument {
 
 ```typescript
 const repository = dm.getRepository<UserRepository>(User);
+```
+
+What about custom IDs? You can either create your own type that extends `Type`, or use our built-ins:
+
+```typescript
+import { Id, Field, UUIDType } from 'type-mongodb';
+
+@Document()
+class User {
+  @Id({ type: UUIDType })
+  _id: string;
+
+  // fields can also be a "UUID" type.
+  @Field({
+    type: UUIDType /* create: true (pass this to auto-generate the uuid, otherwise, omit) */
+  })
+  uuid: string;
+}
 ```
 
 What about events? We want the base class to have createdAt and updatedAt be mapped

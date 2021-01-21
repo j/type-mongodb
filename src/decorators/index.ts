@@ -35,6 +35,7 @@ interface FieldOptions {
   type?: Newable<Type> | Type;
   extensions?: Record<any, any>;
   create?: boolean;
+  createJSValue?: (v: any) => any;
 }
 
 export function Field(options?: FieldOptions): PropertyDecorator;
@@ -56,20 +57,40 @@ export function Field(
       options = embeddedOrOptions || {};
     }
 
-    addFieldDefinition(field, {
+    addFieldDefinition(target, field, options, embedded);
+  };
+}
+
+export function Id(options: FieldOptions = {}): PropertyDecorator {
+  return (target: any, field: string) => {
+    addFieldDefinition(target, field, {
       ...options,
-      DocumentClass: target.constructor,
-      type: fieldToType(target, field, options.type),
-      propertyName: field,
-      fieldName: options.name || field,
-      isEmbedded: typeof embedded !== 'undefined',
-      embedded,
-      create: options.create
+      isId: true,
+      // IDs should default to creating the value
+      create: typeof options.create === 'boolean' ? options.create : true
     });
   };
 }
 
-function addFieldDefinition(field: string, def: FieldDefinition) {
+function addFieldDefinition(
+  target: any,
+  field: string,
+  options: FieldOptions & { isId?: boolean },
+  embedded?: () => any
+) {
+  const def: FieldDefinition = {
+    ...options,
+    DocumentClass: target.constructor,
+    propertyName: field,
+    fieldName: options.name || field,
+    isId: options.isId === true,
+    isEmbedded: typeof embedded !== 'undefined',
+    embedded,
+    type: fieldToType(target, field, options.type),
+    shouldCreateJSValue:
+      typeof options.create === 'boolean' ? options.create : false
+  };
+
   if (definitionStorage.fields.has(def.DocumentClass)) {
     definitionStorage.fields.get(def.DocumentClass).set(field, def);
   } else {
