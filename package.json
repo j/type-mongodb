@@ -28,6 +28,8 @@
     "clean": "rimraf lib",
     "watch": "tsc -w",
     "prepublishOnly": "yarn clean && yarn build",
+    "release:next": "npm publish --access public --tag next",
+    "release": "release-it",
     "mongo-start": "MONGODB_VERSION=4.0.x mongodb-runner start --topology=replicaset --name=test --port=31000",
     "mongo-stop": "mongodb-runner stop --topology=replicaset --name=test",
     "test": "jest --runInBand --verbose --coverage",
@@ -48,6 +50,7 @@
     "prettier": "^2.0.5",
     "pretty-quick": "^2.0.1",
     "reflect-metadata": "^0.1.13",
+    "release-it": "^14.2.2",
     "ts-jest": "^26.1.1",
     "typescript": "^3.9.5",
     "uuid": "^8.3.2"
