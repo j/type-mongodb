@@ -1,7 +1,7 @@
 import { DocumentMetadata } from './DocumentMetadata';
 import { FieldMetadata } from './FieldMetadata';
 import { DocumentClass, Newable } from '../typings';
-import { definitionStorage } from '../utils/definitionStorage';
+import { definitionStorage, isPromise } from '../utils';
 import { DocumentManager } from '../DocumentManager';
 import { EmbeddedDocumentMetadata } from './EmbeddedDocumentMetadata';
 import {
@@ -9,7 +9,6 @@ import {
   FieldsMetadata
 } from './AbstractDocumentMetadata';
 import { Repository } from '../repository';
-import { isPromise } from '../utils/isPromise';
 import { DiscriminatorMetadata } from './DiscriminatorMetadata';
 import { ParentDefinition } from './definitions';
 import { InternalError } from '../errors';
@@ -204,7 +203,7 @@ export class DocumentMetadataFactory {
       definitionStorage.fields.get(target).forEach((prop) => {
         if (!prop.isEmbedded) {
           fields.set(
-            prop.fieldName,
+            prop.propertyName,
             new FieldMetadata({
               ...prop,
               isEmbeddedArray: false
@@ -222,7 +221,7 @@ export class DocumentMetadataFactory {
           );
 
           fields.set(
-            prop.fieldName,
+            prop.propertyName,
             new FieldMetadata({
               ...prop,
               isEmbeddedArray,

@@ -3,7 +3,7 @@ import {
   DiscriminatorDefinition,
   FieldDefinition,
   ParentDefinition
-} from '../metadata/definitions';
+} from '../metadata';
 import { definitionStorage } from '../utils/definitionStorage';
 import { Newable } from '../typings';
 import { Repository } from '../repository';

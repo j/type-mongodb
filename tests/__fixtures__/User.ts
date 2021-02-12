@@ -1,16 +1,11 @@
-import { Document, Id, Field } from '../../src';
+import { Document, Id, Field, UUIDType } from '../../src';
 import { ObjectId } from 'mongodb';
 import { UserRepository } from './UserRepository';
 
-export class Product {
-  @Field()
-  sku: string;
-
-  @Field()
-  title: string;
-}
-
 export class Address {
+  @Field({ type: UUIDType, name: 'uid' })
+  uuid: string;
+
   @Field()
   city: string;
 
@@ -18,18 +13,38 @@ export class Address {
   state: string;
 }
 
+export class Product {
+  @Field({ type: UUIDType, name: 'uid' })
+  uuid: string;
+
+  @Field()
+  sku: string;
+
+  @Field()
+  title: string;
+}
+
 export class Review {
+  @Field({ type: UUIDType, name: 'uid' })
+  uuid: string;
+
   @Field(() => Product)
   product: Product;
 
   @Field()
   rating: number;
+
+  @Field({ type: UUIDType })
+  productUUIDs: number[];
 }
 
 @Document({ repository: () => UserRepository })
 export class User {
   @Id()
   _id: ObjectId;
+
+  @Field({ type: UUIDType, name: 'uid' })
+  uuid: string;
 
   @Field()
   name: string;
@@ -39,6 +54,9 @@ export class User {
 
   @Field(() => [Review])
   reviews: Review[];
+
+  @Field({ type: UUIDType })
+  topReviews: string[];
 
   @Field()
   createdAt: Date;

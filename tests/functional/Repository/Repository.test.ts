@@ -617,7 +617,10 @@ describe('DocumentManager -> queries, inserts, & updates', () => {
   test('deleteByIds() -> with opts', async () => {
     const result = await manager
       .getRepository(User)
-      .deleteByIds([fixtures.john._id, fixtures.mary._id], { w: 1 });
+      .deleteByIds(
+        [fixtures.john._id.toHexString(), fixtures.mary._id.toHexString()],
+        { w: 1 }
+      );
     expect(result.deletedCount).toBe(2);
     expect(spies.deleteMany).toHaveBeenCalledTimes(1);
     expect(spies.deleteMany).toHaveBeenCalledWith(

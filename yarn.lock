@@ -6162,6 +6162,13 @@ util-deprecate@^1.0.1, util-deprecate@~1.0.1:
   resolved "https://registry.yarnpkg.com/util-deprecate/-/util-deprecate-1.0.2.tgz#450d4dc9fa70de732762fbd2d4a28981419a0ccf"
   integrity sha1-RQ1Nyfpw3nMnYvvS1KKJgUGaDM8=
 
+uuid-mongodb@^2.4.1:
+  version "2.4.1"
+  resolved "https://registry.yarnpkg.com/uuid-mongodb/-/uuid-mongodb-2.4.1.tgz#a7fe991735277b176faeb9ea705c6b01c8833d9e"
+  integrity sha512-sExP9cE0nChsVpmxdB5Qe6qs7P5WbSy9bm9m0t2VXqUSzEdO/YHXzp42wOMdpwYXJ+P9E5iJwRC10p97VGwKeQ==
+  dependencies:
+    uuid "^8.3.2"
+
 uuid@8.3.1:
   version "8.3.1"
   resolved "https://registry.yarnpkg.com/uuid/-/uuid-8.3.1.tgz#2ba2e6ca000da60fce5a196954ab241131e05a31"

@@ -1,5 +1,5 @@
 import { FilterQuery } from '../typings';
-import { DocumentMetadata } from '../metadata/DocumentMetadata';
+import { DocumentMetadata } from '../metadata';
 import { Mode, Type } from '../types';
 
 export class InternalError extends Error {

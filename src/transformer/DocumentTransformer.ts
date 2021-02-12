@@ -1,7 +1,5 @@
-import { DocumentClass, Newable } from '..';
-import { FieldMetadata } from '../metadata/FieldMetadata';
-import { AbstractDocumentMetadata } from '../metadata/AbstractDocumentMetadata';
-import { OptionalId } from '../typings';
+import { AbstractDocumentMetadata, FieldMetadata } from '../metadata';
+import { DocumentClass, Newable, OptionalId } from '../typings';
 import { InternalError } from '../errors';
 
 export type DocumentTransformerCompiledFunction = (
@@ -16,7 +14,7 @@ function reserveVariable(name: string): string {
   return `${name}_${++variableCount}`;
 }
 
-export class DocumentTransformer<T = any, D extends Newable = DocumentClass> {
+export class DocumentTransformer<T = any, D extends Newable = Newable<T>> {
   private isCompiled: boolean = false;
   private compiledToDB: DocumentTransformerCompiledFunction;
   private compiledFromDB: DocumentTransformerCompiledFunction;
@@ -75,7 +73,9 @@ export class DocumentTransformer<T = any, D extends Newable = DocumentClass> {
       const { propertyName, mapping } = this.meta.discriminator;
 
       return props[propertyName] && mapping.has(props[propertyName])
-        ? mapping.get(props[propertyName]).transformer.init(props, parent)
+        ? mapping
+            .get(props[propertyName])
+            .documentTransformer.init(props, parent)
         : undefined;
     }
 
@@ -106,22 +106,21 @@ export class DocumentTransformer<T = any, D extends Newable = DocumentClass> {
         return;
       }
 
-      const { DocumentClass, transformer } = mapping.get(props[propertyName]);
+      const { DocumentClass, documentTransformer } = mapping.get(
+        props[propertyName]
+      );
 
       // when a discriminator type changes, it is brand new, so lets create
       // it from scratch.
       return model instanceof DocumentClass
-        ? transformer.merge(model, props, parent)
-        : transformer.init(props, parent);
+        ? documentTransformer.merge(model, props, parent)
+        : documentTransformer.init(props, parent);
     }
 
     return this.compiledMerge(this.prepare(model), props, parent);
   }
 
-  public fromDB(
-    doc?: Partial<T> | { [key: string]: any },
-    parent?: any
-  ): T | void {
+  public fromDB(doc?: Partial<D> | { [key: string]: any }, parent?: any): T {
     this.assertIsCompiled();
 
     // don't attempt transforming invalid documents into models
@@ -133,7 +132,7 @@ export class DocumentTransformer<T = any, D extends Newable = DocumentClass> {
       const { fieldName, mapping } = this.meta.discriminator;
 
       return doc[fieldName] && mapping.has(doc[fieldName])
-        ? mapping.get(doc[fieldName]).transformer.fromDB(doc, parent)
+        ? mapping.get(doc[fieldName]).documentTransformer.fromDB(doc, parent)
         : undefined;
     }
 
@@ -158,7 +157,7 @@ export class DocumentTransformer<T = any, D extends Newable = DocumentClass> {
       const { propertyName, mapping } = this.meta.discriminator;
 
       return model[propertyName] && mapping.has(model[propertyName])
-        ? mapping.get(model[propertyName]).transformer.toDB(model)
+        ? mapping.get(model[propertyName]).documentTransformer.toDB(model)
         : undefined;
     }
 

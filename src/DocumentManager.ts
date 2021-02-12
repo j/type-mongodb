@@ -8,7 +8,7 @@ import { EventManager } from './events';
 import { Repository } from './repository/Repository';
 import { Session } from './transaction/Session';
 import { EmbeddedDocumentMetadata } from './metadata/EmbeddedDocumentMetadata';
-import { DocumentTransformer } from './document/DocumentTransformer';
+import { DocumentTransformer } from './transformer/DocumentTransformer';
 import { InternalError } from './errors';
 
 export interface ContainerLike {

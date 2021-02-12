@@ -1,9 +1,10 @@
+import { FilterQuery } from 'mongodb';
 import { Newable, OptionalId } from '../typings';
 import { FieldMetadata } from './FieldMetadata';
-import { DocumentTransformer } from '../document/DocumentTransformer';
 import { ParentDefinition } from './definitions';
 import { DiscriminatorMetadata } from './DiscriminatorMetadata';
 import { InternalError } from '../errors';
+import { DocumentTransformer, QueryFilterTransformer } from '../transformer';
 
 export type FieldsMetadata = Map<string, FieldMetadata>;
 
@@ -19,9 +20,10 @@ export abstract class AbstractDocumentMetadata<
   public readonly name: string;
   public readonly fields: FieldsMetadata;
   public readonly idField: FieldMetadata;
-  public readonly transformer: DocumentTransformer;
   public readonly parent?: ParentDefinition;
   public readonly discriminator?: DiscriminatorMetadata;
+  public readonly documentTransformer: DocumentTransformer<T, D>;
+  public readonly queryFilterTransformer: QueryFilterTransformer<T>;
 
   constructor(
     DocumentClass: D,
@@ -34,7 +36,8 @@ export abstract class AbstractDocumentMetadata<
     this.fields = fields;
     this.parent = parent;
     this.discriminator = discriminator;
-    this.transformer = DocumentTransformer.create(this);
+    this.documentTransformer = DocumentTransformer.create(this);
+    this.queryFilterTransformer = QueryFilterTransformer.create(this);
 
     // set the idField property if it exists
     this.idField = this.fields.get('_id');
@@ -64,27 +67,34 @@ export abstract class AbstractDocumentMetadata<
    * Maps model fields to a mongodb document.
    */
   toDB(model: Partial<T> | { [key: string]: any }): T & { [key: string]: any } {
-    return this.transformer.toDB(model);
+    return this.documentTransformer.toDB(model);
   }
 
   /**
    * Maps mongodb document(s) to a model.
    */
-  fromDB(doc: Partial<T> | { [key: string]: any }): T {
-    return this.transformer.fromDB(doc);
+  fromDB(doc: Partial<D> | { [key: string]: any }): T {
+    return this.documentTransformer.fromDB(doc);
   }
 
   /**
    * Creates a model from model properties.
    */
   init(props: OptionalId<Partial<T>> | { [key: string]: any }): T {
-    return this.transformer.init(props);
+    return this.documentTransformer.init(props);
   }
 
   /**
    * Creates a model from model properties.
    */
   merge(model: T, props: Partial<T> | { [key: string]: any }): T {
-    return this.transformer.merge(model, props);
+    return this.documentTransformer.merge(model, props);
+  }
+
+  /**
+   * Transforms query filters.
+   */
+  transformQueryFilter(input: FilterQuery<T>): FilterQuery<any> {
+    return this.queryFilterTransformer.transform(input);
   }
 }

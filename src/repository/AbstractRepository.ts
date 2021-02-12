@@ -1,4 +1,13 @@
-import { Cursor } from 'mongodb';
+import {
+  Cursor,
+  FindOneOptions,
+  FindOneAndUpdateOption,
+  FindOneAndReplaceOption,
+  FindOneAndDeleteOption,
+  UpdateWriteOpResult,
+  ReplaceWriteOpResult,
+  DeleteWriteOpResultObject
+} from 'mongodb';
 import {
   Collection,
   Db,
@@ -14,18 +23,9 @@ import {
   InsertWriteOpResult,
   CollectionInsertManyOptions
 } from '../typings';
-import { DocumentMetadata } from '../metadata/DocumentMetadata';
+import { DocumentMetadata } from '../metadata';
 import { ValidationError } from '../errors';
 import { DocumentManager } from '../DocumentManager';
-import {
-  FindOneOptions,
-  FindOneAndUpdateOption,
-  FindOneAndReplaceOption,
-  FindOneAndDeleteOption,
-  UpdateWriteOpResult,
-  ReplaceWriteOpResult,
-  DeleteWriteOpResultObject
-} from 'mongodb';
 import { Type } from '../types';
 
 /**
