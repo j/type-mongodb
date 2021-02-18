@@ -126,7 +126,7 @@ export class DocumentMetadataFactory {
               DocumentClass,
               await this.buildMetadataForDocument(DocumentClass)
             );
-            resolve();
+            resolve(true);
           } catch (err) {
             reject(err);
           }

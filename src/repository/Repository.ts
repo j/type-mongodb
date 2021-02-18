@@ -91,8 +91,14 @@ export class Repository<T> extends AbstractRepository<T> {
   // -------------------------------------------------------------------------
 
   find(query?: FilterQuery<T | any>): Cursor<T>;
-  find(query: FilterQuery<T | any>, opts: FindOneOptions): Cursor<T>;
-  find(query: FilterQuery<T | any>, opts?: FindOneOptions): Cursor<T> {
+  find(
+    query: FilterQuery<T | any>,
+    opts: FindOneOptions<T extends T ? T : T>
+  ): Cursor<T>;
+  find(
+    query: FilterQuery<T | any>,
+    opts?: FindOneOptions<T extends T ? T : T>
+  ): Cursor<T> {
     const cursor = this.collection.find(query, opts);
     cursor.map((doc: any) => this.fromDB(doc));
 
@@ -100,8 +106,8 @@ export class Repository<T> extends AbstractRepository<T> {
   }
 
   findByIds(ids: any[]): Cursor<T>;
-  findByIds(ids: any[], opts: FindOneOptions): Cursor<T>;
-  findByIds(ids: any[], opts?: FindOneOptions): Cursor<T> {
+  findByIds(ids: any[], opts: FindOneOptions<T extends T ? T : T>): Cursor<T>;
+  findByIds(ids: any[], opts?: FindOneOptions<T extends T ? T : T>): Cursor<T> {
     return this.find(
       {
         _id: { $in: ids.map((id) => this.id.convertToDatabaseValue(id)) }
@@ -110,11 +116,17 @@ export class Repository<T> extends AbstractRepository<T> {
     );
   }
 
-  async findById(id: any, opts?: FindOneOptions): Promise<T | null> {
+  async findById(
+    id: any,
+    opts?: FindOneOptions<T extends T ? T : T>
+  ): Promise<T | null> {
     return this.findOne({ _id: this.id.convertToDatabaseValue(id) }, opts);
   }
 
-  async findByIdOrFail(id: any, opts?: FindOneOptions): Promise<T> {
+  async findByIdOrFail(
+    id: any,
+    opts?: FindOneOptions<T extends T ? T : T>
+  ): Promise<T> {
     return this.failIfEmpty(
       this.metadata,
       { _id: id },
@@ -124,7 +136,7 @@ export class Repository<T> extends AbstractRepository<T> {
 
   async findOne(
     filter: FilterQuery<T | any>,
-    opts?: FindOneOptions
+    opts?: FindOneOptions<T extends T ? T : T>
   ): Promise<T | null> {
     const found = await this.collection.findOne(filter, opts);
 
@@ -133,7 +145,7 @@ export class Repository<T> extends AbstractRepository<T> {
 
   async findOneOrFail(
     filter: FilterQuery<T | any>,
-    opts?: FindOneOptions
+    opts?: FindOneOptions<T extends T ? T : T>
   ): Promise<T | null> {
     return this.failIfEmpty(
       this.metadata,
@@ -235,7 +247,7 @@ export class Repository<T> extends AbstractRepository<T> {
   async findOneAndUpdate(
     filter: FilterQuery<T | any>,
     update: UpdateQuery<T>,
-    opts: FindOneAndUpdateOption = {}
+    opts: FindOneAndUpdateOption<T> = {}
   ): Promise<T | null> {
     return this.manager.eventManager.dispatchBeforeAndAfter(
       Events.BeforeUpdate,
@@ -257,7 +269,7 @@ export class Repository<T> extends AbstractRepository<T> {
   async findOneAndUpdateOrFail(
     filter: FilterQuery<T | any>,
     update: UpdateQuery<T>,
-    opts: FindOneAndUpdateOption = {}
+    opts: FindOneAndUpdateOption<T> = {}
   ): Promise<T> {
     return this.failIfEmpty(
       this.metadata,
@@ -269,7 +281,7 @@ export class Repository<T> extends AbstractRepository<T> {
   async findByIdAndUpdate(
     id: any,
     update: UpdateQuery<T>,
-    opts: FindOneAndUpdateOption = {}
+    opts: FindOneAndUpdateOption<T> = {}
   ): Promise<T | null> {
     return this.findOneAndUpdate(
       { _id: this.id.convertToDatabaseValue(id) },
@@ -281,7 +293,7 @@ export class Repository<T> extends AbstractRepository<T> {
   async findByIdAndUpdateOrFail(
     id: any,
     update: UpdateQuery<T>,
-    opts: FindOneAndUpdateOption = {}
+    opts: FindOneAndUpdateOption<T> = {}
   ): Promise<T> {
     return this.findOneAndUpdateOrFail(
       { _id: this.id.convertToDatabaseValue(id) },
@@ -293,7 +305,7 @@ export class Repository<T> extends AbstractRepository<T> {
   async findOneAndReplace(
     filter: FilterQuery<T | any>,
     props: OptionalId<Partial<T>>,
-    opts?: FindOneAndReplaceOption
+    opts?: FindOneAndReplaceOption<T>
   ): Promise<T | null> {
     return this.findOneAnd('Replace', filter, props, {
       returnOriginal: false,
@@ -304,7 +316,7 @@ export class Repository<T> extends AbstractRepository<T> {
   async findOneAndReplaceOrFail(
     filter: FilterQuery<T | any>,
     props: OptionalId<Partial<T>>,
-    opts?: FindOneAndReplaceOption
+    opts?: FindOneAndReplaceOption<T>
   ): Promise<T> {
     return this.failIfEmpty(
       this.metadata,
@@ -316,7 +328,7 @@ export class Repository<T> extends AbstractRepository<T> {
   async findByIdAndReplace(
     id: any,
     props: OptionalId<Partial<T>>,
-    opts?: FindOneAndReplaceOption
+    opts?: FindOneAndReplaceOption<T>
   ): Promise<T | null> {
     return this.findOneAndReplace(
       { _id: this.id.convertToDatabaseValue(id) },
@@ -328,7 +340,7 @@ export class Repository<T> extends AbstractRepository<T> {
   async findByIdAndReplaceOrFail(
     id: any,
     props: OptionalId<Partial<T>>,
-    opts?: FindOneAndReplaceOption
+    opts?: FindOneAndReplaceOption<T>
   ): Promise<T | null> {
     return this.findOneAndReplaceOrFail(
       { _id: this.id.convertToDatabaseValue(id) },
@@ -339,7 +351,7 @@ export class Repository<T> extends AbstractRepository<T> {
 
   async findOneAndDelete(
     filter: FilterQuery<T | any>,
-    opts?: FindOneAndDeleteOption
+    opts?: FindOneAndDeleteOption<T>
   ): Promise<T | null> {
     return this.manager.eventManager.dispatchBeforeAndAfter(
       Events.BeforeDelete,
@@ -354,7 +366,7 @@ export class Repository<T> extends AbstractRepository<T> {
 
   async findOneAndDeleteOrFail(
     filter: FilterQuery<T | any>,
-    opts?: FindOneAndDeleteOption
+    opts?: FindOneAndDeleteOption<T>
   ): Promise<T | null> {
     return this.failIfEmpty(
       this.metadata,
@@ -365,7 +377,7 @@ export class Repository<T> extends AbstractRepository<T> {
 
   async findByIdAndDelete(
     id: any,
-    opts?: FindOneAndDeleteOption
+    opts?: FindOneAndDeleteOption<T>
   ): Promise<T | null> {
     return this.findOneAndDelete(
       { _id: this.id.convertToDatabaseValue(id) },
@@ -375,7 +387,7 @@ export class Repository<T> extends AbstractRepository<T> {
 
   async findByIdAndDeleteOrFail(
     id: any,
-    opts?: FindOneAndDeleteOption
+    opts?: FindOneAndDeleteOption<T>
   ): Promise<T | null> {
     return this.findOneAndDeleteOrFail(
       { _id: this.id.convertToDatabaseValue(id) },

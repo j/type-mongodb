@@ -97,25 +97,31 @@ export abstract class AbstractRepository<T> {
   // -------------------------------------------------------------------------
 
   abstract find(query?: FilterQuery<T | any>): Cursor<T>;
-  abstract find(query: FilterQuery<T | any>, opts: FindOneOptions): Cursor<T>;
-  abstract find(query: FilterQuery<T | any>, opts?: FindOneOptions): Cursor<T>;
+  abstract find(
+    query: FilterQuery<T | any>,
+    opts: FindOneOptions<T>
+  ): Cursor<T>;
+  abstract find(
+    query: FilterQuery<T | any>,
+    opts?: FindOneOptions<T>
+  ): Cursor<T>;
 
   abstract findByIds(ids: any[]): Cursor<T>;
-  abstract findByIds(ids: any[], opts: FindOneOptions): Cursor<T>;
-  abstract findByIds(ids: any[], opts?: FindOneOptions): Cursor<T>;
+  abstract findByIds(ids: any[], opts: FindOneOptions<T>): Cursor<T>;
+  abstract findByIds(ids: any[], opts?: FindOneOptions<T>): Cursor<T>;
 
-  abstract async findById(id: any, opts?: FindOneOptions): Promise<T | null>;
+  abstract findById(id: any, opts?: FindOneOptions<T>): Promise<T | null>;
 
-  abstract async findByIdOrFail(id: any, opts?: FindOneOptions): Promise<T>;
+  abstract findByIdOrFail(id: any, opts?: FindOneOptions<T>): Promise<T>;
 
-  abstract async findOne(
+  abstract findOne(
     filter: FilterQuery<T | any>,
-    opts?: FindOneOptions
+    opts?: FindOneOptions<T>
   ): Promise<T | null>;
 
-  abstract async findOneOrFail(
+  abstract findOneOrFail(
     filter: FilterQuery<T | any>,
-    opts?: FindOneOptions
+    opts?: FindOneOptions<T>
   ): Promise<T | null>;
 
   abstract create(
@@ -126,151 +132,151 @@ export abstract class AbstractRepository<T> {
     props: Partial<T>[],
     opts?: CollectionInsertManyOptions
   ): Promise<T[]>;
-  abstract async create(
+  abstract create(
     props: Partial<T> | Partial<T>[],
     opts?: CollectionInsertOneOptions | CollectionInsertManyOptions
   ): Promise<T | T[]>;
 
-  abstract async createOne(
+  abstract createOne(
     props: Partial<T>,
     opts?: CollectionInsertOneOptions
   ): Promise<T>;
 
-  abstract async createMany(
+  abstract createMany(
     props: Partial<T>[],
     opts?: CollectionInsertManyOptions
   ): Promise<T[]>;
 
-  abstract async insertOne(
+  abstract insertOne(
     model: OptionalId<T>,
     opts?: CollectionInsertOneOptions
   ): Promise<InsertOneWriteOpResult<any>>;
 
-  abstract async insertMany(
+  abstract insertMany(
     models: OptionalId<T>[],
     opts?: CollectionInsertManyOptions
   ): Promise<InsertWriteOpResult<any>>;
 
-  abstract async findOneAndUpdate(
+  abstract findOneAndUpdate(
     filter: FilterQuery<T | any>,
     update: UpdateQuery<T>,
-    opts?: FindOneAndUpdateOption
+    opts?: FindOneAndUpdateOption<T>
   ): Promise<T | null>;
 
-  abstract async findOneAndUpdateOrFail(
+  abstract findOneAndUpdateOrFail(
     filter: FilterQuery<T | any>,
     update: UpdateQuery<T>,
-    opts?: FindOneAndUpdateOption
+    opts?: FindOneAndUpdateOption<T>
   ): Promise<T>;
 
-  abstract async findByIdAndUpdate(
+  abstract findByIdAndUpdate(
     id: any,
     update: UpdateQuery<T>,
-    opts?: FindOneAndUpdateOption
+    opts?: FindOneAndUpdateOption<T>
   ): Promise<T | null>;
 
-  abstract async findByIdAndUpdateOrFail(
+  abstract findByIdAndUpdateOrFail(
     id: any,
     update: UpdateQuery<T>,
-    opts?: FindOneAndUpdateOption
+    opts?: FindOneAndUpdateOption<T>
   ): Promise<T>;
 
-  abstract async findOneAndReplace(
+  abstract findOneAndReplace(
     filter: FilterQuery<T | any>,
     props: OptionalId<Partial<T>>,
-    opts?: FindOneAndReplaceOption
+    opts?: FindOneAndReplaceOption<T>
   ): Promise<T | null>;
 
-  abstract async findOneAndReplaceOrFail(
+  abstract findOneAndReplaceOrFail(
     filter: FilterQuery<T | any>,
     props: OptionalId<Partial<T>>,
-    opts?: FindOneAndReplaceOption
+    opts?: FindOneAndReplaceOption<T>
   ): Promise<T>;
 
-  abstract async findByIdAndReplace(
+  abstract findByIdAndReplace(
     id: any,
     props: OptionalId<Partial<T>>,
-    opts?: FindOneAndReplaceOption
+    opts?: FindOneAndReplaceOption<T>
   ): Promise<T | null>;
 
-  abstract async findByIdAndReplaceOrFail(
+  abstract findByIdAndReplaceOrFail(
     id: any,
     props: OptionalId<Partial<T>>,
-    opts?: FindOneAndReplaceOption
+    opts?: FindOneAndReplaceOption<T>
   ): Promise<T>;
 
-  abstract async findOneAndDelete(
+  abstract findOneAndDelete(
     filter: FilterQuery<T | any>,
-    opts?: FindOneAndDeleteOption
+    opts?: FindOneAndDeleteOption<T>
   ): Promise<T | null>;
 
-  abstract async findOneAndDeleteOrFail(
+  abstract findOneAndDeleteOrFail(
     filter: FilterQuery<T | any>,
-    opts?: FindOneAndDeleteOption
+    opts?: FindOneAndDeleteOption<T>
   ): Promise<T>;
 
-  abstract async findByIdAndDelete(
+  abstract findByIdAndDelete(
     id: any,
-    opts?: FindOneAndDeleteOption
+    opts?: FindOneAndDeleteOption<T>
   ): Promise<T | null>;
 
-  abstract async findByIdAndDeleteOrFail(
+  abstract findByIdAndDeleteOrFail(
     id: any,
-    opts?: FindOneAndDeleteOption
+    opts?: FindOneAndDeleteOption<T>
   ): Promise<T | null>;
 
-  abstract async updateOne(
+  abstract updateOne(
     filter: FilterQuery<T | any>,
     update: UpdateQuery<T>,
     opts?: UpdateOneOptions
   ): Promise<UpdateWriteOpResult>;
 
-  abstract async updateById(
+  abstract updateById(
     id: any,
     update: UpdateQuery<T>,
     opts?: UpdateOneOptions
   ): Promise<UpdateWriteOpResult>;
 
-  abstract async updateMany(
+  abstract updateMany(
     filter: FilterQuery<T | any>,
     update: UpdateQuery<T>,
     opts?: UpdateManyOptions
   ): Promise<UpdateWriteOpResult>;
 
-  abstract async updateByIds(
+  abstract updateByIds(
     ids: any[],
     update: UpdateQuery<T>,
     opts?: UpdateManyOptions
   ): Promise<UpdateWriteOpResult>;
 
-  abstract async replaceOne(
+  abstract replaceOne(
     filter: FilterQuery<T | any>,
     props: Partial<T>,
     opts?: ReplaceOneOptions
   ): Promise<ReplaceWriteOpResult>;
 
-  abstract async replaceById(
+  abstract replaceById(
     id: any,
     props: Partial<T>,
     opts?: ReplaceOneOptions
   ): Promise<ReplaceWriteOpResult>;
 
-  abstract async deleteOne(
+  abstract deleteOne(
     filter: FilterQuery<T | any>,
     opts?: CommonOptions & { bypassDocumentValidation?: boolean }
   ): Promise<boolean>;
 
-  abstract async deleteById(
+  abstract deleteById(
     id: any,
     opts?: CommonOptions & { bypassDocumentValidation?: boolean }
   ): Promise<boolean>;
 
-  abstract async deleteMany(
+  abstract deleteMany(
     filter: FilterQuery<T | any>,
     opts?: CommonOptions
   ): Promise<DeleteWriteOpResultObject>;
 
-  abstract async deleteByIds(
+  abstract deleteByIds(
     ids: any[],
     opts?: CommonOptions
   ): Promise<DeleteWriteOpResultObject>;

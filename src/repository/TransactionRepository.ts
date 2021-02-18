@@ -46,32 +46,32 @@ export class TransactionRepository<T> extends AbstractRepository<T> {
     return this.repository.metadata;
   }
 
-  find(query?: FilterQuery<T | any>, opts: FindOneOptions = {}): Cursor<T> {
+  find(query?: FilterQuery<T | any>, opts: FindOneOptions<T> = {}): Cursor<T> {
     return this.repository.find(query, this.opts(opts));
   }
 
-  findByIds(ids: any[], opts?: FindOneOptions): Cursor<T> {
+  findByIds(ids: any[], opts?: FindOneOptions<T>): Cursor<T> {
     return this.repository.findByIds(ids, this.opts(opts));
   }
 
-  async findById(id: any, opts?: FindOneOptions): Promise<T | null> {
+  async findById(id: any, opts?: FindOneOptions<T>): Promise<T | null> {
     return this.repository.findById(id, this.opts(opts));
   }
 
-  async findByIdOrFail(id: any, opts?: FindOneOptions): Promise<T> {
+  async findByIdOrFail(id: any, opts?: FindOneOptions<T>): Promise<T> {
     return this.repository.findByIdOrFail(id, this.opts(opts));
   }
 
   async findOne(
     filter: FilterQuery<T | any>,
-    opts: FindOneOptions = {}
+    opts: FindOneOptions<T> = {}
   ): Promise<T | null> {
     return this.repository.findOne(filter, this.opts(opts));
   }
 
   async findOneOrFail(
     filter: FilterQuery<T | any>,
-    opts?: FindOneOptions
+    opts?: FindOneOptions<T>
   ): Promise<T | null> {
     return this.repository.findOneOrFail(filter, this.opts(opts));
   }
@@ -116,7 +116,7 @@ export class TransactionRepository<T> extends AbstractRepository<T> {
   async findOneAndUpdate(
     filter: FilterQuery<T | any>,
     update: UpdateQuery<T>,
-    opts: FindOneAndUpdateOption = {}
+    opts: FindOneAndUpdateOption<T> = {}
   ): Promise<T | null> {
     return this.repository.findOneAndUpdate(filter, update, this.opts(opts));
   }
@@ -124,7 +124,7 @@ export class TransactionRepository<T> extends AbstractRepository<T> {
   async findOneAndUpdateOrFail(
     filter: FilterQuery<T | any>,
     update: UpdateQuery<T>,
-    opts: FindOneAndUpdateOption = {}
+    opts: FindOneAndUpdateOption<T> = {}
   ): Promise<T> {
     return this.repository.findOneAndUpdateOrFail(filter, update, opts);
   }
@@ -132,7 +132,7 @@ export class TransactionRepository<T> extends AbstractRepository<T> {
   async findByIdAndUpdate(
     id: any,
     update: UpdateQuery<T>,
-    opts: FindOneAndUpdateOption = {}
+    opts: FindOneAndUpdateOption<T> = {}
   ): Promise<T | null> {
     return this.repository.findByIdAndUpdate(id, update, this.opts(opts));
   }
@@ -140,7 +140,7 @@ export class TransactionRepository<T> extends AbstractRepository<T> {
   async findByIdAndUpdateOrFail(
     id: any,
     update: UpdateQuery<T>,
-    opts: FindOneAndUpdateOption = {}
+    opts: FindOneAndUpdateOption<T> = {}
   ): Promise<T | null> {
     return this.repository.findOneAndUpdateOrFail(id, update, this.opts(opts));
   }
@@ -148,7 +148,7 @@ export class TransactionRepository<T> extends AbstractRepository<T> {
   async findOneAndReplace(
     filter: FilterQuery<T | any>,
     props: OptionalId<Partial<T>>,
-    opts?: FindOneAndReplaceOption
+    opts?: FindOneAndReplaceOption<T>
   ): Promise<T | null> {
     return this.repository.findOneAndReplace(filter, props, this.opts(opts));
   }
@@ -156,7 +156,7 @@ export class TransactionRepository<T> extends AbstractRepository<T> {
   async findOneAndReplaceOrFail(
     filter: FilterQuery<T | any>,
     props: OptionalId<Partial<T>>,
-    opts?: FindOneAndReplaceOption
+    opts?: FindOneAndReplaceOption<T>
   ): Promise<T | null> {
     return this.repository.findOneAndReplaceOrFail(
       filter,
@@ -168,7 +168,7 @@ export class TransactionRepository<T> extends AbstractRepository<T> {
   async findByIdAndReplace(
     id: any,
     props: OptionalId<Partial<T>>,
-    opts?: FindOneAndReplaceOption
+    opts?: FindOneAndReplaceOption<T>
   ): Promise<T | null> {
     return this.repository.findByIdAndReplace(id, props, this.opts(opts));
   }
@@ -176,35 +176,35 @@ export class TransactionRepository<T> extends AbstractRepository<T> {
   async findByIdAndReplaceOrFail(
     id: any,
     props: OptionalId<Partial<T>>,
-    opts?: FindOneAndReplaceOption
+    opts?: FindOneAndReplaceOption<T>
   ): Promise<T | null> {
     return this.repository.findByIdAndReplaceOrFail(id, props, this.opts(opts));
   }
 
   async findOneAndDelete(
     filter: FilterQuery<T | any>,
-    opts?: FindOneAndDeleteOption
+    opts?: FindOneAndDeleteOption<T>
   ): Promise<T | null> {
     return this.repository.findOneAndDelete(filter, this.opts(opts));
   }
 
   async findOneAndDeleteOrFail(
     filter: FilterQuery<T | any>,
-    opts?: FindOneAndDeleteOption
+    opts?: FindOneAndDeleteOption<T>
   ): Promise<T | null> {
     return this.repository.findOneAndDeleteOrFail(filter, this.opts(opts));
   }
 
   async findByIdAndDelete(
     id: any,
-    opts?: FindOneAndDeleteOption
+    opts?: FindOneAndDeleteOption<T>
   ): Promise<T | null> {
     return this.repository.findByIdAndDelete(id, this.opts(opts));
   }
 
   async findByIdAndDeleteOrFail(
     id: any,
-    opts?: FindOneAndDeleteOption
+    opts?: FindOneAndDeleteOption<T>
   ): Promise<T | null> {
     return this.repository.findByIdAndDeleteOrFail(id, this.opts(opts));
   }
