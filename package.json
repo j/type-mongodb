@@ -24,7 +24,7 @@
   "main": "lib/index.js",
   "typings": "lib/index.d.ts",
   "scripts": {
-    "build": "tsc -b . --force",
+    "build": "tsc -b .",
     "clean": "rimraf lib",
     "watch": "tsc -w",
     "prepublishOnly": "yarn clean && yarn build",
