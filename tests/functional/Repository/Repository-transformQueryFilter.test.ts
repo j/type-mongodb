@@ -48,6 +48,11 @@ describe('Repository.castFilter', () => {
   const cases = [
     ['casts _id', { _id: id().from }, { _id: id().to }],
     [
+      'casts _id nested with operators',
+      { _id: { $eq: id().from } },
+      { _id: { $eq: id().to } }
+    ],
+    [
       'casts UUID with mapped field name',
       { uuid: uuid().from },
       { uid: uuid().to }

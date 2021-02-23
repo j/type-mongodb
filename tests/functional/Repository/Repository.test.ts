@@ -160,7 +160,7 @@ describe('DocumentManager -> queries, inserts, & updates', () => {
     const _id = new ObjectId();
     await expect(
       manager.getRepository(User).findByIdOrFail(_id)
-    ).rejects.toThrow(`"User" with id "${_id}" not found`);
+    ).rejects.toThrow(`"User" not found`);
     expect(spies.findOne).toHaveBeenCalledTimes(1);
     expect(spies.findOne).toHaveBeenCalledWith({ _id }, undefined);
     expect(spies.fromDB).toHaveBeenCalledTimes(0);
@@ -178,7 +178,7 @@ describe('DocumentManager -> queries, inserts, & updates', () => {
   test('findOneOrFail() -> fails when not found', async () => {
     await expect(
       manager.getRepository(User).findOneOrFail({ name: 'Nope' })
-    ).rejects.toThrow(`"User" not found with criteria: '{"name":"Nope"}'`);
+    ).rejects.toThrow(`"User" not found`);
     expect(spies.findOne).toHaveBeenCalledTimes(1);
     expect(spies.findOne).toHaveBeenCalledWith({ name: 'Nope' }, undefined);
     expect(spies.fromDB).toHaveBeenCalledTimes(0);

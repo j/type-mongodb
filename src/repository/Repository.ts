@@ -115,14 +115,17 @@ export class Repository<T> extends AbstractRepository<T> {
   findByIds(ids: any[]): Cursor<T>;
   findByIds(ids: any[], opts: FindOneOptions & FilterOptions): Cursor<T>;
   findByIds(ids: any[], opts?: FindOneOptions & FilterOptions): Cursor<T> {
-    return this.find({ _id: { $in: ids } }, opts);
+    return this.find(
+      { [this.metadata.idField.propertyName]: { $in: ids } },
+      opts
+    );
   }
 
   async findById(
     id: any,
     opts?: FindOneOptions & FilterOptions
   ): Promise<T | null> {
-    return this.findOne({ _id: id }, opts);
+    return this.findOne({ [this.metadata.idField.propertyName]: id }, opts);
   }
 
   async findByIdOrFail(
@@ -131,7 +134,7 @@ export class Repository<T> extends AbstractRepository<T> {
   ): Promise<T> {
     return this.failIfEmpty(
       this.metadata,
-      { _id: id },
+      { [this.metadata.idField.propertyName]: id },
       await this.findById(id, opts)
     );
   }
@@ -219,10 +222,11 @@ export class Repository<T> extends AbstractRepository<T> {
     const afterInsertEvents: Promise<any>[] = [];
 
     const docs: OptionalId<T>[] = models.map((model) => this.toDB(model as T));
+    const idProp = this.metadata.idField.propertyName;
 
     models.forEach((model) => {
-      if (!model._id) {
-        model._id = this.id.createJSValue();
+      if (idProp && !model[idProp]) {
+        model[idProp] = this.id.createJSValue();
       }
 
       beforeInsertEvents.push(
@@ -293,7 +297,11 @@ export class Repository<T> extends AbstractRepository<T> {
     update: UpdateQuery<T>,
     opts: FindOneAndUpdateOption & FilterOptions = {}
   ): Promise<T | null> {
-    return this.findOneAndUpdate({ _id: id }, update, opts);
+    return this.findOneAndUpdate(
+      { [this.metadata.idField.propertyName]: id },
+      update,
+      opts
+    );
   }
 
   async findByIdAndUpdateOrFail(
@@ -301,7 +309,11 @@ export class Repository<T> extends AbstractRepository<T> {
     update: UpdateQuery<T>,
     opts: FindOneAndUpdateOption & FilterOptions = {}
   ): Promise<T> {
-    return this.findOneAndUpdateOrFail({ _id: id }, update, opts);
+    return this.findOneAndUpdateOrFail(
+      { [this.metadata.idField.propertyName]: id },
+      update,
+      opts
+    );
   }
 
   async findOneAndReplace(
@@ -337,7 +349,11 @@ export class Repository<T> extends AbstractRepository<T> {
     props: OptionalId<Partial<T>>,
     opts?: FindOneAndReplaceOption & FilterOptions
   ): Promise<T | null> {
-    return this.findOneAndReplace({ _id: id }, props, opts);
+    return this.findOneAndReplace(
+      { [this.metadata.idField.propertyName]: id },
+      props,
+      opts
+    );
   }
 
   async findByIdAndReplaceOrFail(
@@ -345,7 +361,11 @@ export class Repository<T> extends AbstractRepository<T> {
     props: OptionalId<Partial<T>>,
     opts?: FindOneAndReplaceOption & FilterOptions
   ): Promise<T | null> {
-    return this.findOneAndReplaceOrFail({ _id: id }, props, opts);
+    return this.findOneAndReplaceOrFail(
+      { [this.metadata.idField.propertyName]: id },
+      props,
+      opts
+    );
   }
 
   async findOneAndDelete(
@@ -379,14 +399,20 @@ export class Repository<T> extends AbstractRepository<T> {
     id: any,
     opts?: FindOneAndDeleteOption & FilterOptions
   ): Promise<T | null> {
-    return this.findOneAndDelete({ _id: id }, opts);
+    return this.findOneAndDelete(
+      { [this.metadata.idField.propertyName]: id },
+      opts
+    );
   }
 
   async findByIdAndDeleteOrFail(
     id: any,
     opts?: FindOneAndDeleteOption & FilterOptions
   ): Promise<T | null> {
-    return this.findOneAndDeleteOrFail({ _id: id }, opts);
+    return this.findOneAndDeleteOrFail(
+      { [this.metadata.idField.propertyName]: id },
+      opts
+    );
   }
 
   async updateOne(
@@ -416,7 +442,11 @@ export class Repository<T> extends AbstractRepository<T> {
     update: UpdateQuery<T>,
     opts?: UpdateOneOptions & FilterOptions
   ): Promise<UpdateWriteOpResult> {
-    return this.updateOne({ _id: id }, update, opts);
+    return this.updateOne(
+      { [this.metadata.idField.propertyName]: id },
+      update,
+      opts
+    );
   }
 
   async updateMany(
@@ -446,7 +476,11 @@ export class Repository<T> extends AbstractRepository<T> {
     update: UpdateQuery<T>,
     opts?: UpdateManyOptions & FilterOptions
   ): Promise<UpdateWriteOpResult> {
-    return this.updateMany({ _id: { $in: ids } }, update, opts);
+    return this.updateMany(
+      { [this.metadata.idField.propertyName]: { $in: ids } },
+      update,
+      opts
+    );
   }
 
   async replaceOne(
@@ -485,7 +519,11 @@ export class Repository<T> extends AbstractRepository<T> {
     props: Partial<T>,
     opts?: ReplaceOneOptions & FilterOptions
   ): Promise<ReplaceWriteOpResult> {
-    return this.replaceOne({ _id: id }, props, opts);
+    return this.replaceOne(
+      { [this.metadata.idField.propertyName]: id },
+      props,
+      opts
+    );
   }
 
   async deleteOne(
@@ -516,7 +554,7 @@ export class Repository<T> extends AbstractRepository<T> {
     id: any,
     opts?: CommonOptions & { bypassDocumentValidation?: boolean }
   ): Promise<boolean> {
-    return this.deleteOne({ _id: id }, opts);
+    return this.deleteOne({ [this.metadata.idField.propertyName]: id }, opts);
   }
 
   async deleteMany(
@@ -542,12 +580,22 @@ export class Repository<T> extends AbstractRepository<T> {
     ids: any[],
     opts?: CommonOptions & FilterOptions
   ): Promise<DeleteWriteOpResultObject> {
-    return this.deleteMany({ _id: { $in: ids } }, opts);
+    return this.deleteMany(
+      {
+        [this.metadata.idField.propertyName]: {
+          $in: ids.map((i) => this.id.convertToDatabaseValue(i))
+        }
+      },
+      {
+        ...opts,
+        transformQueryFilter: false
+      }
+    );
   }
 
   transformQueryFilter(
     input: FilterQuery<T | any>,
-    opts?: { transformQueryFilter?: boolean }
+    opts?: FilterOptions
   ): FilterQuery<any> {
     if (typeof opts === 'object' && 'transformQueryFilter' in opts) {
       const transformQueryFilter = opts.transformQueryFilter;

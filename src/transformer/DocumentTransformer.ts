@@ -342,12 +342,14 @@ export class DocumentTransformer<T = any, D extends Newable = Newable<T>> {
    * Initializes "_id" field if it's a valid type.
    */
   private prepare<T = any>(object: any): T {
-    if (
-      typeof object._id === 'undefined' &&
-      typeof this.meta.idField !== 'undefined' &&
-      this.meta.idField.shouldCreateJSValue
-    ) {
-      object._id = this.meta.idField.createJSValue();
+    const idField = this.meta.idField;
+
+    if (typeof idField !== 'undefined' && idField.shouldCreateJSValue) {
+      const idProp = idField.propertyName;
+
+      if (typeof object[idProp] === 'undefined') {
+        object[idProp] = this.meta.idField.createJSValue();
+      }
     }
 
     return object;

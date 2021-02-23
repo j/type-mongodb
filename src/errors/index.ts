@@ -75,20 +75,9 @@ export class ValidationError extends Error {
   }
 
   static documentNotFound(meta: DocumentMetadata, filter: FilterQuery<any>) {
-    let message: string;
-
-    if (
-      filter &&
-      Object.keys(filter).length === 1 &&
-      typeof filter._id !== 'undefined'
-    ) {
-      message = `"${meta.name}" with id "${filter._id}" not found`;
-    } else {
-      message = `"${meta.name}" not found with criteria: '${JSON.stringify(
-        filter
-      )}'`;
-    }
-
-    this.throw(message, { code: 'DOCUMENT_NOT_FOUND' });
+    this.throw(`"${meta.name}" not found`, {
+      code: 'DOCUMENT_NOT_FOUND',
+      filter
+    });
   }
 }

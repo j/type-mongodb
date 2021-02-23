@@ -20,8 +20,8 @@ import { ValidationError } from '../../src/errors';
 
 @Document()
 class DocumentWithRenamedFields {
-  @Id()
-  _id: ObjectId;
+  @Id({ name: '_id' })
+  id: ObjectId;
 
   @Field({ name: 'active' })
   isActive: boolean;
@@ -289,26 +289,39 @@ describe('DocumentManager', () => {
   describe('field renaming', () => {
     it('init', () => {
       const model = manager.init(DocumentWithRenamedFields, { isActive: true });
+      expect(model.id).toBeInstanceOf(ObjectId);
       expect(model.isActive).toBeTruthy();
     });
     it('merge', () => {
+      const id1 = new ObjectId();
+      const id2 = new ObjectId();
       const first = Object.assign(new DocumentWithRenamedFields(), {
+        id: id1,
         isActive: false
       });
       const model = manager.merge(DocumentWithRenamedFields, first, {
+        id: id2,
         isActive: true
       });
       expect(model.isActive).toBeTruthy();
+      expect(model.id).toBe(id2);
     });
     it('fromDB', () => {
-      const model = manager.fromDB(DocumentWithRenamedFields, { active: true });
+      const _id = new ObjectId();
+      const model = manager.fromDB(DocumentWithRenamedFields, {
+        _id,
+        active: true
+      });
       expect(model.isActive).toBeTruthy();
+      expect(model.id).toBe(_id);
     });
     it('toDb', () => {
+      const id = new ObjectId();
       const doc = manager.toDB(
         DocumentWithRenamedFields,
-        Object.assign(new DocumentWithRenamedFields(), { isActive: true })
+        Object.assign(new DocumentWithRenamedFields(), { id, isActive: true })
       );
+      expect(doc._id).toBe(id);
       expect(doc.active).toBeTruthy();
     });
   });

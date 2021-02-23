@@ -40,7 +40,7 @@ export abstract class AbstractDocumentMetadata<
     this.queryFilterTransformer = QueryFilterTransformer.create(this);
 
     // set the idField property if it exists
-    this.idField = this.fields.get('_id');
+    this.idField = [...this.fields.values()].find((f) => f.fieldName === '_id');
 
     if (
       // root documents must have an `_id` field
