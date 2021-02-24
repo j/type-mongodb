@@ -35,7 +35,6 @@ interface FieldOptions {
   type?: Newable<Type> | Type;
   extensions?: Record<any, any>;
   create?: boolean;
-  createJSValue?: (v: any) => any;
 }
 
 export function Field(options?: FieldOptions): PropertyDecorator;
@@ -86,10 +85,22 @@ function addFieldDefinition(
     isId: options.isId === true,
     isEmbedded: typeof embedded !== 'undefined',
     embedded,
-    type: fieldToType(target, field, options.type),
+    ...fieldToType(target, field, options.type),
     shouldCreateJSValue:
       typeof options.create === 'boolean' ? options.create : false
   };
+
+  if (def.type && def.typeIsArray && def.shouldCreateJSValue) {
+    console.log(
+      def.type,
+      def.typeIsArray,
+      def.shouldCreateJSValue,
+      options.create
+    );
+    InternalError.throw(
+      `Option "create" is not supported for array types for property "${def.propertyName}" in "${def.DocumentClass.name}"`
+    );
+  }
 
   if (definitionStorage.fields.has(def.DocumentClass)) {
     definitionStorage.fields.get(def.DocumentClass).set(field, def);

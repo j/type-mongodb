@@ -1,23 +1,34 @@
 import 'reflect-metadata';
 import { Newable } from '../typings';
 import { ObjectIdType, Type } from '../types';
+import { FieldDefinition } from 'src/metadata';
 
 export function fieldToType(
   target: Object,
   name: string,
   type?: Type | Newable<Type>
-): Type | undefined {
+): Pick<FieldDefinition, 'type' | 'typeIsArray'> {
+  const designType = Reflect.getMetadata('design:type', target, name);
+
   if (typeof type !== 'undefined') {
-    return type instanceof Type ? type : Type.getType(type);
+    return {
+      type: type instanceof Type ? type : Type.getType(type),
+      typeIsArray: designType === Array
+    };
   }
 
-  const designType = Reflect.getMetadata('design:type', target, name);
   if (typeof designType?.name !== 'string') {
-    return;
+    return {
+      type: undefined,
+      typeIsArray: false
+    };
   }
 
   switch (designType.name.toLowerCase()) {
     case 'objectid':
-      return Type.getType(ObjectIdType);
+      return {
+        type: Type.getType(ObjectIdType),
+        typeIsArray: false
+      };
   }
 }

@@ -21,6 +21,7 @@ export class FieldMetadata<T = any> {
   public readonly embeddedType?: Newable;
   public readonly embeddedMetadata?: EmbeddedDocumentMetadata;
   public readonly type: Type;
+  public readonly typeIsArray: boolean;
   public readonly shouldCreateJSValue: boolean;
 
   constructor(opts: FieldMetadataOpts) {
@@ -34,6 +35,7 @@ export class FieldMetadata<T = any> {
     this.embeddedType = opts.embeddedType;
     this.embeddedMetadata = opts.embeddedMetadata;
     this.type = opts.type;
+    this.typeIsArray = opts.typeIsArray;
     this.shouldCreateJSValue = opts.shouldCreateJSValue;
 
     if (this.type && !(this.type instanceof Type)) {

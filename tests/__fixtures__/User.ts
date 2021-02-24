@@ -1,4 +1,4 @@
-import { Document, Id, Field, UUIDType } from '../../src';
+import { Document, Id, Field, UUIDType, ObjectIdType } from '../../src';
 import { ObjectId } from 'mongodb';
 import { UserRepository } from './UserRepository';
 
@@ -57,6 +57,9 @@ export class User {
 
   @Field({ type: UUIDType })
   topReviews: string[];
+
+  @Field({ type: ObjectIdType })
+  bestFriends: ObjectId[];
 
   @Field()
   createdAt: Date;

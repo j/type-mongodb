@@ -203,7 +203,11 @@ export class DocumentTransformer<T = any, D extends Newable = Newable<T>> {
 
         return `
           if (typeof ${variable} === 'undefined') {
-            const ${createJsVar} = ${typeVar}.createJSValue();
+            ${
+              fieldMetadata.typeIsArray
+                ? `const ${createJsVar} = [${typeVar}.createJSValue()];`
+                : `const ${createJsVar} = ${typeVar}.createJSValue();`
+            }
             
             if (typeof ${createJsVar} !== 'undefined') {
               ${variable} = ${createJsVar};
@@ -215,7 +219,11 @@ export class DocumentTransformer<T = any, D extends Newable = Newable<T>> {
       const setTargetCode = (convertFn: string = 'convertToJSValue') => {
         return `
           if (typeof source["${accessor}"] !== 'undefined') {
-            target["${setter}"] = ${typeVar}.${convertFn}(source["${accessor}"]);
+            if (Array.isArray(source["${accessor}"])) {
+              target["${setter}"] = source["${accessor}"].map(v => ${typeVar}.${convertFn}(v));
+            } else {
+              target["${setter}"] = ${typeVar}.${convertFn}(source["${accessor}"]);
+            }
           }
         `;
       };

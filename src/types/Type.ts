@@ -77,11 +77,15 @@ export class Type<JSType = any, DBType = JSType, ConvertibleTypes = JSType> {
   /**
    * Returns or creates a type by the given constructor.
    */
-  static getType<M, D>(Ctor: Newable<Type<M, D>>): Type<M, D> {
-    const key = Ctor.name;
+  static getType<M, D>(type: Newable<Type<M, D>> | Type<M, D>): Type<M, D> {
+    if (type instanceof Type) {
+      return type;
+    }
+
+    const key = type.name;
 
     if (!Type.types.has(key)) {
-      Type.types.set(key, new Ctor());
+      Type.types.set(key, new type());
     }
 
     return Type.types.get(key);

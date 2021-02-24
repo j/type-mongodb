@@ -18,6 +18,7 @@ export interface DocumentDefinition<T = any> {
 export interface FieldDefinition<T = any> {
   DocumentClass: DocumentClass<T>;
   type: Type;
+  typeIsArray: boolean;
   propertyName: string;
   fieldName: string;
   isEmbedded: boolean;

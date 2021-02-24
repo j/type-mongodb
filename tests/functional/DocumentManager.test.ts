@@ -128,6 +128,7 @@ describe('DocumentManager', () => {
 
     test('converts to User document', () => {
       const user = createUsers().john;
+      user.topReviews = [];
       const result = manager.toDB(User, user);
       expect(result.address instanceof Address).toBeFalsy();
       expect(result.reviews).toHaveLength(2);
@@ -142,6 +143,7 @@ describe('DocumentManager', () => {
           { product: { sku: '1', title: 'Poster' }, rating: 10 },
           { product: { sku: '2', title: 'Frame' }, rating: 5 }
         ],
+        topReviews: [],
         isActive: true,
         createdAt: user.createdAt
       });
@@ -252,7 +254,7 @@ describe('DocumentManager', () => {
     test('creates an object of User', () => {
       const user = createUsers().john;
       const result = manager.init(User, {
-        _id: user._id,
+        _id: user._id.toHexString(),
         name: 'John',
         address: {
           city: 'San Diego',
@@ -262,6 +264,8 @@ describe('DocumentManager', () => {
           { product: { sku: '1', title: 'Poster' }, rating: 10 },
           { product: { sku: '2', title: 'Frame' }, rating: 5 }
         ],
+        topReviews: ['393967e0-8de1-11e8-9eb6-529269fb1459'],
+        bestFriends: ['507f191e810c19729de860ea'],
         isActive: true,
         createdAt: user.createdAt
       });
@@ -272,7 +276,14 @@ describe('DocumentManager', () => {
       expect(result.reviews[0].product).toBeInstanceOf(Product);
       expect(result.reviews[1]).toBeInstanceOf(Review);
       expect(result.reviews[1].product).toBeInstanceOf(Product);
-      expect(result).toEqual(user);
+      expect(result.topReviews).toEqual([
+        '393967e0-8de1-11e8-9eb6-529269fb1459'
+      ]);
+      expect(result.bestFriends).toHaveLength(1);
+      expect(result.bestFriends[0]).toBeInstanceOf(ObjectId);
+      expect(result.bestFriends[0].toHexString()).toEqual(
+        '507f191e810c19729de860ea'
+      );
     });
 
     test('inits embedded document', () => {
