@@ -1,6 +1,6 @@
 {
   "name": "type-mongodb",
-  "version": "1.0.0-beta.14",
+  "version": "1.0.0-beta.15",
   "description": "A simple decorator based MongoDB ODM.",
   "repository": "https://github.com/j/type-mongodb",
   "keywords": [
