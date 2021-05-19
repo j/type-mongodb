@@ -1,7 +1,7 @@
 import { DiscriminatorDefinition } from './definitions';
 import { AbstractDocumentMetadata } from './AbstractDocumentMetadata';
 import { DocumentClass } from '../typings';
-import { definitionStorage } from '../utils/definitionStorage';
+import { definitionStorage } from '../utils';
 import { InternalError } from '../errors';
 
 export class DiscriminatorMetadata {

@@ -1,4 +1,4 @@
-import { FilterQuery } from '../typings';
+import { Filter } from 'mongodb';
 import { DocumentMetadata } from '../metadata';
 import { Mode, Type } from '../types';
 
@@ -74,7 +74,7 @@ export class ValidationError extends Error {
     });
   }
 
-  static documentNotFound(meta: DocumentMetadata, filter: FilterQuery<any>) {
+  static documentNotFound(meta: DocumentMetadata, filter: Filter<any>) {
     this.throw(`"${meta.name}" not found`, {
       code: 'DOCUMENT_NOT_FOUND',
       filter

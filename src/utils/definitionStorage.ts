@@ -4,7 +4,7 @@ import {
   FieldDefinition,
   ParentDefinition,
   DiscriminatorDefinition
-} from '../metadata/definitions';
+} from '../metadata';
 
 type FieldName = string;
 

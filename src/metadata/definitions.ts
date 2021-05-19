@@ -1,5 +1,5 @@
 import { DocumentClass, Newable } from '../typings';
-import { Repository } from '../repository/Repository';
+import { Repository } from '../repository';
 import { Type } from '../types';
 
 /**

@@ -1,5 +1,5 @@
 import 'reflect-metadata';
-import { ObjectId, Binary, FilterQuery } from 'mongodb';
+import { ObjectId, Binary, Filter } from 'mongodb';
 import { Simple } from '../../__fixtures__/Simple';
 import { User } from '../../__fixtures__/User';
 import { DocumentManager } from '../../../src/DocumentManager';
@@ -181,7 +181,7 @@ describe('Repository.castFilter', () => {
       { 'reviews.0.productUUIDs': { $not: { $eq: uuid().from } } }, // second value already converted
       { 'reviews.0.productUUIDs': { $not: { $eq: uuid().to } } }
     ]
-  ] as Array<[string, FilterQuery<User>, FilterQuery<any>, boolean?]>;
+  ] as Array<[string, Filter<User>, Filter<any>, boolean?]>;
 
   cases.forEach(([name, query, expected]) => {
     test(`${name}`, async () => {

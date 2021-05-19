@@ -1,5 +1,6 @@
+import { OptionalId } from 'mongodb';
 import { AbstractDocumentMetadata, FieldMetadata } from '../metadata';
-import { DocumentClass, Newable, OptionalId } from '../typings';
+import { DocumentClass, Newable } from '../typings';
 import { InternalError } from '../errors';
 
 export type DocumentTransformerCompiledFunction = (

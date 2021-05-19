@@ -5,7 +5,7 @@ import {
   FieldsMetadata
 } from './AbstractDocumentMetadata';
 import { Connection } from '../connection/Connection';
-import { Repository } from '../repository/Repository';
+import { Repository } from '../repository';
 import { DocumentManager } from '../DocumentManager';
 
 export interface DocumentMetadataOpts<T = any, D extends Newable = Newable<T>> {
@@ -28,7 +28,7 @@ export class DocumentMetadata<
   public readonly dm: DocumentManager;
   public readonly connection: Connection;
   public readonly db: Db;
-  public readonly collection: Collection;
+  public readonly collection: Collection<T>;
   public readonly extensions: Record<any, any>;
   public readonly repository: Repository<T>;
 

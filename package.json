@@ -1,6 +1,6 @@
 {
   "name": "type-mongodb",
-  "version": "1.0.0-beta.15",
+  "version": "2.0.0-beta.0",
   "description": "A simple decorator based MongoDB ODM.",
   "repository": "https://github.com/j/type-mongodb",
   "keywords": [
@@ -40,19 +40,18 @@
   },
   "devDependencies": {
     "@types/jest": "^26.0.3",
-    "@types/mongodb": "3.5.25",
     "@types/uuid": "^8.3.0",
     "benchmark": "^2.1.4",
     "husky": "^4.2.5",
     "jest": "^26.1.0",
-    "mongodb": "3.x.x",
+    "mongodb": "^4.0.0",
     "mongodb-runner": "^4.7.2",
     "prettier": "^2.0.5",
     "pretty-quick": "^2.0.1",
     "reflect-metadata": "^0.1.13",
     "release-it": "^14.2.2",
     "ts-jest": "^26.1.1",
-    "typescript": "^3.9.5",
+    "typescript": "^4.2.4",
     "uuid": "^8.3.2",
     "uuid-mongodb": "^2.4.1"
   },
@@ -60,7 +59,7 @@
     "uuid": "^8.3.2"
   },
   "peerDependencies": {
-    "mongodb": "3.x.x",
+    "mongodb": "^4.0.0",
     "reflect-metadata": "^0.1.13"
   },
   "prettier": {

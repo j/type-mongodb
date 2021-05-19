@@ -1,6 +1,6 @@
-import { DocumentMetadata } from '../metadata/DocumentMetadata';
+import { Filter, UpdateQuery } from 'mongodb';
+import { DocumentMetadata } from '../metadata';
 import { DocumentManager } from '../DocumentManager';
-import { FilterQuery, UpdateQuery } from '../typings';
 
 export enum Events {
   // events on single document
@@ -30,15 +30,15 @@ export interface InsertEvent<T = any> extends Event<T> {
 
 export interface UpdateEvent<T = any> extends Event<T> {
   update: UpdateQuery<T>;
-  filter: FilterQuery<T>;
+  filter: Filter<T>;
 }
 
 export interface DeleteEvent<T = any> extends Event<T> {
-  filter: FilterQuery<T>;
+  filter: Filter<T>;
 }
 
 export interface ReplaceEvent<T = any> extends Event<T> {
-  filter: FilterQuery<T>;
+  filter: Filter<T>;
   model: T;
 }
 

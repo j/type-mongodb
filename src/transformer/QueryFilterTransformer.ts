@@ -1,4 +1,4 @@
-import { Condition, FilterQuery } from 'mongodb';
+import { Filter } from 'mongodb';
 import {
   AbstractDocumentMetadata,
   EmbeddedDocumentMetadata,
@@ -79,7 +79,7 @@ export class QueryFilterTransformer<T = any> {
     });
   }
 
-  transform(input: FilterQuery<T>): FilterQuery<T | any> {
+  transform(input: Filter<T>): Filter<T | any> {
     if (!this.isTransformable || typeof input !== 'object') {
       return input;
     }
@@ -87,7 +87,7 @@ export class QueryFilterTransformer<T = any> {
     // assume query is a map of operators if it contains at least one
     // MongoDB operator.
     if (this.containsOperator(input)) {
-      return Object.entries<FilterQuery<any>>(input).reduce(
+      return Object.entries<Filter<any>>(input).reduce(
         (output, [$op, condition]) => {
           output[$op] = this.transform(condition);
 
@@ -103,14 +103,12 @@ export class QueryFilterTransformer<T = any> {
   /**
    * Assumes the input is a direct queriable object.
    */
-  transformObject(
-    input: FilterQuery<any> | FilterQuery<any>
-  ): FilterQuery<any> {
+  transformObject(input: Filter<any>): Filter<any> {
     if (Array.isArray(input)) {
       return input.map((i) => this.transformObject(i));
     }
 
-    return Object.entries<FilterQuery<any>>(input).reduce(
+    return Object.entries<Filter<any>>(input).reduce(
       (output, [path, condition]) => {
         const transformed = this.transformPath(path, condition);
         output[transformed[0]] = transformed[1];
@@ -125,10 +123,7 @@ export class QueryFilterTransformer<T = any> {
    * Determines if the path is a query against an embedded document, a direct field,
    * etc.
    */
-  transformPath(
-    path: string,
-    condition: Condition<any>
-  ): [string, Condition<any>] {
+  transformPath(path: string, condition: Filter<any>): [string, Filter<any>] {
     let field: FieldMetadata;
     let embeddedMetadata: AbstractDocumentMetadata<any> = this.metadata;
 
@@ -170,14 +165,14 @@ export class QueryFilterTransformer<T = any> {
   /**
    * Transforms the values for the given path.
    */
-  transformPathValue(type: Type, value: Condition<any>): Condition<any> {
+  transformPathValue(type: Type, value: Filter<any>): Filter<any> {
     if (!type) {
       return value;
     }
 
     // if path has a filter with other operators, transform them independently
     if (this.containsOperator(value)) {
-      return Object.entries(value).reduce<Condition<any>>(
+      return Object.entries(value).reduce<Filter<any>>(
         (condition, [$op, value]) => {
           condition[$op] = this.transformPathValue(type, value);
 

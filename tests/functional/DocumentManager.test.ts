@@ -88,7 +88,7 @@ describe('DocumentManager', () => {
   test('filters metadata', () => {
     expect(
       manager.filterMetadata((value) => value.fields.has('reviews'))
-    ).toStrictEqual([manager.getMetadataFor(User)]);
+    ).toEqual([manager.getMetadataFor(User)]);
   });
 
   describe('document metadata', () => {
@@ -315,7 +315,7 @@ describe('DocumentManager', () => {
         isActive: true
       });
       expect(model.isActive).toBeTruthy();
-      expect(model.id).toBe(id2);
+      expect(model.id.toHexString()).toBe(id2.toHexString());
     });
     it('fromDB', () => {
       const _id = new ObjectId();
@@ -324,7 +324,7 @@ describe('DocumentManager', () => {
         active: true
       });
       expect(model.isActive).toBeTruthy();
-      expect(model.id).toBe(_id);
+      expect(model.id.toHexString()).toBe(_id.toHexString());
     });
     it('toDb', () => {
       const id = new ObjectId();
@@ -332,7 +332,7 @@ describe('DocumentManager', () => {
         DocumentWithRenamedFields,
         Object.assign(new DocumentWithRenamedFields(), { id, isActive: true })
       );
-      expect(doc._id).toBe(id);
+      expect(doc._id.toHexString()).toBe(id.toHexString());
       expect(doc.active).toBeTruthy();
     });
   });

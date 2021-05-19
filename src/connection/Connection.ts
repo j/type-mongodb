@@ -22,7 +22,7 @@ export class Connection {
    * Makes connections to all the configured databases.
    */
   async connect(): Promise<void> {
-    if (!this.client.isConnected()) {
+    if (!this.client.topology?.isConnected()) {
       await this.client.connect();
     }
   }
@@ -31,7 +31,7 @@ export class Connection {
    * Closes all the open connections.
    */
   async close(force?: boolean): Promise<void> {
-    if (this.client.isConnected()) {
+    if (this.client.topology?.isConnected()) {
       await this.client.close(force);
     }
   }
@@ -43,13 +43,7 @@ export class Connection {
       );
     }
 
-    const client =
-      opts.client ||
-      new MongoClient(opts.uri, {
-        ...(opts.options || {}),
-        useNewUrlParser: true,
-        useUnifiedTopology: true
-      });
+    const client = opts.client || new MongoClient(opts.uri, opts.options);
 
     return new Connection(client, opts.database);
   }

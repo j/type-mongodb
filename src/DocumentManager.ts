@@ -1,14 +1,14 @@
-import { MongoClient, SessionOptions } from 'mongodb';
-import { DocumentClass, Collection, Db, Newable } from './typings';
-import { DocumentMetadataFactory } from './metadata/DocumentMetadataFactory';
-import { DocumentMetadata } from './metadata/DocumentMetadata';
+import { MongoClient, Collection, Db, ClientSessionOptions } from 'mongodb';
+import { DocumentClass, Newable } from './typings';
+import { DocumentMetadataFactory } from './metadata';
+import { DocumentMetadata } from './metadata';
 import { Connection, ConnectionOptions } from './connection/Connection';
-import { EventSubscriber } from './events/interfaces';
+import { EventSubscriber } from './events';
 import { EventManager } from './events';
-import { Repository } from './repository/Repository';
+import { Repository } from './repository';
 import { Session } from './transaction/Session';
-import { EmbeddedDocumentMetadata } from './metadata/EmbeddedDocumentMetadata';
-import { DocumentTransformer } from './transformer/DocumentTransformer';
+import { EmbeddedDocumentMetadata } from './metadata';
+import { DocumentTransformer } from './transformer';
 import { InternalError } from './errors';
 
 export interface ContainerLike {
@@ -186,7 +186,7 @@ export class DocumentManager {
     return this.getMetadataFor<T>(target).repository;
   }
 
-  startSession(opts?: SessionOptions): Session {
+  startSession(opts?: ClientSessionOptions): Session {
     const session = new Session(this);
 
     if (opts) {

@@ -1,7 +1,7 @@
 import {
-  SessionOptions,
   TransactionOptions,
   ClientSession,
+  ClientSessionOptions,
   MongoClient,
   WithTransactionCallback
 } from 'mongodb';
@@ -9,18 +9,6 @@ import { DocumentClass } from '../typings';
 import { DocumentManager } from '../DocumentManager';
 import { TransactionRepository } from '../repository/TransactionRepository';
 import { InternalError } from '../errors';
-
-declare module 'mongodb' {
-  interface MongoError {
-    hasErrorLabel(label: string): boolean;
-    writeConcernError: WriteConcernError;
-  }
-}
-
-interface Config {
-  session?: SessionOptions;
-  transaction?: TransactionOptions;
-}
 
 export enum SessionState {
   Pending,
@@ -32,44 +20,49 @@ export class Session {
   protected client: MongoClient;
   protected session: ClientSession;
   protected state: SessionState = SessionState.Pending;
-  protected config: Config = {
-    session: undefined,
-    transaction: undefined
-  };
+  protected transactionOptions: TransactionOptions;
+  protected sessionOptions: ClientSessionOptions;
 
   constructor(protected dm: DocumentManager) {
     this.client = dm.connection.client;
   }
 
-  setSessionOptions(opts: SessionOptions): this {
-    this.config.session = opts;
+  setSessionOptions(opts: ClientSessionOptions): this {
+    this.sessionOptions = opts;
 
     return this;
   }
 
   setTransactionOptions(opts: TransactionOptions): this {
-    this.config.transaction = opts;
+    this.transactionOptions = opts;
 
     return this;
   }
 
-  async withTransaction<T>(fn: WithTransactionCallback<T>): Promise<T> {
+  startSession(): ClientSession {
+    return this.client.startSession(this.sessionOptions);
+  }
+
+  async withTransaction<T>(fn: WithTransactionCallback<T>): Promise<T | void> {
     this.assertTransactionState(SessionState.Pending);
 
-    let result: T;
+    let result: T | void;
 
     try {
       this.state = SessionState.InProgress;
-      this.session = this.client.startSession();
+      this.session = this.startSession();
 
-      await this.session.withTransaction(async (session: ClientSession) => {
-        result = await fn(session);
-      }, this.config.transaction);
+      result = await this.session.withTransaction<T>(
+        async (session: ClientSession): Promise<T> => {
+          return (await fn(session)) as T;
+        },
+        this.transactionOptions
+      );
     } catch (err) {
       throw err;
     } finally {
       this.state = SessionState.Done;
-      this.session.endSession();
+      await this.session.endSession();
     }
 
     return result;

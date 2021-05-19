@@ -119,7 +119,7 @@ export class DocumentMetadataFactory {
   protected async buildDocuments(): Promise<void> {
     await Promise.all(
       this.opts.documents.map((DocumentClass) => {
-        return new Promise(async (resolve, reject) => {
+        return new Promise<void>(async (resolve, reject) => {
           try {
             this.loadedDocumentMetadata.set(
               DocumentClass,
@@ -158,7 +158,7 @@ export class DocumentMetadataFactory {
 
     repository.manager = this.opts.dm;
 
-    const meta = new DocumentMetadata({
+    return new DocumentMetadata({
       DocumentClass,
       fields: this.buildFields(DocumentClass),
       connection,
@@ -167,8 +167,6 @@ export class DocumentMetadataFactory {
       repository,
       extensions: def.extensions || {}
     });
-
-    return meta;
   }
 
   protected buildEmbeddedDocumentMetadata(

@@ -1,5 +1,5 @@
-import { FilterQuery } from 'mongodb';
-import { Newable, OptionalId } from '../typings';
+import { Filter, OptionalId } from 'mongodb';
+import { Newable } from '../typings';
 import { FieldMetadata } from './FieldMetadata';
 import { ParentDefinition } from './definitions';
 import { DiscriminatorMetadata } from './DiscriminatorMetadata';
@@ -94,7 +94,7 @@ export abstract class AbstractDocumentMetadata<
   /**
    * Transforms query filters.
    */
-  transformQueryFilter(input: FilterQuery<T>): FilterQuery<any> {
+  transformQueryFilter(input: Filter<T>): Filter<any> {
     return this.queryFilterTransformer.transform(input);
   }
 }

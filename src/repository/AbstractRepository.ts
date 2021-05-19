@@ -1,32 +1,31 @@
 import {
-  Cursor,
-  FindOneOptions,
-  FindOneAndUpdateOption,
-  FindOneAndReplaceOption,
-  FindOneAndDeleteOption,
-  UpdateWriteOpResult,
-  ReplaceWriteOpResult,
-  DeleteWriteOpResultObject
-} from 'mongodb';
-import {
-  Collection,
   Db,
+  Collection,
+  FindCursor,
+  FindOptions,
+  Filter,
+  InsertOneOptions,
+  BulkWriteOptions,
   OptionalId,
-  InsertOneWriteOpResult,
-  CommonOptions,
-  FilterQuery,
+  InsertOneResult,
+  InsertManyResult,
   UpdateQuery,
-  UpdateManyOptions,
-  UpdateOneOptions,
-  ReplaceOneOptions,
-  CollectionInsertOneOptions,
-  InsertWriteOpResult,
-  CollectionInsertManyOptions
-} from '../typings';
+  FindOneAndUpdateOptions,
+  FindOneAndReplaceOptions,
+  FindOneAndDeleteOptions,
+  UpdateOptions,
+  UpdateResult,
+  DeleteOptions,
+  DeleteResult
+} from 'mongodb';
 import { DocumentMetadata } from '../metadata';
 import { ValidationError } from '../errors';
 import { DocumentManager } from '../DocumentManager';
 import { Type } from '../types';
+
+export interface TransformQueryFilterOptions {
+  transformQueryFilter?: boolean;
+}
 
 /**
  * Repository for documents
@@ -72,6 +71,23 @@ export abstract class AbstractRepository<T> {
     return this.metadata.fromDB(doc);
   }
 
+  transformQueryFilter(
+    input: Filter<T | any>,
+    opts?: TransformQueryFilterOptions & Record<any, any>
+  ): Filter<any> {
+    if (typeof opts === 'object' && 'transformQueryFilter' in opts) {
+      const transformQueryFilter = opts.transformQueryFilter;
+
+      delete opts.transformQueryFilter;
+
+      if (transformQueryFilter === false) {
+        return input;
+      }
+    }
+
+    return this.metadata.transformQueryFilter(input);
+  }
+
   // -------------------------------------------------------------------------
   // MongoDB specific methods
   // -------------------------------------------------------------------------
@@ -82,7 +98,7 @@ export abstract class AbstractRepository<T> {
 
   protected failIfEmpty(
     meta: DocumentMetadata<T>,
-    filter: FilterQuery<any>,
+    filter: Filter<any>,
     value: any
   ) {
     if (!value) {
@@ -96,182 +112,173 @@ export abstract class AbstractRepository<T> {
   // Abstract Methods
   // -------------------------------------------------------------------------
 
-  abstract find(query?: FilterQuery<T | any>): Cursor<T>;
-  abstract find(query: FilterQuery<T | any>, opts: FindOneOptions): Cursor<T>;
-  abstract find(query: FilterQuery<T | any>, opts?: FindOneOptions): Cursor<T>;
+  abstract find(query?: Filter<T | any>): FindCursor<T>;
+  abstract find(query: Filter<T | any>, opts: FindOptions): FindCursor<T>;
+  abstract find(query: Filter<T | any>, opts?: FindOptions): FindCursor<T>;
 
-  abstract findByIds(ids: any[]): Cursor<T>;
-  abstract findByIds(ids: any[], opts: FindOneOptions): Cursor<T>;
-  abstract findByIds(ids: any[], opts?: FindOneOptions): Cursor<T>;
+  abstract findByIds(ids: any[]): FindCursor<T>;
+  abstract findByIds(ids: any[], opts: FindOptions): FindCursor<T>;
+  abstract findByIds(ids: any[], opts?: FindOptions): FindCursor<T>;
 
-  abstract async findById(id: any, opts?: FindOneOptions): Promise<T | null>;
+  abstract findById(id: any, opts?: FindOptions): Promise<T | null>;
 
-  abstract async findByIdOrFail(id: any, opts?: FindOneOptions): Promise<T>;
+  abstract findByIdOrFail(id: any, opts?: FindOptions): Promise<T>;
 
-  abstract async findOne(
-    filter: FilterQuery<T | any>,
-    opts?: FindOneOptions
+  abstract findOne(
+    filter: Filter<T | any>,
+    opts?: FindOptions
   ): Promise<T | null>;
 
-  abstract async findOneOrFail(
-    filter: FilterQuery<T | any>,
-    opts?: FindOneOptions
+  abstract findOneOrFail(
+    filter: Filter<T | any>,
+    opts?: FindOptions
   ): Promise<T | null>;
 
+  abstract create(props: Partial<T>, opts?: InsertOneOptions): Promise<T>;
+  abstract create(props: Partial<T>[], opts?: BulkWriteOptions): Promise<T[]>;
   abstract create(
-    props: Partial<T>,
-    opts?: CollectionInsertOneOptions
-  ): Promise<T>;
-  abstract create(
-    props: Partial<T>[],
-    opts?: CollectionInsertManyOptions
-  ): Promise<T[]>;
-  abstract async create(
     props: Partial<T> | Partial<T>[],
-    opts?: CollectionInsertOneOptions | CollectionInsertManyOptions
+    opts?: InsertOneOptions | BulkWriteOptions
   ): Promise<T | T[]>;
 
-  abstract async createOne(
-    props: Partial<T>,
-    opts?: CollectionInsertOneOptions
-  ): Promise<T>;
+  abstract createOne(props: Partial<T>, opts?: InsertOneOptions): Promise<T>;
 
-  abstract async createMany(
+  abstract createMany(
     props: Partial<T>[],
-    opts?: CollectionInsertManyOptions
+    opts?: BulkWriteOptions
   ): Promise<T[]>;
 
-  abstract async insertOne(
+  abstract insertOne(
     model: OptionalId<T>,
-    opts?: CollectionInsertOneOptions
-  ): Promise<InsertOneWriteOpResult<any>>;
+    opts?: InsertOneOptions
+  ): Promise<InsertOneResult<any>>;
 
-  abstract async insertMany(
+  abstract insertMany(
     models: OptionalId<T>[],
-    opts?: CollectionInsertManyOptions
-  ): Promise<InsertWriteOpResult<any>>;
+    opts?: BulkWriteOptions
+  ): Promise<InsertManyResult<T>>;
 
-  abstract async findOneAndUpdate(
-    filter: FilterQuery<T | any>,
+  abstract findOneAndUpdate(
+    filter: Filter<T | any>,
     update: UpdateQuery<T>,
-    opts?: FindOneAndUpdateOption
+    opts?: FindOneAndUpdateOptions & TransformQueryFilterOptions
   ): Promise<T | null>;
 
-  abstract async findOneAndUpdateOrFail(
-    filter: FilterQuery<T | any>,
+  abstract findOneAndUpdateOrFail(
+    filter: Filter<T | any>,
     update: UpdateQuery<T>,
-    opts?: FindOneAndUpdateOption
+    opts?: FindOneAndUpdateOptions & TransformQueryFilterOptions
   ): Promise<T>;
 
-  abstract async findByIdAndUpdate(
+  abstract findByIdAndUpdate(
     id: any,
     update: UpdateQuery<T>,
-    opts?: FindOneAndUpdateOption
+    opts?: FindOneAndUpdateOptions & TransformQueryFilterOptions
   ): Promise<T | null>;
 
-  abstract async findByIdAndUpdateOrFail(
+  abstract findByIdAndUpdateOrFail(
     id: any,
     update: UpdateQuery<T>,
-    opts?: FindOneAndUpdateOption
+    opts?: FindOneAndUpdateOptions & TransformQueryFilterOptions
   ): Promise<T>;
 
-  abstract async findOneAndReplace(
-    filter: FilterQuery<T | any>,
-    props: OptionalId<Partial<T>>,
-    opts?: FindOneAndReplaceOption
-  ): Promise<T | null>;
-
-  abstract async findOneAndReplaceOrFail(
-    filter: FilterQuery<T | any>,
-    props: OptionalId<Partial<T>>,
-    opts?: FindOneAndReplaceOption
-  ): Promise<T>;
-
-  abstract async findByIdAndReplace(
-    id: any,
-    props: OptionalId<Partial<T>>,
-    opts?: FindOneAndReplaceOption
-  ): Promise<T | null>;
-
-  abstract async findByIdAndReplaceOrFail(
-    id: any,
-    props: OptionalId<Partial<T>>,
-    opts?: FindOneAndReplaceOption
-  ): Promise<T>;
-
-  abstract async findOneAndDelete(
-    filter: FilterQuery<T | any>,
-    opts?: FindOneAndDeleteOption
-  ): Promise<T | null>;
-
-  abstract async findOneAndDeleteOrFail(
-    filter: FilterQuery<T | any>,
-    opts?: FindOneAndDeleteOption
-  ): Promise<T>;
-
-  abstract async findByIdAndDelete(
-    id: any,
-    opts?: FindOneAndDeleteOption
-  ): Promise<T | null>;
-
-  abstract async findByIdAndDeleteOrFail(
-    id: any,
-    opts?: FindOneAndDeleteOption
-  ): Promise<T | null>;
-
-  abstract async updateOne(
-    filter: FilterQuery<T | any>,
-    update: UpdateQuery<T>,
-    opts?: UpdateOneOptions
-  ): Promise<UpdateWriteOpResult>;
-
-  abstract async updateById(
-    id: any,
-    update: UpdateQuery<T>,
-    opts?: UpdateOneOptions
-  ): Promise<UpdateWriteOpResult>;
-
-  abstract async updateMany(
-    filter: FilterQuery<T | any>,
-    update: UpdateQuery<T>,
-    opts?: UpdateManyOptions
-  ): Promise<UpdateWriteOpResult>;
-
-  abstract async updateByIds(
-    ids: any[],
-    update: UpdateQuery<T>,
-    opts?: UpdateManyOptions
-  ): Promise<UpdateWriteOpResult>;
-
-  abstract async replaceOne(
-    filter: FilterQuery<T | any>,
+  abstract findOneAndReplace(
+    filter: Filter<T | any>,
     props: Partial<T>,
-    opts?: ReplaceOneOptions
-  ): Promise<ReplaceWriteOpResult>;
+    opts?: FindOneAndReplaceOptions & TransformQueryFilterOptions
+  ): Promise<T | null>;
 
-  abstract async replaceById(
+  abstract findOneAndReplaceOrFail(
+    filter: Filter<T | any>,
+    props: Partial<T>,
+    opts?: FindOneAndReplaceOptions & TransformQueryFilterOptions
+  ): Promise<T>;
+
+  abstract findByIdAndReplace(
     id: any,
     props: Partial<T>,
-    opts?: ReplaceOneOptions
-  ): Promise<ReplaceWriteOpResult>;
+    opts?: FindOneAndReplaceOptions & TransformQueryFilterOptions
+  ): Promise<T | null>;
 
-  abstract async deleteOne(
-    filter: FilterQuery<T | any>,
-    opts?: CommonOptions & { bypassDocumentValidation?: boolean }
-  ): Promise<boolean>;
-
-  abstract async deleteById(
+  abstract findByIdAndReplaceOrFail(
     id: any,
-    opts?: CommonOptions & { bypassDocumentValidation?: boolean }
+    props: Partial<T>,
+    opts?: FindOneAndReplaceOptions & TransformQueryFilterOptions
+  ): Promise<T>;
+
+  abstract findOneAndDelete(
+    filter: Filter<T | any>,
+    opts?: FindOneAndDeleteOptions & TransformQueryFilterOptions
+  ): Promise<T | null>;
+
+  abstract findOneAndDeleteOrFail(
+    filter: Filter<T | any>,
+    opts?: FindOneAndDeleteOptions & TransformQueryFilterOptions
+  ): Promise<T | null>;
+
+  abstract findByIdAndDelete(
+    id: any,
+    opts?: FindOneAndDeleteOptions & TransformQueryFilterOptions
+  ): Promise<T | null>;
+
+  abstract findByIdAndDeleteOrFail(
+    id: any,
+    opts?: FindOneAndDeleteOptions & TransformQueryFilterOptions
+  ): Promise<T | null>;
+
+  abstract updateOne(
+    filter: Filter<T | any>,
+    update: UpdateQuery<T>,
+    opts?: UpdateOptions & TransformQueryFilterOptions
+  ): Promise<UpdateResult>;
+
+  abstract updateById(
+    id: any,
+    update: UpdateQuery<T>,
+    opts?: UpdateOptions & TransformQueryFilterOptions
+  ): Promise<UpdateResult>;
+
+  abstract updateMany(
+    filter: Filter<T | any>,
+    update: UpdateQuery<T>,
+    opts?: UpdateOptions & TransformQueryFilterOptions
+  ): Promise<UpdateResult>;
+
+  abstract updateByIds(
+    ids: any[],
+    update: UpdateQuery<T>,
+    opts?: UpdateOptions & TransformQueryFilterOptions
+  ): Promise<UpdateResult>;
+
+  abstract replaceOne(
+    filter: Filter<T | any>,
+    props: Partial<T>,
+    opts?: UpdateOptions & TransformQueryFilterOptions
+  ): Promise<UpdateResult>;
+
+  abstract replaceById(
+    id: any,
+    props: Partial<T>,
+    opts?: UpdateOptions & TransformQueryFilterOptions
+  ): Promise<UpdateResult>;
+
+  abstract deleteOne(
+    filter: Filter<T | any>,
+    opts?: DeleteOptions & TransformQueryFilterOptions
   ): Promise<boolean>;
 
-  abstract async deleteMany(
-    filter: FilterQuery<T | any>,
-    opts?: CommonOptions
-  ): Promise<DeleteWriteOpResultObject>;
+  abstract deleteById(
+    id: any,
+    opts?: DeleteOptions & TransformQueryFilterOptions
+  ): Promise<boolean>;
 
-  abstract async deleteByIds(
+  abstract deleteMany(
+    filter: Filter<T | any>,
+    opts?: DeleteOptions & TransformQueryFilterOptions
+  ): Promise<DeleteResult>;
+
+  abstract deleteByIds(
     ids: any[],
-    opts?: CommonOptions
-  ): Promise<DeleteWriteOpResultObject>;
+    opts?: DeleteOptions & TransformQueryFilterOptions
+  ): Promise<DeleteResult>;
 }

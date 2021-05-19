@@ -4,11 +4,10 @@ import {
   FieldDefinition,
   ParentDefinition
 } from '../metadata';
-import { definitionStorage } from '../utils/definitionStorage';
 import { Newable } from '../typings';
 import { Repository } from '../repository';
 import { Type } from '../types';
-import { fieldToType } from '../utils/reflection';
+import { definitionStorage, fieldToType } from '../utils';
 import { InternalError } from '../errors';
 
 interface DocumentOptions {
