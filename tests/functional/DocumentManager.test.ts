@@ -77,6 +77,10 @@ describe('DocumentManager', () => {
     expect(manager.metadataFactory.loadedDocumentMetadata.size).toBe(4);
   });
 
+  test('isConnected', () => {
+    expect(manager.isConnected()).toBe(true);
+  });
+
   test('gets db', () => {
     expect(manager.db(User).databaseName).toEqual('test');
   });

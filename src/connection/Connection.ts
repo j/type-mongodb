@@ -22,16 +22,23 @@ export class Connection {
    * Makes connections to all the configured databases.
    */
   async connect(): Promise<void> {
-    if (!this.client.topology?.isConnected()) {
+    if (!this.isConnected()) {
       await this.client.connect();
     }
+  }
+
+  /**
+   * Returns true if MongoClient is connected.
+   */
+  isConnected(): boolean {
+    return !!this.client.topology?.isConnected();
   }
 
   /**
    * Closes all the open connections.
    */
   async close(force?: boolean): Promise<void> {
-    if (this.client.topology?.isConnected()) {
+    if (this.isConnected()) {
       await this.client.close(force);
     }
   }

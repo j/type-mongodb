@@ -161,6 +161,13 @@ export class DocumentManager {
   }
 
   /**
+   * Returns true if client is connected
+   */
+  isConnected(): boolean {
+    return !!this.connection.isConnected();
+  }
+
+  /**
    * Closes to all MongoClients.
    */
   close(force?: boolean): Promise<void> {
