@@ -1,10 +1,10 @@
 import { DocumentManager } from '../DocumentManager';
 
-export async function removeDocuments(dm: DocumentManager): Promise<void> {
-  await dm.connect();
+export async function removeDocuments(manager: DocumentManager): Promise<void> {
+  await manager.connect();
 
   await Promise.all(
-    dm
+    manager
       .filterMetadata((meta) => !!meta.collection)
       .map((meta) => meta.collection.deleteMany({}))
   );

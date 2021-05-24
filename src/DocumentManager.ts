@@ -1,4 +1,12 @@
-import { MongoClient, Collection, Db, ClientSessionOptions } from 'mongodb';
+import {
+  MongoClient,
+  Collection,
+  Db,
+  ClientSessionOptions,
+  TransactionOptions,
+  WithTransactionCallback,
+  ClientSession
+} from 'mongodb';
 import { DocumentClass, Newable } from './typings';
 import { DocumentMetadataFactory } from './metadata';
 import { DocumentMetadata } from './metadata';
@@ -6,13 +14,17 @@ import { Connection, ConnectionOptions } from './connection/Connection';
 import { EventSubscriber } from './events';
 import { EventManager } from './events';
 import { Repository } from './repository';
-import { Session } from './transaction/Session';
 import { EmbeddedDocumentMetadata } from './metadata';
 import { DocumentTransformer } from './transformer';
 import { InternalError } from './errors';
 
 export interface ContainerLike {
   get: <T = any>(service: Newable<T>) => any;
+}
+
+export interface WithTransactionOptions {
+  session?: ClientSessionOptions;
+  transaction?: TransactionOptions;
 }
 
 const defaultContainer = {
@@ -45,7 +57,7 @@ export class DocumentManager {
     this.connection = Connection.create(this.opts.connection);
 
     this.metadataFactory = new DocumentMetadataFactory({
-      dm: this,
+      manager: this,
       documents: opts.documents
     });
 
@@ -161,13 +173,6 @@ export class DocumentManager {
   }
 
   /**
-   * Returns true if client is connected
-   */
-  isConnected(): boolean {
-    return !!this.connection.isConnected();
-  }
-
-  /**
    * Closes to all MongoClients.
    */
   close(force?: boolean): Promise<void> {
@@ -193,14 +198,29 @@ export class DocumentManager {
     return this.getMetadataFor<T>(target).repository;
   }
 
-  startSession(opts?: ClientSessionOptions): Session {
-    const session = new Session(this);
+  startSession(opts?: ClientSessionOptions): ClientSession {
+    return this.connection.client.startSession(opts);
+  }
 
-    if (opts) {
-      session.setSessionOptions(opts);
+  async withTransaction<T = any>(
+    fn: WithTransactionCallback<T>,
+    opts: WithTransactionOptions = {}
+  ): Promise<T | void> {
+    let result: T;
+
+    const session = this.startSession(opts?.session);
+
+    try {
+      await session.withTransaction(async (session: ClientSession) => {
+        result = (await fn(session)) as T;
+      }, opts?.transaction);
+    } catch (err) {
+      throw err;
+    } finally {
+      await session.endSession();
     }
 
-    return session;
+    return result;
   }
 
   // -------------------------------------------------------------------------
@@ -208,15 +228,15 @@ export class DocumentManager {
   // -------------------------------------------------------------------------
 
   static async create(opts: DocumentManagerOptions): Promise<DocumentManager> {
-    const dm = new DocumentManager(opts);
+    const manager = new DocumentManager(opts);
 
-    await dm.connect();
+    await manager.connect();
 
-    await dm.buildMetadata();
-    dm.buildSubscribers();
+    await manager.buildMetadata();
+    manager.buildSubscribers();
 
     DocumentTransformer.compile();
 
-    return dm;
+    return manager;
   }
 }

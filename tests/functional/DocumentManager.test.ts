@@ -1,7 +1,7 @@
 import 'reflect-metadata';
-import { ObjectId, Binary } from 'mongodb';
+import { ObjectId, Binary, ClientSession } from 'mongodb';
 import * as uuid from 'uuid';
-import { from } from 'uuid-mongodb';
+import { UUID } from 'bson';
 import { Simple } from '../__fixtures__/Simple';
 import {
   User,
@@ -45,7 +45,7 @@ describe('DocumentManager', () => {
   beforeAll(async () => {
     manager = await DocumentManager.create({
       connection: {
-        uri: 'mongodb://localhost:31000',
+        uri: 'mongodb://localhost:27017',
         database: 'test'
       },
       documents: [
@@ -75,10 +75,6 @@ describe('DocumentManager', () => {
     expect(manager.connection).toBeInstanceOf(Connection);
     expect(manager.metadataFactory).toBeInstanceOf(DocumentMetadataFactory);
     expect(manager.metadataFactory.loadedDocumentMetadata.size).toBe(4);
-  });
-
-  test('isConnected', () => {
-    expect(manager.isConnected()).toBe(true);
   });
 
   test('gets db', () => {
@@ -301,6 +297,19 @@ describe('DocumentManager', () => {
     });
   });
 
+  describe('withTransaction', () => {
+    it('uses a transaction', async () => {
+      const user = await manager.withTransaction((session: ClientSession) => {
+        // @ts-ignore
+        return manager
+          .getRepository(User)
+          .create(createUsers().john, { session });
+      });
+
+      expect(user).toBeInstanceOf(User);
+    });
+  });
+
   describe('field renaming', () => {
     it('init', () => {
       const model = manager.init(DocumentWithRenamedFields, { isActive: true });
@@ -361,12 +370,12 @@ describe('DocumentManager', () => {
       expect(model.field).toBe(ids[1]);
     });
     it('fromDB', () => {
-      const _id = '393967e0-8de1-11e8-9eb6-529269fb1459';
-      const field = '393967e0-8de1-11e8-9eb6-529269fb1460';
+      const _id = '290a1768-c0a2-409b-95fd-0768d96e172a';
+      const field = '290a1768-c0a2-409b-95fd-0768d96e172b';
 
       const model = manager.fromDB(DocumentWithCustomTypes, {
-        _id: from(_id),
-        field: from(field)
+        _id: new UUID(_id).toBinary(),
+        field: new UUID(field).toBinary()
       });
       expect(uuid.validate(model._id)).toBeTruthy();
       expect(uuid.validate(model.field)).toBeTruthy();
@@ -375,10 +384,10 @@ describe('DocumentManager', () => {
       expect(typeof model.optional === 'undefined').toBe(true);
     });
     it('fromDB (with missing "createable" type)', () => {
-      const _id = '393967e0-8de1-11e8-9eb6-529269fb1459';
+      const _id = '290a1768-c0a2-409b-95fd-0768d96e172a';
 
       const model = manager.fromDB(DocumentWithCustomTypes, {
-        _id: from(_id)
+        _id: new UUID(_id).toBinary()
       });
       expect(uuid.validate(model._id)).toBeTruthy();
       expect(model._id).toEqual(_id);

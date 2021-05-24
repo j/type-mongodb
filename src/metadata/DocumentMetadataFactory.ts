@@ -1,7 +1,7 @@
 import { DocumentMetadata } from './DocumentMetadata';
 import { FieldMetadata } from './FieldMetadata';
 import { DocumentClass, Newable } from '../typings';
-import { definitionStorage, isPromise } from '../utils';
+import { definitionStorage } from '../utils';
 import { DocumentManager } from '../DocumentManager';
 import { EmbeddedDocumentMetadata } from './EmbeddedDocumentMetadata';
 import {
@@ -14,7 +14,7 @@ import { ParentDefinition } from './definitions';
 import { InternalError } from '../errors';
 
 export interface BuildMetadataStorageOptions {
-  dm: DocumentManager;
+  manager: DocumentManager;
   documents: DocumentClass<any>[];
 }
 
@@ -29,6 +29,10 @@ export class DocumentMetadataFactory {
   public loadedEmbeddedDocumentMetadata: Map<
     Newable,
     EmbeddedDocumentMetadata<any>
+  > = new Map();
+  public loadedDiscriminatorMetadata: Map<
+    Newable,
+    DiscriminatorMetadata
   > = new Map();
 
   private isBuilt: boolean = false;
@@ -147,19 +151,17 @@ export class DocumentMetadataFactory {
     }
 
     const def = definitionStorage.documents.get(DocumentClass);
-    const connection = this.opts.dm.connection;
+    const connection = this.opts.manager.connection;
     const db = connection.getDatabase(connection, def.database);
 
     const RepositoryClass = def.repository ? def.repository() : Repository;
-    const repositoryOrPromise = this.opts.dm.container.get(RepositoryClass);
-    const repository = isPromise(repositoryOrPromise)
-      ? await repositoryOrPromise
-      : repositoryOrPromise;
-
-    repository.manager = this.opts.dm;
+    const repository = await Promise.resolve(
+      this.opts.manager.container.get(RepositoryClass)
+    );
 
     return new DocumentMetadata({
       DocumentClass,
+      manager: this.opts.manager,
       fields: this.buildFields(DocumentClass),
       connection,
       db,
@@ -177,6 +179,7 @@ export class DocumentMetadataFactory {
     }
 
     const embeddedMetadata = new EmbeddedDocumentMetadata(
+      this.opts.manager,
       DocumentClass,
       this.buildFields(DocumentClass),
       this.locateParentDefinition(DocumentClass),
@@ -280,12 +283,20 @@ export class DocumentMetadataFactory {
       return;
     }
 
+    if (this.loadedDiscriminatorMetadata.has(target)) {
+      return this.loadedDiscriminatorMetadata.get(target);
+    }
+
     const def = definitionStorage.discriminators.get(target);
     const map = new Map<string, AbstractDocumentMetadata<any>>();
+    const metadata = new DiscriminatorMetadata(def, map);
+
+    this.loadedDiscriminatorMetadata.set(target, metadata);
+
     Object.keys(def.map).forEach((type) => {
       map.set(type, this.buildEmbeddedDocumentMetadata(def.map[type]()));
     });
 
-    return new DiscriminatorMetadata(def, map);
+    return metadata;
   }
 }

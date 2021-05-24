@@ -10,6 +10,7 @@ import { DocumentManager } from '../DocumentManager';
 
 export interface DocumentMetadataOpts<T = any, D extends Newable = Newable<T>> {
   DocumentClass: D;
+  manager: DocumentManager;
   fields: FieldsMetadata;
   connection: Connection;
   db: Db;
@@ -25,7 +26,7 @@ export class DocumentMetadata<
   T = any,
   D extends Newable = Newable<T>
 > extends AbstractDocumentMetadata<T, D> {
-  public readonly dm: DocumentManager;
+  public readonly manager: DocumentManager;
   public readonly connection: Connection;
   public readonly db: Db;
   public readonly collection: Collection<T>;
@@ -33,12 +34,13 @@ export class DocumentMetadata<
   public readonly repository: Repository<T>;
 
   constructor(opts: DocumentMetadataOpts<T, D>) {
-    super(opts.DocumentClass, opts.fields);
+    super(opts.manager, opts.DocumentClass, opts.fields);
     this.connection = opts.connection;
     this.db = opts.db;
     this.collection = opts.collection;
     this.extensions = opts.extensions || {};
     this.repository = opts.repository;
+    this.repository.manager = this.manager;
     this.repository.metadata = this;
   }
 

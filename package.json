@@ -27,15 +27,15 @@
     "build": "tsc -b . --force",
     "clean": "rimraf lib",
     "watch": "tsc -w",
-    "prepublishOnly": "yarn clean && yarn build",
+    "prepublishOnly": "npm run clean && npm run build",
     "release:next": "npm publish --access public --tag next",
     "release": "release-it",
-    "mongo-start": "MONGODB_VERSION=4.0.x mongodb-runner start --topology=replicaset --name=test --port=31000",
-    "mongo-stop": "mongodb-runner stop --topology=replicaset --name=test",
+    "mongo-start": "MONGODB_VERSION=4.x.x npx mongodb-runner start --topology=replicaset",
+    "mongo-stop": "npx mongodb-runner stop --topology=replicaset",
     "test": "jest --runInBand --verbose --coverage",
-    "pretest:ci": "yarn mongo-start",
-    "test:ci": "yarn mongo-start && jest --verbose --coverage --ci --forceExit --detectOpenHandles --runInBand",
-    "posttest:ci": "yarn mongo-stop",
+    "pretest:ci": "npm run mongo-start",
+    "test:ci": "npm run mongo-start && jest --verbose --coverage --ci --forceExit --detectOpenHandles --runInBand",
+    "posttest:ci": "npm run mongo-stop",
     "pretty": "prettier '{src,tests}/**/*.ts' --write"
   },
   "devDependencies": {
@@ -49,11 +49,10 @@
     "prettier": "^2.0.5",
     "pretty-quick": "^2.0.1",
     "reflect-metadata": "^0.1.13",
-    "release-it": "^14.2.2",
+    "release-it": "^14.6.2",
     "ts-jest": "^26.1.1",
     "typescript": "^4.2.4",
-    "uuid": "^8.3.2",
-    "uuid-mongodb": "^2.4.1"
+    "uuid": "^8.3.2"
   },
   "optionalDependencies": {
     "uuid": "^8.3.2"

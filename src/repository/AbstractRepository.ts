@@ -71,21 +71,22 @@ export abstract class AbstractRepository<T> {
     return this.metadata.fromDB(doc);
   }
 
-  transformQueryFilter(
-    input: Filter<T | any>,
+  prepareFilter(
+    filter: Filter<T | any>,
     opts?: TransformQueryFilterOptions & Record<any, any>
   ): Filter<any> {
+    // don't transform filter if "transformQueryFilter" is set to false
     if (typeof opts === 'object' && 'transformQueryFilter' in opts) {
       const transformQueryFilter = opts.transformQueryFilter;
 
       delete opts.transformQueryFilter;
 
       if (transformQueryFilter === false) {
-        return input;
+        return filter;
       }
     }
 
-    return this.metadata.transformQueryFilter(input);
+    return this.metadata.transformQueryFilter(filter);
   }
 
   // -------------------------------------------------------------------------

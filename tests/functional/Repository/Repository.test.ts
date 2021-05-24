@@ -16,7 +16,7 @@ describe('Repository -> queries, inserts, & updates', () => {
   beforeAll(async () => {
     manager = await DocumentManager.create({
       connection: {
-        uri: 'mongodb://localhost:31000',
+        uri: 'mongodb://localhost:27017',
         database: 'test'
       },
       documents: [Simple, User]

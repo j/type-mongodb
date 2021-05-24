@@ -43,7 +43,7 @@ export interface ReplaceEvent<T = any> extends Event<T> {
 }
 
 export interface EventSubscriber<T = any> {
-  getSubscribedDocuments?(dm: DocumentManager): any[];
+  getSubscribedDocuments?(manager: DocumentManager): any[];
 
   // events on single document
   beforeInsert?(e: InsertEvent<T>): Promise<void> | void;

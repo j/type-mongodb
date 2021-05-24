@@ -92,8 +92,8 @@ export class Repository<T> extends AbstractRepository<T> {
   find(query: Filter<T | any>, opts: FindOptions): FindCursor<T>;
   find(query: Filter<T | any>, opts?: FindOptions): FindCursor<T> {
     const cursor = this.collection.find(
-      this.transformQueryFilter(query, opts),
-      opts
+      this.prepareFilter(query, opts),
+      this.prepareOptions(opts)
     );
     cursor.map((doc: any) => this.fromDB(doc));
 
@@ -126,8 +126,8 @@ export class Repository<T> extends AbstractRepository<T> {
     opts?: FindOptions
   ): Promise<T | null> {
     const found = await this.collection.findOne(
-      this.transformQueryFilter(filter, opts),
-      opts
+      this.prepareFilter(filter, opts),
+      this.prepareOptions(opts)
     );
 
     return found ? this.fromDB(found) : null;
@@ -186,7 +186,7 @@ export class Repository<T> extends AbstractRepository<T> {
         meta: this.metadata,
         model: model as T
       },
-      () => this.collection.insertOne(doc, opts)
+      () => this.collection.insertOne(doc, this.prepareOptions(opts))
     );
   }
 
@@ -222,7 +222,7 @@ export class Repository<T> extends AbstractRepository<T> {
 
     await Promise.all(beforeInsertEvents);
 
-    const result = this.collection.insertMany(docs, opts);
+    const result = this.collection.insertMany(docs, this.prepareOptions(opts));
 
     await Promise.all(afterInsertEvents);
 
@@ -244,9 +244,9 @@ export class Repository<T> extends AbstractRepository<T> {
       },
       async () => {
         const result = await this.collection.findOneAndUpdate(
-          this.transformQueryFilter(filter, opts),
+          this.prepareFilter(filter, opts),
           update,
-          opts
+          this.prepareOptions(opts)
         );
 
         return this.fromModifyResult(result);
@@ -296,9 +296,9 @@ export class Repository<T> extends AbstractRepository<T> {
     opts?: FindOneAndReplaceOptions & TransformQueryFilterOptions
   ): Promise<T | null> {
     const result = await this.collection.findOneAndReplace(
-      this.transformQueryFilter(filter, opts),
+      this.prepareFilter(filter, opts),
       props,
-      opts
+      this.prepareOptions(opts)
     );
 
     return this.fromModifyResult(result);
@@ -353,8 +353,8 @@ export class Repository<T> extends AbstractRepository<T> {
       },
       async () => {
         const result = await this.collection.findOneAndDelete(
-          this.transformQueryFilter(filter, opts),
-          opts
+          this.prepareFilter(filter, opts),
+          this.prepareOptions(opts)
         );
 
         return this.fromModifyResult(result);
@@ -408,9 +408,9 @@ export class Repository<T> extends AbstractRepository<T> {
       },
       () =>
         this.collection.updateOne(
-          this.transformQueryFilter(filter, opts),
+          this.prepareFilter(filter, opts),
           update,
-          opts
+          this.prepareOptions(opts)
         ) as Promise<UpdateResult>
     );
   }
@@ -442,9 +442,9 @@ export class Repository<T> extends AbstractRepository<T> {
       },
       () =>
         this.collection.updateMany(
-          this.transformQueryFilter(filter, opts),
+          this.prepareFilter(filter, opts),
           update,
-          opts
+          this.prepareOptions(opts)
         ) as Promise<UpdateResult>
     );
   }
@@ -484,9 +484,9 @@ export class Repository<T> extends AbstractRepository<T> {
         delete doc._id;
 
         return (await this.collection.replaceOne(
-          this.transformQueryFilter(filter, opts),
+          this.prepareFilter(filter, opts),
           doc,
-          opts
+          this.prepareOptions(opts)
         )) as UpdateResult;
       }
     );
@@ -517,8 +517,8 @@ export class Repository<T> extends AbstractRepository<T> {
       },
       async () => {
         const result = await this.collection.deleteOne(
-          this.transformQueryFilter(filter, opts),
-          opts
+          this.prepareFilter(filter, opts),
+          this.prepareOptions(opts)
         );
 
         return result && result.deletedCount === 1;
@@ -546,8 +546,8 @@ export class Repository<T> extends AbstractRepository<T> {
       },
       () =>
         this.collection.deleteMany(
-          this.transformQueryFilter(filter, opts),
-          opts
+          this.prepareFilter(filter, opts),
+          this.prepareOptions(opts)
         )
     );
   }
@@ -567,6 +567,10 @@ export class Repository<T> extends AbstractRepository<T> {
         transformQueryFilter: false
       }
     );
+  }
+
+  prepareOptions<T = any>(opts: T): T {
+    return opts;
   }
 
   // -------------------------------------------------------------------------

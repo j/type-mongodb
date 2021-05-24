@@ -31,7 +31,7 @@ describe('Repository.castFilter', () => {
   beforeAll(async () => {
     manager = await DocumentManager.create({
       connection: {
-        uri: 'mongodb://localhost:31000',
+        uri: 'mongodb://localhost:27017',
         database: 'test'
       },
       documents: [Simple, User]
@@ -185,14 +185,14 @@ describe('Repository.castFilter', () => {
 
   cases.forEach(([name, query, expected]) => {
     test(`${name}`, async () => {
-      const filter = repository.transformQueryFilter(query);
+      const filter = repository.prepareFilter(query);
       expect(filter).toEqual(expected);
       await assertValidFilter(filter);
     });
 
     ['$and', '$nor', '$or'].forEach(($op) => {
       test(`${name} wrapped in "${$op}"`, async () => {
-        const filter = repository.transformQueryFilter({ [$op]: [query] });
+        const filter = repository.prepareFilter({ [$op]: [query] });
         expect(filter).toEqual({ [$op]: [expected] });
         await assertValidFilter(filter);
       });

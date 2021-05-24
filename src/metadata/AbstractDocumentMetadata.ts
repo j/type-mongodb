@@ -5,6 +5,7 @@ import { ParentDefinition } from './definitions';
 import { DiscriminatorMetadata } from './DiscriminatorMetadata';
 import { InternalError } from '../errors';
 import { DocumentTransformer, QueryFilterTransformer } from '../transformer';
+import { DocumentManager } from '../DocumentManager';
 
 export type FieldsMetadata = Map<string, FieldMetadata>;
 
@@ -16,6 +17,7 @@ export abstract class AbstractDocumentMetadata<
   T,
   D extends Newable = Newable<T>
 > {
+  public readonly manager: DocumentManager;
   public readonly DocumentClass: D;
   public readonly name: string;
   public readonly fields: FieldsMetadata;
@@ -26,11 +28,13 @@ export abstract class AbstractDocumentMetadata<
   public readonly queryFilterTransformer: QueryFilterTransformer<T>;
 
   constructor(
+    manager: DocumentManager,
     DocumentClass: D,
     fields: FieldsMetadata,
     parent?: ParentDefinition,
     discriminator?: DiscriminatorMetadata
   ) {
+    this.manager = manager;
     this.DocumentClass = DocumentClass;
     this.name = DocumentClass.name;
     this.fields = fields;

@@ -43,17 +43,17 @@ export class EventManager {
    * field, and if so, automatically add `{ $set: { updatedAt: new Date() } }` for each
    * update query.
    */
-  build(dm: DocumentManager) {
+  build(manager: DocumentManager) {
     this.documentsWithSubscribers.clear();
 
     const documents: Newable[] = Array.from(
-      dm.metadataFactory.loadedDocumentMetadata.values()
+      manager.metadataFactory.loadedDocumentMetadata.values()
     ).map((meta) => meta.DocumentClass);
 
     this.subscribers.forEach((subscriber) => {
       const subscribedDocuments =
         typeof subscriber.getSubscribedDocuments === 'function'
-          ? subscriber.getSubscribedDocuments(dm)
+          ? subscriber.getSubscribedDocuments(manager)
           : null;
 
       documents.forEach((DocumentClass) => {
