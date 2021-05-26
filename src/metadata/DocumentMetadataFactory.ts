@@ -1,6 +1,6 @@
 import { DocumentMetadata } from './DocumentMetadata';
 import { FieldMetadata } from './FieldMetadata';
-import { DocumentClass, Newable } from '../typings';
+import { Constructor } from '../typings';
 import { definitionStorage } from '../utils';
 import { DocumentManager } from '../DocumentManager';
 import { EmbeddedDocumentMetadata } from './EmbeddedDocumentMetadata';
@@ -13,40 +13,39 @@ import { DiscriminatorMetadata } from './DiscriminatorMetadata';
 import { ParentDefinition } from './definitions';
 import { InternalError } from '../errors';
 
-export interface BuildMetadataStorageOptions {
-  manager: DocumentManager;
-  documents: DocumentClass<any>[];
-}
-
 /**
  * DocumentMetadataFactory builds and validates all the Document's metadata.
  */
 export class DocumentMetadataFactory {
   public loadedDocumentMetadata: Map<
-    DocumentClass,
+    Constructor,
     DocumentMetadata<any>
   > = new Map();
   public loadedEmbeddedDocumentMetadata: Map<
-    Newable,
+    Constructor,
     EmbeddedDocumentMetadata<any>
   > = new Map();
   public loadedDiscriminatorMetadata: Map<
-    Newable,
+    Constructor,
     DiscriminatorMetadata
   > = new Map();
 
+  public manager: DocumentManager;
+
   private isBuilt: boolean = false;
 
-  constructor(public readonly opts: BuildMetadataStorageOptions) {}
+  constructor(public readonly documents: Constructor[]) {}
 
   // -------------------------------------------------------------------------
   // Public Methods
   // -------------------------------------------------------------------------
 
-  async build() {
+  async build(manager: DocumentManager) {
     if (this.isBuilt) {
       InternalError.throw('DocumentMetadata already built');
     }
+
+    this.manager = manager;
 
     await this.buildDocuments();
 
@@ -56,7 +55,7 @@ export class DocumentMetadataFactory {
   /**
    * Gets the DocumentMetadata for the given class.
    */
-  getMetadataFor<T>(DocumentClass: DocumentClass<T>): DocumentMetadata<T> {
+  getMetadataFor<T>(DocumentClass: Constructor<T>): DocumentMetadata<T> {
     this.assertMetadataIsBuilt();
 
     const meta = this.loadedDocumentMetadata.get(DocumentClass);
@@ -74,7 +73,7 @@ export class DocumentMetadataFactory {
    * Gets the DocumentMetadata for the given class.
    */
   getEmbeddedMetadataFor<T>(
-    EmbeddedDocumentClass: Newable<T>
+    EmbeddedDocumentClass: Constructor<T>
   ): EmbeddedDocumentMetadata<T> {
     this.assertMetadataIsBuilt();
 
@@ -92,16 +91,16 @@ export class DocumentMetadataFactory {
   /**
    * Filters metadata by given criteria.
    */
-  filterMetadata(
+  filterMetadata<T = any>(
     filter: (value: DocumentMetadata) => boolean
-  ): DocumentMetadata[] {
+  ): DocumentMetadata<T>[] {
     return Array.from(this.loadedDocumentMetadata.values()).filter(filter);
   }
 
   /**
    * Filters metadata by given criteria.
    */
-  map<T>(
+  map<T = any>(
     fn: (value: DocumentMetadata, index: number, array: DocumentMetadata[]) => T
   ): T[] {
     return Array.from(this.loadedDocumentMetadata.values()).map(fn);
@@ -122,7 +121,7 @@ export class DocumentMetadataFactory {
    */
   protected async buildDocuments(): Promise<void> {
     await Promise.all(
-      this.opts.documents.map((DocumentClass) => {
+      this.documents.map((DocumentClass) => {
         return new Promise<void>(async (resolve, reject) => {
           try {
             this.loadedDocumentMetadata.set(
@@ -141,9 +140,9 @@ export class DocumentMetadataFactory {
   /**
    * Builds the DocumentMetadata and it's fields for the given class.
    */
-  protected async buildMetadataForDocument(
-    DocumentClass: DocumentClass
-  ): Promise<DocumentMetadata> {
+  protected async buildMetadataForDocument<T = any>(
+    DocumentClass: Constructor<T>
+  ): Promise<DocumentMetadata<T>> {
     if (!definitionStorage.documents.has(DocumentClass)) {
       InternalError.throw(
         `"${DocumentClass.name}" is not a decorated @Document()`
@@ -151,19 +150,19 @@ export class DocumentMetadataFactory {
     }
 
     const def = definitionStorage.documents.get(DocumentClass);
-    const connection = this.opts.manager.connection;
-    const db = connection.getDatabase(connection, def.database);
+    const client = this.manager.client;
+    const db = client.db(def.database);
 
     const RepositoryClass = def.repository ? def.repository() : Repository;
     const repository = await Promise.resolve(
-      this.opts.manager.container.get(RepositoryClass)
+      this.manager.container.get(RepositoryClass)
     );
 
     return new DocumentMetadata({
       DocumentClass,
-      manager: this.opts.manager,
+      manager: this.manager,
       fields: this.buildFields(DocumentClass),
-      connection,
+      client,
       db,
       collection: db.collection(def.collection),
       repository,
@@ -172,14 +171,14 @@ export class DocumentMetadataFactory {
   }
 
   protected buildEmbeddedDocumentMetadata(
-    DocumentClass: DocumentClass
+    DocumentClass: Constructor
   ): EmbeddedDocumentMetadata {
     if (this.loadedEmbeddedDocumentMetadata.has(DocumentClass)) {
       return this.loadedEmbeddedDocumentMetadata.get(DocumentClass);
     }
 
     const embeddedMetadata = new EmbeddedDocumentMetadata(
-      this.opts.manager,
+      this.manager,
       DocumentClass,
       this.buildFields(DocumentClass),
       this.locateParentDefinition(DocumentClass),
@@ -195,7 +194,7 @@ export class DocumentMetadataFactory {
    * Recursively adds fields to the DocumentMetadata.
    */
   protected buildFields(
-    target: DocumentClass,
+    target: Constructor,
     fields?: FieldsMetadata
   ): FieldsMetadata {
     fields = fields || new Map();
@@ -259,7 +258,7 @@ export class DocumentMetadataFactory {
   }
 
   private locateParentDefinition(
-    target: DocumentClass
+    target: Constructor
   ): ParentDefinition | undefined {
     if (definitionStorage.parents.get(target)) {
       return definitionStorage.parents.get(target);
@@ -277,7 +276,7 @@ export class DocumentMetadataFactory {
   }
 
   private buildDiscriminatorMetadata(
-    target: DocumentClass
+    target: Constructor
   ): DiscriminatorMetadata | undefined {
     if (!definitionStorage.discriminators.has(target)) {
       return;

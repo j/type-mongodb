@@ -4,7 +4,7 @@ import {
   FieldDefinition,
   ParentDefinition
 } from '../metadata';
-import { Newable } from '../typings';
+import { Constructor } from '../typings';
 import { Repository } from '../repository';
 import { Type } from '../types';
 import { definitionStorage, fieldToType } from '../utils';
@@ -14,7 +14,7 @@ interface DocumentOptions {
   database?: string;
   collection?: string;
   extensions?: Record<any, any>;
-  repository?: () => Newable<Repository<any>>;
+  repository?: () => Constructor<Repository<any>>;
 }
 
 export function Document(options: DocumentOptions = {}): ClassDecorator {
@@ -31,7 +31,7 @@ export function Document(options: DocumentOptions = {}): ClassDecorator {
 
 interface FieldOptions {
   name?: string;
-  type?: Newable<Type> | Type;
+  type?: Constructor<Type> | Type;
   extensions?: Record<any, any>;
   create?: boolean;
 }

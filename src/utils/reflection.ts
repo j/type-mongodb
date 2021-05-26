@@ -1,12 +1,12 @@
 import 'reflect-metadata';
-import { Newable } from '../typings';
+import { Constructor } from '../typings';
 import { ObjectIdType, Type } from '../types';
 import { FieldDefinition } from 'src/metadata';
 
 export function fieldToType(
-  target: Object,
+  target: Record<any, any>,
   name: string,
-  type?: Type | Newable<Type>
+  type?: Type | Constructor<Type>
 ): Pick<FieldDefinition, 'type' | 'typeIsArray'> {
   const designType = Reflect.getMetadata('design:type', target, name);
 

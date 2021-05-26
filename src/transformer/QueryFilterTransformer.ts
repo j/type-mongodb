@@ -6,7 +6,6 @@ import {
 } from '../metadata';
 import { isPlainObject } from '../utils';
 import { Type } from '../types';
-import { Newable } from '../typings';
 
 // fields to exclude as query operators
 const EXCLUDED_KEYS = new Set(['$ref', '$id', '$db']);
@@ -30,10 +29,10 @@ export class QueryFilterTransformer<T = any> {
   /**
    * Skips attempts to transform if there are no transformable fields for the document.
    */
-  private isTransformable: boolean;
+  private readonly isTransformable: boolean;
 
-  static create<T = any, D extends Newable = Newable<T>>(
-    metadata: AbstractDocumentMetadata<T, D>
+  static create<T = any>(
+    metadata: AbstractDocumentMetadata<T>
   ): QueryFilterTransformer<T> {
     const { DocumentClass } = metadata;
 

@@ -1,5 +1,5 @@
 import { Filter, OptionalId } from 'mongodb';
-import { Newable } from '../typings';
+import { Constructor, PartialDeep } from '../typings';
 import { FieldMetadata } from './FieldMetadata';
 import { ParentDefinition } from './definitions';
 import { DiscriminatorMetadata } from './DiscriminatorMetadata';
@@ -13,23 +13,20 @@ export type FieldsMetadata = Map<string, FieldMetadata>;
  * AbstractDocumentMetadata contains all the needed info for Document and embedded
  * documents.
  */
-export abstract class AbstractDocumentMetadata<
-  T,
-  D extends Newable = Newable<T>
-> {
+export abstract class AbstractDocumentMetadata<T> {
   public readonly manager: DocumentManager;
-  public readonly DocumentClass: D;
+  public readonly DocumentClass: Constructor<T>;
   public readonly name: string;
   public readonly fields: FieldsMetadata;
   public readonly idField: FieldMetadata;
   public readonly parent?: ParentDefinition;
   public readonly discriminator?: DiscriminatorMetadata;
-  public readonly documentTransformer: DocumentTransformer<T, D>;
+  public readonly documentTransformer: DocumentTransformer<T>;
   public readonly queryFilterTransformer: QueryFilterTransformer<T>;
 
   constructor(
     manager: DocumentManager,
-    DocumentClass: D,
+    DocumentClass: Constructor<T>,
     fields: FieldsMetadata,
     parent?: ParentDefinition,
     discriminator?: DiscriminatorMetadata
@@ -68,31 +65,31 @@ export abstract class AbstractDocumentMetadata<
   // -------------------------------------------------------------------------
 
   /**
-   * Maps model fields to a mongodb document.
-   */
-  toDB(model: Partial<T> | { [key: string]: any }): T & { [key: string]: any } {
-    return this.documentTransformer.toDB(model);
-  }
-
-  /**
-   * Maps mongodb document(s) to a model.
-   */
-  fromDB(doc: Partial<D> | { [key: string]: any }): T {
-    return this.documentTransformer.fromDB(doc);
-  }
-
-  /**
    * Creates a model from model properties.
    */
-  init(props: OptionalId<Partial<T>> | { [key: string]: any }): T {
+  init(props: PartialDeep<T>): T {
     return this.documentTransformer.init(props);
   }
 
   /**
    * Creates a model from model properties.
    */
-  merge(model: T, props: Partial<T> | { [key: string]: any }): T {
+  merge(model: T, props: PartialDeep<T>): T {
     return this.documentTransformer.merge(model, props);
+  }
+
+  /**
+   * Maps model fields to a mongodb document.
+   */
+  toDB(model: T): OptionalId<any> {
+    return this.documentTransformer.toDB(model);
+  }
+
+  /**
+   * Maps mongodb document(s) to a model.
+   */
+  fromDB(doc: Record<string, any>): T {
+    return this.documentTransformer.fromDB(doc);
   }
 
   /**

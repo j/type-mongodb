@@ -24,9 +24,11 @@
   "main": "lib/index.js",
   "typings": "lib/index.d.ts",
   "scripts": {
-    "build": "tsc -b . --force",
+    "build": "tsc -b . --force --project tsconfig.build.json",
     "clean": "rimraf lib",
     "watch": "tsc -w",
+    "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
+    "pretty": "prettier '{src,tests}/**/*.ts' --write",
     "prepublishOnly": "npm run clean && npm run build",
     "release:next": "npm publish --access public --tag next",
     "release": "release-it",
@@ -35,13 +37,17 @@
     "test": "jest --runInBand --verbose --coverage",
     "pretest:ci": "npm run mongo-start",
     "test:ci": "npm run mongo-start && jest --verbose --coverage --ci --forceExit --detectOpenHandles --runInBand",
-    "posttest:ci": "npm run mongo-stop",
-    "pretty": "prettier '{src,tests}/**/*.ts' --write"
+    "posttest:ci": "npm run mongo-stop"
   },
   "devDependencies": {
     "@types/jest": "^26.0.3",
     "@types/uuid": "^8.3.0",
+    "@typescript-eslint/eslint-plugin": "^4.19.0",
+    "@typescript-eslint/parser": "^4.19.0",
     "benchmark": "^2.1.4",
+    "eslint": "^7.22.0",
+    "eslint-config-prettier": "^8.1.0",
+    "eslint-plugin-prettier": "^3.3.1",
     "husky": "^4.2.5",
     "jest": "^26.1.0",
     "mongodb": "^4.0.0-beta.4",
@@ -67,7 +73,23 @@
   },
   "husky": {
     "hooks": {
-      "pre-commit": "pretty-quick --staged"
+      "pre-commit": "npm run lint"
     }
+  },
+  "jest": {
+    "moduleFileExtensions": [
+      "js",
+      "json",
+      "ts"
+    ],
+    "testMatch": ["<rootDir>/tests/**/*.test.ts"],
+    "transform": {
+      "^.+\\.(t|j)s$": "ts-jest"
+    },
+    "collectCoverageFrom": [
+      "<rootDir>/src/**/*.(t|j)s"
+    ],
+    "coverageDirectory": "./coverage",
+    "testEnvironment": "node"
   }
 }

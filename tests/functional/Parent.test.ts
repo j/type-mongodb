@@ -4,27 +4,28 @@ import { DocumentManager } from '../../src/DocumentManager';
 import { Parent } from '../__fixtures__/Parent';
 import { Sibling } from '../__fixtures__/Sibling';
 import { SiblingSibling } from '../__fixtures__/SiblingSibling';
+import { PartialDeep } from '../../lib';
 
-function assertValidParent(parent: Parent) {
+function assertValidParent(parent: PartialDeep<Parent>) {
   expect(parent.sibling).toBeInstanceOf(Sibling);
-  expect(parent.sibling.parent).toBe(parent);
+  expect(parent.sibling?.parent).toBe(parent);
 
   expect(parent.siblings).toHaveLength(1);
-  expect(parent.siblings[0].parent).toBeInstanceOf(Parent);
-  expect(parent.siblings[0].parent).toBe(parent);
+  expect(parent.siblings?.[0]?.parent).toBeInstanceOf(Parent);
+  expect(parent.siblings?.[0]?.parent).toBe(parent);
 
-  expect(parent.sibling.sibling).toBeInstanceOf(SiblingSibling);
-  expect(parent.sibling.sibling.parent).toBeInstanceOf(Sibling);
-  expect(parent.sibling.sibling.parent).toBe(parent.sibling);
+  expect(parent.sibling?.sibling).toBeInstanceOf(SiblingSibling);
+  expect(parent.sibling?.sibling?.parent).toBeInstanceOf(Sibling);
+  expect(parent.sibling?.sibling?.parent).toBe(parent.sibling);
 
-  expect(parent.sibling.siblings).toHaveLength(1);
-  expect(parent.sibling.siblings[0]).toBeInstanceOf(SiblingSibling);
-  expect(parent.sibling.siblings[0].parent).toBeInstanceOf(Sibling);
-  expect(parent.sibling.siblings[0].parent).toBe(parent.sibling);
+  expect(parent.sibling?.siblings).toHaveLength(1);
+  expect(parent.sibling?.siblings?.[0]).toBeInstanceOf(SiblingSibling);
+  expect(parent.sibling?.siblings?.[0]?.parent).toBeInstanceOf(Sibling);
+  expect(parent.sibling?.siblings?.[0]?.parent).toBe(parent.sibling);
 
   // why not
-  expect(parent.sibling.parent.sibling.sibling).toBe(parent.sibling.sibling);
-  expect(parent.sibling.sibling.rootParent).toBe(parent);
+  expect(parent.sibling?.parent?.sibling?.sibling).toBe(parent.sibling?.sibling);
+  expect(parent.sibling?.sibling?.rootParent).toBe(parent);
 }
 
 const doc = {
@@ -43,10 +44,7 @@ describe('Parent', () => {
 
   beforeAll(async () => {
     manager = await DocumentManager.create({
-      connection: {
-        uri: 'mongodb://localhost:27017',
-        database: 'test'
-      },
+      uri: 'mongodb://localhost:27017/test',
       documents: [Parent]
     });
   });

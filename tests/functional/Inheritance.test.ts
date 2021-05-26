@@ -8,10 +8,7 @@ describe('Inheritance', () => {
 
   beforeAll(async () => {
     manager = await DocumentManager.create({
-      connection: {
-        uri: 'mongodb://localhost:27017',
-        database: 'test'
-      },
+      uri: 'mongodb://localhost:27017/test',
       documents: [Inheritance]
     });
   });
@@ -26,10 +23,10 @@ describe('Inheritance', () => {
     expect(meta.fields.get('_id')).toBeDefined();
     expect(meta.fields.get('base')).toBeDefined();
     expect(
-      meta.fields.get('sibling').embeddedMetadata.fields.get('base')
+      meta.fields.get('sibling')?.embeddedMetadata?.fields.get('base')
     ).toBeDefined();
     expect(
-      meta.fields.get('sibling').embeddedMetadata.fields.get('baseBase')
+      meta.fields.get('sibling')?.embeddedMetadata?.fields.get('baseBase')
     ).toBeDefined();
   });
 });

@@ -5,6 +5,6 @@ export * from './metadata/EmbeddedDocumentMetadata';
 export * from './errors';
 export * from './events';
 export * from './repository';
-export * from './typings';
 export * from './types';
+export * from './typings';
 export * from './utils/testUtils';

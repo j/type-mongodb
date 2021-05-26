@@ -1,4 +1,4 @@
-import { DocumentClass, Newable } from '../typings';
+import { Constructor } from '../typings';
 import { Repository } from '../repository';
 import { Type } from '../types';
 
@@ -8,15 +8,15 @@ import { Type } from '../types';
  */
 
 export interface DocumentDefinition<T = any> {
-  DocumentClass: DocumentClass<T>;
-  repository: () => Newable<Repository<T>>;
+  DocumentClass: Constructor<T>;
+  repository: () => Constructor<Repository<T>>;
   database?: string;
   collection: string;
   extensions?: Record<any, any>;
 }
 
 export interface FieldDefinition<T = any> {
-  DocumentClass: DocumentClass<T>;
+  DocumentClass: Constructor<T>;
   type: Type;
   typeIsArray: boolean;
   propertyName: string;
@@ -29,14 +29,14 @@ export interface FieldDefinition<T = any> {
 }
 
 export interface ParentDefinition<T = any> {
-  DocumentClass: DocumentClass<T>;
+  DocumentClass: Constructor<T>;
   propertyName: string;
 }
 
 export interface DiscriminatorDefinition<T = any> {
-  DocumentClass: DocumentClass<T>;
+  DocumentClass: Constructor<T>;
   isMapped?: boolean;
   propertyName?: string;
   fieldName?: string;
-  map: { [type: string]: () => Newable };
+  map: Record<string, () => Constructor>;
 }

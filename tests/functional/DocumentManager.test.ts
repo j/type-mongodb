@@ -1,5 +1,5 @@
 import 'reflect-metadata';
-import { ObjectId, Binary, ClientSession } from 'mongodb';
+import { ObjectId, Binary, ClientSession, MongoClient } from 'mongodb';
 import * as uuid from 'uuid';
 import { UUID } from 'bson';
 import { Simple } from '../__fixtures__/Simple';
@@ -14,7 +14,6 @@ import { DocumentManager } from '../../src/DocumentManager';
 import { Document, Id, Field } from '../../src/decorators';
 import { DocumentMetadata } from '../../src/metadata/DocumentMetadata';
 import { DocumentMetadataFactory } from '../../src/metadata/DocumentMetadataFactory';
-import { Connection } from '../../src/connection/Connection';
 import { UUIDType } from '../../src/types/UUIDType';
 import { ValidationError } from '../../src/errors';
 
@@ -44,10 +43,7 @@ describe('DocumentManager', () => {
 
   beforeAll(async () => {
     manager = await DocumentManager.create({
-      connection: {
-        uri: 'mongodb://localhost:27017',
-        database: 'test'
-      },
+      uri: 'mongodb://localhost:27017/test',
       documents: [
         Simple,
         User,
@@ -61,18 +57,9 @@ describe('DocumentManager', () => {
     await manager.close();
   });
 
-  test('throws error when DocumentManager is created without a connection', async () => {
-    expect(
-      // @ts-ignore
-      DocumentManager.create({
-        documents: [Simple, User]
-      })
-    ).rejects.toThrow('DocumentManager needs a connection.');
-  });
-
   test('creates DocumentManager', () => {
     expect(manager).toBeInstanceOf(DocumentManager);
-    expect(manager.connection).toBeInstanceOf(Connection);
+    expect(manager.client).toBeInstanceOf(MongoClient);
     expect(manager.metadataFactory).toBeInstanceOf(DocumentMetadataFactory);
     expect(manager.metadataFactory.loadedDocumentMetadata.size).toBe(4);
   });
@@ -254,7 +241,7 @@ describe('DocumentManager', () => {
     test('creates an object of User', () => {
       const user = createUsers().john;
       const result = manager.init(User, {
-        _id: user._id.toHexString(),
+        _id: user._id,
         name: 'John',
         address: {
           city: 'San Diego',
@@ -265,7 +252,7 @@ describe('DocumentManager', () => {
           { product: { sku: '2', title: 'Frame' }, rating: 5 }
         ],
         topReviews: ['393967e0-8de1-11e8-9eb6-529269fb1459'],
-        bestFriends: ['507f191e810c19729de860ea'],
+        bestFriends: [new ObjectId('507f191e810c19729de860ea')],
         isActive: true,
         createdAt: user.createdAt
       });

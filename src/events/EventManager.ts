@@ -4,12 +4,14 @@ import {
   InsertEvent,
   UpdateEvent,
   DeleteEvent,
-  ReplaceEvent
+  ReplaceEvent,
+  InsertManyEvent,
+  EventSubscriberMethods
 } from './interfaces';
-import { Newable } from '../typings';
+import { Constructor } from '../typings';
 import { DocumentManager } from '../DocumentManager';
 
-type EventSubscribers = Map<Events, EventSubscriber[]>;
+type EventSubscribers = Map<EventSubscriberMethods, EventSubscriber[]>;
 
 /**
  * EventManager takes event subscribers, determines what events to be
@@ -18,7 +20,7 @@ type EventSubscribers = Map<Events, EventSubscriber[]>;
 export class EventManager {
   protected subscribers: EventSubscriber[] = [];
   protected documentsWithSubscribers: Map<
-    Newable,
+    Constructor,
     EventSubscribers
   > = new Map();
 
@@ -46,7 +48,7 @@ export class EventManager {
   build(manager: DocumentManager) {
     this.documentsWithSubscribers.clear();
 
-    const documents: Newable[] = Array.from(
+    const documents: Constructor[] = Array.from(
       manager.metadataFactory.loadedDocumentMetadata.values()
     ).map((meta) => meta.DocumentClass);
 
@@ -67,45 +69,51 @@ export class EventManager {
   }
 
   dispatchBeforeAndAfter<T1 = any, T2 = any>(
-    before: Events.BeforeInsert,
-    after: Events.AfterInsert,
+    before: EventSubscriberMethods.BeforeInsert,
+    after: EventSubscriberMethods.AfterInsert,
     e: InsertEvent<T1>,
     run: () => Promise<T2>
   ): Promise<T2>;
   dispatchBeforeAndAfter<T1 = any, T2 = any>(
-    before: Events.BeforeUpdate,
-    after: Events.AfterUpdate,
+    before: EventSubscriberMethods.BeforeUpdate,
+    after: EventSubscriberMethods.AfterUpdate,
     e: UpdateEvent<T1>,
     run: () => Promise<T2>
   ): Promise<T2>;
   dispatchBeforeAndAfter<T1 = any, T2 = any>(
-    before: Events.BeforeDelete,
-    after: Events.AfterDelete,
+    before: EventSubscriberMethods.BeforeDelete,
+    after: EventSubscriberMethods.AfterDelete,
     e: DeleteEvent<T1>,
     run: () => Promise<T2>
   ): Promise<T2>;
   dispatchBeforeAndAfter<T1 = any, T2 = any>(
-    before: Events.BeforeReplace,
-    after: Events.AfterReplace,
+    before: EventSubscriberMethods.BeforeReplace,
+    after: EventSubscriberMethods.AfterReplace,
     e: ReplaceEvent<T1>,
     run: () => Promise<T2>
   ): Promise<T2>;
   dispatchBeforeAndAfter<T1 = any, T2 = any>(
-    before: Events.BeforeUpdateMany,
-    after: Events.AfterUpdateMany,
+    before: EventSubscriberMethods.BeforeInsertMany,
+    after: EventSubscriberMethods.AfterInsertMany,
+    e: InsertManyEvent<T1>,
+    run: () => Promise<T2>
+  ): Promise<T2>;
+  dispatchBeforeAndAfter<T1 = any, T2 = any>(
+    before: EventSubscriberMethods.BeforeUpdateMany,
+    after: EventSubscriberMethods.AfterUpdateMany,
     e: UpdateEvent<T1>,
     run: () => Promise<T2>
   ): Promise<T2>;
   dispatchBeforeAndAfter<T1 = any, T2 = any>(
-    before: Events.BeforeDeleteMany,
-    after: Events.AfterDeleteMany,
+    before: EventSubscriberMethods.BeforeDeleteMany,
+    after: EventSubscriberMethods.AfterDeleteMany,
     e: DeleteEvent<T1>,
     run: () => Promise<T2>
   ): Promise<T2>;
   async dispatchBeforeAndAfter<T1 = any, T2 = any>(
-    before: Events,
-    after: Events,
-    e: InsertEvent<T1> | UpdateEvent<T1> | DeleteEvent<T1> | ReplaceEvent<T1>,
+    before: EventSubscriberMethods,
+    after: EventSubscriberMethods,
+    e: Events<T1>,
     run: () => Promise<T2>
   ): Promise<T2> {
     await this.dispatch(before, e);
@@ -119,8 +127,8 @@ export class EventManager {
    * Dispatches the all the subscribed events for the document.
    */
   async dispatch<T = any>(
-    type: Events,
-    e: InsertEvent<T> | UpdateEvent<T> | DeleteEvent<T> | ReplaceEvent<T>
+    type: EventSubscriberMethods,
+    e: Events<T>
   ): Promise<void> {
     if (!this.documentsWithSubscribers.has(e.meta.DocumentClass)) {
       return;
@@ -136,7 +144,7 @@ export class EventManager {
 
     const eventSubscribers = documentSubscribers.get(type);
 
-    for (let subscriber of eventSubscribers) {
+    for (const subscriber of eventSubscribers) {
       await subscriber[type as any](e);
     }
   }
@@ -149,7 +157,7 @@ export class EventManager {
    * Attaches the subscriber's defined methods to the document.
    */
   protected attachSubscriberToDocument(
-    DocumentClass: Newable,
+    DocumentClass: Constructor,
     subscriber: EventSubscriber
   ) {
     if (!this.documentsWithSubscribers.has(DocumentClass)) {
@@ -158,8 +166,8 @@ export class EventManager {
 
     const subscribers = this.documentsWithSubscribers.get(DocumentClass);
 
-    Object.keys(Events).forEach((event) => {
-      const fn = Events[event];
+    Object.keys(EventSubscriberMethods).forEach((event) => {
+      const fn = EventSubscriberMethods[event];
 
       if (typeof subscriber[fn] === 'function') {
         if (!subscribers.has(fn)) {

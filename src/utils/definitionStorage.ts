@@ -1,4 +1,4 @@
-import { DocumentClass } from '../typings';
+import { Constructor } from '../typings';
 import {
   DocumentDefinition,
   FieldDefinition,
@@ -8,10 +8,10 @@ import {
 
 type FieldName = string;
 
-type DocumentStorage = Map<DocumentClass, DocumentDefinition>;
-type FieldStorage = Map<DocumentClass, Map<FieldName, FieldDefinition>>;
-type ParentStorage = Map<DocumentClass, ParentDefinition>;
-type DiscriminatorStorage = Map<DocumentClass, DiscriminatorDefinition>;
+type DocumentStorage = Map<Constructor, DocumentDefinition>;
+type FieldStorage = Map<Constructor, Map<FieldName, FieldDefinition>>;
+type ParentStorage = Map<Constructor, ParentDefinition>;
+type DiscriminatorStorage = Map<Constructor, DiscriminatorDefinition>;
 
 export const definitionStorage: {
   documents: DocumentStorage;

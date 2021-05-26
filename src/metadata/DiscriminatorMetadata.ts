@@ -1,11 +1,11 @@
 import { DiscriminatorDefinition } from './definitions';
 import { AbstractDocumentMetadata } from './AbstractDocumentMetadata';
-import { DocumentClass } from '../typings';
+import { Constructor } from '../typings';
 import { definitionStorage } from '../utils';
 import { InternalError } from '../errors';
 
 export class DiscriminatorMetadata {
-  readonly DocumentClass: DocumentClass;
+  readonly DocumentClass: Constructor;
   readonly propertyName: string;
   readonly fieldName: string;
 

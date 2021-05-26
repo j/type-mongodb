@@ -30,10 +30,7 @@ describe('Repository.castFilter', () => {
 
   beforeAll(async () => {
     manager = await DocumentManager.create({
-      connection: {
-        uri: 'mongodb://localhost:27017',
-        database: 'test'
-      },
+      uri: 'mongodb://localhost:27017/test',
       documents: [Simple, User]
     });
 

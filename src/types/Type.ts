@@ -1,4 +1,4 @@
-import { Newable } from '../typings';
+import { Constructor } from '../typings';
 import { ValidationError } from '../errors';
 
 export enum Mode {
@@ -44,7 +44,9 @@ export class Type<JSType = any, DBType = JSType, ConvertibleTypes = JSType> {
 
   /**
    * Checks if JS representation is valid.
+   *
    */
+  // eslint-disable-next-line
   isValidJSValue(_value?: JSType | ConvertibleTypes): boolean {
     return true;
   }
@@ -52,6 +54,7 @@ export class Type<JSType = any, DBType = JSType, ConvertibleTypes = JSType> {
   /**
    * Checks if database representation is valid.
    */
+  // eslint-disable-next-line
   isValidDatabaseValue(_value?: DBType | ConvertibleTypes): boolean {
     return true;
   }
@@ -77,7 +80,7 @@ export class Type<JSType = any, DBType = JSType, ConvertibleTypes = JSType> {
   /**
    * Returns or creates a type by the given constructor.
    */
-  static getType<M, D>(type: Newable<Type<M, D>> | Type<M, D>): Type<M, D> {
+  static getType<M, D>(type: Constructor<Type<M, D>> | Type<M, D>): Type<M, D> {
     if (type instanceof Type) {
       return type;
     }

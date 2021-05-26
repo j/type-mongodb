@@ -50,16 +50,18 @@ class Cat extends Pet {
   litter: Litter;
 }
 
+type Pets = Dog | Cat;
+
 @Document()
 class Person {
   @Id()
   _id: ObjectId;
 
   @Field(() => [Pet])
-  pets: Pet[] = [];
+  pets: Pets[] = [];
 
   @Field(() => Pet)
-  favoritePet: Dog | Cat;
+  favoritePet: Pets;
 }
 
 function createFixtures(): { person: Person; dog: Dog; cat: Cat; doc: any } {
@@ -108,10 +110,7 @@ describe('Discriminator', () => {
 
   beforeAll(async () => {
     manager = await DocumentManager.create({
-      connection: {
-        uri: 'mongodb://localhost:27017',
-        database: 'test'
-      },
+      uri: 'mongodb://localhost:27017/test',
       documents: [Person]
     });
   });

@@ -5,27 +5,24 @@ function isObject(o: any) {
 }
 
 export function isPlainObject(o: any) {
-  let ctor: any;
-  let prot: any;
-
   if (isObject(o) === false) {
     return false;
   }
 
   // If has modified constructor
-  ctor = o.constructor;
-  if (ctor === undefined) {
+  const ctor = o.constructor;
+  if (o.constructor === undefined) {
     return true;
   }
 
   // If has modified prototype
-  prot = ctor.prototype;
-  if (isObject(prot) === false) {
+  const proto = ctor.prototype;
+  if (isObject(proto) === false) {
     return false;
   }
 
   // If constructor does not have an Object-specific method
-  if (prot.hasOwnProperty('isPrototypeOf') === false) {
+  if (proto.hasOwnProperty('isPrototypeOf') === false) {
     return false;
   }
 

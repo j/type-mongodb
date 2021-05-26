@@ -1,7 +1,7 @@
 import { OptionalId } from 'mongodb';
 import { AbstractDocumentMetadata, FieldMetadata } from '../metadata';
-import { DocumentClass, Newable } from '../typings';
 import { InternalError } from '../errors';
+import { PartialDeep } from '../typings';
 
 export type DocumentTransformerCompiledFunction = (
   target: any,
@@ -15,26 +15,26 @@ function reserveVariable(name: string): string {
   return `${name}_${++variableCount}`;
 }
 
-export class DocumentTransformer<T = any, D extends Newable = Newable<T>> {
+export class DocumentTransformer<T = any> {
   private isCompiled: boolean = false;
   private compiledToDB: DocumentTransformerCompiledFunction;
   private compiledFromDB: DocumentTransformerCompiledFunction;
   private compiledInit: DocumentTransformerCompiledFunction;
   private compiledMerge: DocumentTransformerCompiledFunction;
 
-  private constructor(private meta: AbstractDocumentMetadata<T, D>) {}
+  private constructor(private meta: AbstractDocumentMetadata<T>) {}
 
   static readonly transformers = new Map<any, DocumentTransformer>();
 
-  static create<T = any, D extends Newable = DocumentClass>(
-    meta: AbstractDocumentMetadata<T, D>
-  ): DocumentTransformer<T, D> {
+  static create<T = any>(
+    meta: AbstractDocumentMetadata<T>
+  ): DocumentTransformer<T> {
     // create transformer if it does not exist
     let transformer = DocumentTransformer.transformers.get(
       meta.DocumentClass
-    ) as DocumentTransformer<T, D>;
+    ) as DocumentTransformer<T>;
     if (!transformer) {
-      transformer = new DocumentTransformer<T, D>(meta);
+      transformer = new DocumentTransformer<T>(meta);
     }
 
     DocumentTransformer.transformers.set(meta.DocumentClass, transformer);
@@ -62,13 +62,10 @@ export class DocumentTransformer<T = any, D extends Newable = Newable<T>> {
     this.isCompiled = true;
   }
 
-  public init(
-    props: OptionalId<Partial<T>> | { [key: string]: any },
-    parent?: any
-  ): T {
+  public init(props: PartialDeep<T>, parent?: any): T {
     this.assertIsCompiled();
 
-    props = props || {};
+    props = props || ({} as PartialDeep<T>);
 
     if (this.meta.discriminator) {
       const { propertyName, mapping } = this.meta.discriminator;
@@ -87,11 +84,7 @@ export class DocumentTransformer<T = any, D extends Newable = Newable<T>> {
     );
   }
 
-  public merge(
-    model: T,
-    props: Partial<T> | { [key: string]: any },
-    parent?: any
-  ): T {
+  public merge(model: T, props: PartialDeep<T>, parent?: any): T {
     this.assertIsCompiled();
 
     if (!model) {
@@ -121,7 +114,7 @@ export class DocumentTransformer<T = any, D extends Newable = Newable<T>> {
     return this.compiledMerge(this.prepare(model), props, parent);
   }
 
-  public fromDB(doc?: Partial<D> | { [key: string]: any }, parent?: any): T {
+  public fromDB(doc?: Record<string, any>, parent?: any): T {
     this.assertIsCompiled();
 
     // don't attempt transforming invalid documents into models
@@ -144,9 +137,7 @@ export class DocumentTransformer<T = any, D extends Newable = Newable<T>> {
     );
   }
 
-  public toDB(
-    model: Partial<T> | { [key: string]: any }
-  ): T & { [key: string]: any } {
+  public toDB(model: T): OptionalId<any> {
     this.assertIsCompiled();
 
     // don't attempt transforming invalid models into documents

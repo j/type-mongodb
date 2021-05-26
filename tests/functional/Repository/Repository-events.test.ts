@@ -23,6 +23,8 @@ class NoopListener implements EventSubscriber<any> {
   afterDelete() {}
   beforeReplace() {}
   afterReplace() {}
+  beforeInsertMany() {}
+  afterInsertMany() {}
   beforeUpdateMany() {}
   afterUpdateMany() {}
   beforeDeleteMany() {}
@@ -67,10 +69,7 @@ describe('DocumentManager -> Events', () => {
 
   beforeAll(async () => {
     manager = await DocumentManager.create({
-      connection: {
-        uri: 'mongodb://localhost:27017',
-        database: 'test'
-      },
+      uri: 'mongodb://localhost:27017/test',
       documents: [Event],
       subscribers: [new NoopListener()]
     });
@@ -89,6 +88,14 @@ describe('DocumentManager -> Events', () => {
     spies.afterReplace = jest.spyOn(NoopListener.prototype, 'afterReplace');
 
     // many documents
+    spies.beforeInsertMany = jest.spyOn(
+      NoopListener.prototype,
+      'beforeInsertMany'
+    );
+    spies.afterInsertMany = jest.spyOn(
+      NoopListener.prototype,
+      'afterInsertMany'
+    );
     spies.beforeUpdateMany = jest.spyOn(
       NoopListener.prototype,
       'beforeUpdateMany'
@@ -135,22 +142,14 @@ describe('DocumentManager -> Events', () => {
   test('create() -> multiple documents', async () => {
     const events = [{ field: 'event1' }, { field: 'event2' }];
     const models = await repository.create(events);
-    assertEventsCalled([spies.beforeInsert, spies.afterInsert], 2);
-    assertEventCalledWith(spies.beforeInsert, 1, {
+    assertEventsCalled([spies.beforeInsertMany, spies.afterInsertMany], 1);
+    assertEventCalledWith(spies.beforeInsertMany, 1, {
       meta,
-      model: models[0]
+      models
     });
-    assertEventCalledWith(spies.beforeInsert, 2, {
+    assertEventCalledWith(spies.afterInsertMany, 1, {
       meta,
-      model: models[1]
-    });
-    assertEventCalledWith(spies.afterInsert, 1, {
-      meta,
-      model: models[0]
-    });
-    assertEventCalledWith(spies.afterInsert, 2, {
-      meta,
-      model: models[1]
+      models
     });
   });
 
@@ -175,22 +174,14 @@ describe('DocumentManager -> Events', () => {
     ];
 
     await repository.insertMany(models);
-    assertEventsCalled([spies.beforeInsert, spies.afterInsert], 2);
-    assertEventCalledWith(spies.beforeInsert, 1, {
+    assertEventsCalled([spies.beforeInsertMany, spies.afterInsertMany], 1);
+    assertEventCalledWith(spies.beforeInsertMany, 1, {
       meta,
-      model: models[0]
+      models
     });
-    assertEventCalledWith(spies.beforeInsert, 2, {
+    assertEventCalledWith(spies.afterInsertMany, 1, {
       meta,
-      model: models[1]
-    });
-    assertEventCalledWith(spies.afterInsert, 1, {
-      meta,
-      model: models[0]
-    });
-    assertEventCalledWith(spies.afterInsert, 2, {
-      meta,
-      model: models[1]
+      models
     });
   });
 
