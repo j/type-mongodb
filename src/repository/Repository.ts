@@ -26,9 +26,16 @@ import { EventSubscriberMethods, InsertManyEvent } from '../events';
 import { Type } from '../types';
 import { Mutable, PartialDeep } from '../typings';
 
-export interface TransformQueryFilterOptions {
+/**
+ * `type-mongodb` specific options
+ */
+export interface InternalOptions {
   transformQueryFilter?: boolean;
 }
+
+export type WithInternalOptions<
+  T extends Record<any, any> = Record<any, any>
+> = T & InternalOptions;
 
 /**
  * Repository for documents
@@ -99,8 +106,14 @@ export class Repository<T> {
   // MongoDB specific methods
   // -------------------------------------------------------------------------
   find(query?: Filter<T | any>): FindCursor<T>;
-  find(query: Filter<T | any>, opts: FindOptions): FindCursor<T>;
-  find(query: Filter<T | any>, opts?: FindOptions): FindCursor<T> {
+  find(
+    query: Filter<T | any>,
+    opts: WithInternalOptions<FindOptions>
+  ): FindCursor<T>;
+  find(
+    query: Filter<T | any>,
+    opts?: WithInternalOptions<FindOptions>
+  ): FindCursor<T> {
     const cursor = this.collection.find(
       this.prepareFilter(query, opts),
       this.prepareOptions(opts)
@@ -111,19 +124,28 @@ export class Repository<T> {
   }
 
   findByIds(ids: any[]): FindCursor<T>;
-  findByIds(ids: any[], opts: FindOptions): FindCursor<T>;
-  findByIds(ids: any[], opts?: FindOptions): FindCursor<T> {
+  findByIds(ids: any[], opts: WithInternalOptions<FindOptions>): FindCursor<T>;
+  findByIds(
+    ids: any[],
+    opts?: WithInternalOptions<FindOptions>
+  ): FindCursor<T> {
     return this.find(
       { [this.metadata.idField.propertyName]: { $in: ids } },
       opts
     );
   }
 
-  async findById(id: any, opts?: FindOptions): Promise<T | null> {
+  async findById(
+    id: any,
+    opts?: WithInternalOptions<FindOptions>
+  ): Promise<T | null> {
     return this.findOne({ [this.metadata.idField.propertyName]: id }, opts);
   }
 
-  async findByIdOrFail(id: any, opts?: FindOptions): Promise<T> {
+  async findByIdOrFail(
+    id: any,
+    opts?: WithInternalOptions<FindOptions>
+  ): Promise<T> {
     return this.failIfEmpty(
       this.metadata,
       { [this.metadata.idField.propertyName]: id },
@@ -133,7 +155,7 @@ export class Repository<T> {
 
   async findOne(
     filter: Filter<T | any>,
-    opts?: FindOptions
+    opts?: WithInternalOptions<FindOptions>
   ): Promise<T | null> {
     const found = await this.collection.findOne(
       this.prepareFilter(filter, opts),
@@ -145,7 +167,7 @@ export class Repository<T> {
 
   async findOneOrFail(
     filter: Filter<T | any>,
-    opts?: FindOptions
+    opts?: WithInternalOptions<FindOptions>
   ): Promise<T | null> {
     return this.failIfEmpty(
       this.metadata,
@@ -232,7 +254,7 @@ export class Repository<T> {
   async findOneAndUpdate(
     filter: Filter<T | any>,
     update: UpdateQuery<T>,
-    opts?: FindOneAndUpdateOptions & TransformQueryFilterOptions
+    opts?: WithInternalOptions<FindOneAndUpdateOptions>
   ): Promise<T | null> {
     return this.manager.eventManager.dispatchBeforeAndAfter(
       EventSubscriberMethods.BeforeUpdate,
@@ -257,7 +279,7 @@ export class Repository<T> {
   async findOneAndUpdateOrFail(
     filter: Filter<T | any>,
     update: UpdateQuery<T>,
-    opts?: FindOneAndUpdateOptions & TransformQueryFilterOptions
+    opts?: WithInternalOptions<FindOneAndUpdateOptions>
   ): Promise<T> {
     return this.failIfEmpty(
       this.metadata,
@@ -269,7 +291,7 @@ export class Repository<T> {
   async findByIdAndUpdate(
     id: any,
     update: UpdateQuery<T>,
-    opts?: FindOneAndUpdateOptions & TransformQueryFilterOptions
+    opts?: WithInternalOptions<FindOneAndUpdateOptions>
   ): Promise<T | null> {
     return this.findOneAndUpdate(
       { [this.metadata.idField.propertyName]: id },
@@ -281,7 +303,7 @@ export class Repository<T> {
   async findByIdAndUpdateOrFail(
     id: any,
     update: UpdateQuery<T>,
-    opts?: FindOneAndUpdateOptions & TransformQueryFilterOptions
+    opts?: WithInternalOptions<InternalOptions>
   ): Promise<T> {
     return this.findOneAndUpdateOrFail(
       { [this.metadata.idField.propertyName]: id },
@@ -293,7 +315,7 @@ export class Repository<T> {
   async findOneAndReplace(
     filter: Filter<T | any>,
     props: PartialDeep<T>,
-    opts?: FindOneAndReplaceOptions & TransformQueryFilterOptions
+    opts?: WithInternalOptions<FindOneAndReplaceOptions>
   ): Promise<T | null> {
     const result = await this.collection.findOneAndReplace(
       this.prepareFilter(filter, opts),
@@ -307,7 +329,7 @@ export class Repository<T> {
   async findOneAndReplaceOrFail(
     filter: Filter<T | any>,
     props: PartialDeep<T>,
-    opts?: FindOneAndReplaceOptions & TransformQueryFilterOptions
+    opts?: WithInternalOptions<FindOneAndReplaceOptions>
   ): Promise<T> {
     return this.failIfEmpty(
       this.metadata,
@@ -319,7 +341,7 @@ export class Repository<T> {
   async findByIdAndReplace(
     id: any,
     props: PartialDeep<T>,
-    opts?: FindOneAndReplaceOptions & TransformQueryFilterOptions
+    opts?: WithInternalOptions<FindOneAndReplaceOptions>
   ): Promise<T | null> {
     return this.findOneAndReplace(
       { [this.metadata.idField.propertyName]: id },
@@ -331,7 +353,7 @@ export class Repository<T> {
   async findByIdAndReplaceOrFail(
     id: any,
     props: PartialDeep<T>,
-    opts?: FindOneAndReplaceOptions & TransformQueryFilterOptions
+    opts?: WithInternalOptions<FindOneAndReplaceOptions>
   ): Promise<T> {
     return this.findOneAndReplaceOrFail(
       { [this.metadata.idField.propertyName]: id },
@@ -342,7 +364,7 @@ export class Repository<T> {
 
   async findOneAndDelete(
     filter: Filter<T | any>,
-    opts?: FindOneAndDeleteOptions & TransformQueryFilterOptions
+    opts?: WithInternalOptions<FindOneAndDeleteOptions>
   ): Promise<T | null> {
     return this.manager.eventManager.dispatchBeforeAndAfter(
       EventSubscriberMethods.BeforeDelete,
@@ -364,7 +386,7 @@ export class Repository<T> {
 
   async findOneAndDeleteOrFail(
     filter: Filter<T | any>,
-    opts?: FindOneAndDeleteOptions & TransformQueryFilterOptions
+    opts?: WithInternalOptions<FindOneAndDeleteOptions>
   ): Promise<T> {
     return this.failIfEmpty(
       this.metadata,
@@ -375,7 +397,7 @@ export class Repository<T> {
 
   async findByIdAndDelete(
     id: any,
-    opts?: FindOneAndDeleteOptions & TransformQueryFilterOptions
+    opts?: WithInternalOptions<FindOneAndDeleteOptions>
   ): Promise<T | null> {
     return this.findOneAndDelete(
       { [this.metadata.idField.propertyName]: id },
@@ -385,7 +407,7 @@ export class Repository<T> {
 
   async findByIdAndDeleteOrFail(
     id: any,
-    opts?: FindOneAndDeleteOptions & TransformQueryFilterOptions
+    opts?: WithInternalOptions<FindOneAndDeleteOptions>
   ): Promise<T | null> {
     return this.findOneAndDeleteOrFail(
       { [this.metadata.idField.propertyName]: id },
@@ -396,7 +418,7 @@ export class Repository<T> {
   async updateOne(
     filter: Filter<T | any>,
     update: UpdateQuery<T>,
-    opts?: UpdateOptions & TransformQueryFilterOptions
+    opts?: WithInternalOptions<UpdateOptions>
   ): Promise<UpdateResult> {
     return this.manager.eventManager.dispatchBeforeAndAfter(
       EventSubscriberMethods.BeforeUpdate,
@@ -418,7 +440,7 @@ export class Repository<T> {
   async updateById(
     id: any,
     update: UpdateQuery<T>,
-    opts?: UpdateOptions & TransformQueryFilterOptions
+    opts?: WithInternalOptions<UpdateOptions>
   ): Promise<UpdateResult> {
     return this.updateOne(
       { [this.metadata.idField.propertyName]: id },
@@ -430,7 +452,7 @@ export class Repository<T> {
   async updateMany(
     filter: Filter<T | any>,
     update: UpdateQuery<T>,
-    opts?: UpdateOptions & TransformQueryFilterOptions
+    opts?: WithInternalOptions<UpdateOptions>
   ): Promise<UpdateResult> {
     return this.manager.eventManager.dispatchBeforeAndAfter(
       EventSubscriberMethods.BeforeUpdateMany,
@@ -452,7 +474,7 @@ export class Repository<T> {
   async updateByIds(
     ids: any[],
     update: UpdateQuery<T>,
-    opts?: UpdateOptions & TransformQueryFilterOptions
+    opts?: WithInternalOptions<UpdateOptions>
   ): Promise<UpdateResult> {
     return this.updateMany(
       { [this.metadata.idField.propertyName]: { $in: ids } },
@@ -464,7 +486,7 @@ export class Repository<T> {
   async replaceOne(
     filter: Filter<T | any>,
     props: PartialDeep<T>,
-    opts?: UpdateOptions & TransformQueryFilterOptions
+    opts?: WithInternalOptions<UpdateOptions>
   ): Promise<UpdateResult> {
     const model =
       props instanceof this.metadata.DocumentClass ? props : this.init(props);
@@ -493,7 +515,7 @@ export class Repository<T> {
   async replaceById(
     id: any,
     props: PartialDeep<T>,
-    opts?: UpdateOptions & TransformQueryFilterOptions
+    opts?: WithInternalOptions<UpdateOptions>
   ): Promise<UpdateResult> {
     return this.replaceOne(
       { [this.metadata.idField.propertyName]: id },
@@ -504,7 +526,7 @@ export class Repository<T> {
 
   async deleteOne(
     filter: Filter<T | any>,
-    opts?: DeleteOptions & TransformQueryFilterOptions
+    opts?: WithInternalOptions<DeleteOptions>
   ): Promise<boolean> {
     return this.manager.eventManager.dispatchBeforeAndAfter(
       EventSubscriberMethods.BeforeDelete,
@@ -526,14 +548,14 @@ export class Repository<T> {
 
   async deleteById(
     id: any,
-    opts?: DeleteOptions & TransformQueryFilterOptions
+    opts?: WithInternalOptions<DeleteOptions>
   ): Promise<boolean> {
     return this.deleteOne({ [this.metadata.idField.propertyName]: id }, opts);
   }
 
   async deleteMany(
     filter: Filter<T | any>,
-    opts?: DeleteOptions & TransformQueryFilterOptions
+    opts?: WithInternalOptions<DeleteOptions>
   ): Promise<DeleteResult> {
     return this.manager.eventManager.dispatchBeforeAndAfter(
       EventSubscriberMethods.BeforeDeleteMany,
@@ -552,7 +574,7 @@ export class Repository<T> {
 
   async deleteByIds(
     ids: any[],
-    opts?: DeleteOptions & TransformQueryFilterOptions
+    opts?: WithInternalOptions<DeleteOptions>
   ): Promise<DeleteResult> {
     return this.deleteMany(
       {
@@ -569,24 +591,26 @@ export class Repository<T> {
 
   prepareFilter(
     filter: Filter<T | any>,
-    opts?: TransformQueryFilterOptions & Record<any, any>
+    opts?: WithInternalOptions | Record<any, any>
   ): Filter<any> {
-    // don't transform filter if "transformQueryFilter" is set to false
-    if (typeof opts === 'object' && 'transformQueryFilter' in opts) {
-      const transformQueryFilter = opts.transformQueryFilter;
+    const transformQueryFilter = (opts || {}).transformQueryFilter ?? true;
 
-      delete opts.transformQueryFilter;
-
-      if (transformQueryFilter === false) {
-        return filter;
-      }
-    }
-
-    return this.metadata.transformQueryFilter(filter);
+    return transformQueryFilter
+      ? this.metadata.transformQueryFilter(filter)
+      : filter;
   }
 
   prepareOptions<T = any>(opts?: T): T {
-    return opts as T;
+    if (typeof opts !== 'object') {
+      return opts;
+    }
+
+    // remove unwanted options
+    if ('transformQueryFilter' in opts) {
+      delete (opts as InternalOptions).transformQueryFilter;
+    }
+
+    return opts;
   }
 
   // -------------------------------------------------------------------------
