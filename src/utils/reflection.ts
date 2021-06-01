@@ -1,7 +1,7 @@
 import 'reflect-metadata';
 import { Constructor } from '../typings';
 import { ObjectIdType, Type } from '../types';
-import { FieldDefinition } from 'src/metadata';
+import { FieldDefinition } from '../metadata';
 
 export function fieldToType(
   target: Record<any, any>,

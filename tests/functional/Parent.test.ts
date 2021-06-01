@@ -1,10 +1,8 @@
 import 'reflect-metadata';
-// import { ObjectId } from 'mongodb';
-import { DocumentManager } from '../../src/DocumentManager';
+import { DocumentManager, PartialDeep } from '../../src';
 import { Parent } from '../__fixtures__/Parent';
 import { Sibling } from '../__fixtures__/Sibling';
 import { SiblingSibling } from '../__fixtures__/SiblingSibling';
-import { PartialDeep } from '../../lib';
 
 function assertValidParent(parent: PartialDeep<Parent>) {
   expect(parent.sibling).toBeInstanceOf(Sibling);

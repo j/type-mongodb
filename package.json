@@ -24,9 +24,9 @@
   "main": "lib/index.js",
   "typings": "lib/index.d.ts",
   "scripts": {
-    "build": "tsc -b . --force --project tsconfig.build.json",
+    "build": "tsc --project tsconfig.build.json",
     "clean": "rimraf lib",
-    "watch": "tsc -w",
+    "watch": "tsc --project tsconfig.build.json --watch",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
     "pretty": "prettier '{src,tests}/**/*.ts' --write",
     "prepublishOnly": "npm run clean && npm run build",
@@ -44,7 +44,6 @@
     "@types/uuid": "^8.3.0",
     "@typescript-eslint/eslint-plugin": "^4.19.0",
     "@typescript-eslint/parser": "^4.19.0",
-    "benchmark": "^2.1.4",
     "eslint": "^7.22.0",
     "eslint-config-prettier": "^8.1.0",
     "eslint-plugin-prettier": "^3.3.1",
@@ -92,6 +91,11 @@
       "<rootDir>/src/**/*.(t|j)s"
     ],
     "coverageDirectory": "./coverage",
-    "testEnvironment": "node"
+    "testEnvironment": "node",
+    "globals": {
+      "ts-jest": {
+        "tsconfig": "tsconfig.test.json"
+      }
+    }
   }
 }
