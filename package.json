@@ -64,7 +64,7 @@
     "uuid": "^8.3.2"
   },
   "peerDependencies": {
-    "mongodb": "^4.0.0-beta.4",
+    "mongodb": "^4.0.0-beta.5",
     "reflect-metadata": "^0.1.13"
   },
   "prettier": {
@@ -82,7 +82,9 @@
       "json",
       "ts"
     ],
-    "testMatch": ["<rootDir>/tests/**/*.test.ts"],
+    "testMatch": [
+      "<rootDir>/tests/**/*.test.ts"
+    ],
     "transform": {
       "^.+\\.(t|j)s$": "ts-jest"
     },

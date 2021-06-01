@@ -24,7 +24,9 @@ function assertValidParent(parent: PartialDeep<Parent>) {
   expect(parent.sibling?.siblings?.[0]?.parent).toBe(parent.sibling);
 
   // why not
-  expect(parent.sibling?.parent?.sibling?.sibling).toBe(parent.sibling?.sibling);
+  expect(parent.sibling?.parent?.sibling?.sibling).toBe(
+    parent.sibling?.sibling
+  );
   expect(parent.sibling?.sibling?.rootParent).toBe(parent);
 }
 
