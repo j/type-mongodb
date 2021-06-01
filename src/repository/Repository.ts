@@ -303,7 +303,7 @@ export class Repository<T> {
   async findByIdAndUpdateOrFail(
     id: any,
     update: UpdateQuery<T>,
-    opts?: WithInternalOptions<InternalOptions>
+    opts?: WithInternalOptions<FindOneAndUpdateOptions>
   ): Promise<T> {
     return this.findOneAndUpdateOrFail(
       { [this.metadata.idField.propertyName]: id },
