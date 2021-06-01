@@ -203,6 +203,7 @@ export class DocumentManager {
   static async create(
     opts: DocumentManagerOptionsUsingUri
   ): Promise<DocumentManager>;
+  static async create(opts: DocumentManagerOptions): Promise<DocumentManager>;
   static async create(opts: DocumentManagerOptions): Promise<DocumentManager> {
     let client: MongoClient;
     if ((opts as DocumentManagerOptionsUsingClient).client) {
