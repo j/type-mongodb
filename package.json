@@ -32,7 +32,7 @@
     "prepublishOnly": "npm run clean && npm run build",
     "release:next": "npm publish --access public --tag next",
     "release": "release-it",
-    "mongo-start": "MONGODB_VERSION=4.x.x npx mongodb-runner start --topology=replicaset",
+    "mongo-start": "MONGODB_VERSION=4.x.x npx mongodb-runner start --topology=replicaset --purge=false",
     "mongo-stop": "npx mongodb-runner stop --topology=replicaset",
     "test": "jest --runInBand --verbose --coverage",
     "pretest:ci": "npm run mongo-start",
