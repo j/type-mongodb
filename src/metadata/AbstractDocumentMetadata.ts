@@ -1,11 +1,12 @@
-import { Filter, OptionalId } from 'mongodb';
+import { OptionalId } from 'mongodb';
 import { Constructor, PartialDeep } from '../typings';
 import { FieldMetadata } from './FieldMetadata';
 import { ParentDefinition } from './definitions';
 import { DiscriminatorMetadata } from './DiscriminatorMetadata';
 import { InternalError } from '../errors';
-import { DocumentTransformer, QueryFilterTransformer } from '../transformer';
+import { Hydrator, HydratorFactory } from '../hydration';
 import { DocumentManager } from '../DocumentManager';
+import { cast, CastInput, CastType } from '../utils';
 
 export type FieldsMetadata = Map<string, FieldMetadata>;
 
@@ -21,8 +22,7 @@ export abstract class AbstractDocumentMetadata<T> {
   public readonly idField: FieldMetadata;
   public readonly parent?: ParentDefinition;
   public readonly discriminator?: DiscriminatorMetadata;
-  public readonly documentTransformer: DocumentTransformer<T>;
-  public readonly queryFilterTransformer: QueryFilterTransformer<T>;
+  public readonly hydrator: Hydrator;
 
   constructor(
     manager: DocumentManager,
@@ -37,8 +37,7 @@ export abstract class AbstractDocumentMetadata<T> {
     this.fields = fields;
     this.parent = parent;
     this.discriminator = discriminator;
-    this.documentTransformer = DocumentTransformer.create(this);
-    this.queryFilterTransformer = QueryFilterTransformer.create(this);
+    this.hydrator = HydratorFactory.create(this);
 
     // set the idField property if it exists
     this.idField = [...this.fields.values()].find((f) => f.fieldName === '_id');
@@ -68,34 +67,38 @@ export abstract class AbstractDocumentMetadata<T> {
    * Creates a model from model properties.
    */
   init(props: PartialDeep<T>): T {
-    return this.documentTransformer.init(props);
+    return this.hydrator.init(props);
   }
 
   /**
    * Creates a model from model properties.
    */
   merge(model: T, props: PartialDeep<T>): T {
-    return this.documentTransformer.merge(model, props);
+    return this.hydrator.merge(model, props);
   }
 
   /**
    * Maps model fields to a mongodb document.
    */
   toDB(model: T): OptionalId<any> {
-    return this.documentTransformer.toDB(model);
+    if (!(model instanceof this.DocumentClass)) {
+      model = this.init(model as PartialDeep<T>);
+    }
+
+    return this.hydrator.toDB(model);
   }
 
   /**
    * Maps mongodb document(s) to a model.
    */
   fromDB(doc: Record<string, any>): T {
-    return this.documentTransformer.fromDB(doc);
+    return this.hydrator.fromDB(doc);
   }
 
   /**
-   * Transforms query filters.
+   * Casts field names & values from the Repository to MongoDB.
    */
-  transformQueryFilter(input: Filter<T>): Filter<any> {
-    return this.queryFilterTransformer.transform(input);
+  cast<I extends CastInput<T>>(input: I, type: CastType): I {
+    return cast(this, input, type);
   }
 }

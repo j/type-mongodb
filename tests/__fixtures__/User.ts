@@ -35,7 +35,7 @@ export class Review {
   rating: number;
 
   @Field({ type: UUIDType })
-  productUUIDs: number[];
+  productUUIDs: string[];
 }
 
 @Document({ repository: () => UserRepository })
@@ -53,7 +53,7 @@ export class User {
   address: Address;
 
   @Field(() => [Review])
-  reviews: Review[];
+  reviews: Review[] = [];
 
   @Field({ type: UUIDType })
   topReviews: string[];

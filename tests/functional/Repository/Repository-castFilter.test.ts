@@ -1,7 +1,7 @@
 import 'reflect-metadata';
 import { ObjectId, Binary, Filter } from 'mongodb';
 import { Simple } from '../../__fixtures__/Simple';
-import { User } from '../../__fixtures__/User';
+import { User, Address, Review } from '../../__fixtures__/User';
 import { DocumentManager } from '../../../src/DocumentManager';
 import { UserRepository } from '../../__fixtures__/UserRepository';
 import { UUIDType } from '../../../src';
@@ -182,14 +182,14 @@ describe('Repository.castFilter', () => {
 
   cases.forEach(([name, query, expected]) => {
     test(`${name}`, async () => {
-      const filter = repository.prepareFilter(query);
+      const filter = repository.castFilter(query);
       expect(filter).toEqual(expected);
       await assertValidFilter(filter);
     });
 
     ['$and', '$nor', '$or'].forEach(($op) => {
       test(`${name} wrapped in "${$op}"`, async () => {
-        const filter = repository.prepareFilter({ [$op]: [query] });
+        const filter = repository.castFilter({ [$op]: [query] });
         expect(filter).toEqual({ [$op]: [expected] });
         await assertValidFilter(filter);
       });

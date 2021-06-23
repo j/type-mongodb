@@ -31,7 +31,7 @@ class NoopListener implements EventSubscriber<any> {
   afterDeleteMany() {}
 }
 
-describe('DocumentManager -> Events', () => {
+describe('Repository -> Events', () => {
   let manager: DocumentManager;
   let repository: Repository<Event>;
   let meta: DocumentMetadata;

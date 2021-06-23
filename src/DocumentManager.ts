@@ -16,7 +16,7 @@ import { EventSubscriber } from './events';
 import { EventManager } from './events';
 import { Repository } from './repository';
 import { EmbeddedDocumentMetadata } from './metadata';
-import { DocumentTransformer } from './transformer';
+import { HydratorFactory } from './hydration';
 import { InternalError } from './errors';
 
 export interface ContainerLike {
@@ -229,8 +229,6 @@ export class DocumentManager {
 
       await manager.metadataFactory.build(manager);
       manager.eventManager.build(manager);
-
-      DocumentTransformer.compile();
 
       return manager;
     } catch (err) {

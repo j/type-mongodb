@@ -25,12 +25,13 @@ import { DocumentManager } from '../DocumentManager';
 import { EventSubscriberMethods, InsertManyEvent } from '../events';
 import { Type } from '../types';
 import { Mutable, PartialDeep } from '../typings';
+import { CastInput, CastType } from '../utils';
 
 /**
  * `type-mongodb` specific options
  */
 export interface InternalOptions {
-  transformQueryFilter?: boolean;
+  disableCasting?: boolean;
 }
 
 export type WithInternalOptions<
@@ -105,18 +106,18 @@ export class Repository<T> {
   // -------------------------------------------------------------------------
   // MongoDB specific methods
   // -------------------------------------------------------------------------
-  find(query?: Filter<T | any>): FindCursor<T>;
+  find(filter?: Filter<T | any>): FindCursor<T>;
   find(
-    query: Filter<T | any>,
-    opts: WithInternalOptions<FindOptions>
+    filter: Filter<T | any>,
+    options: WithInternalOptions<FindOptions>
   ): FindCursor<T>;
   find(
-    query: Filter<T | any>,
-    opts?: WithInternalOptions<FindOptions>
+    filter: Filter<T | any>,
+    options?: WithInternalOptions<FindOptions>
   ): FindCursor<T> {
     const cursor = this.collection.find(
-      this.prepareFilter(query, opts),
-      this.prepareOptions(opts)
+      this.castFilter(filter, options) || {},
+      this.castOptions(options)
     );
     cursor.map((doc: any) => this.fromDB(doc));
 
@@ -124,42 +125,45 @@ export class Repository<T> {
   }
 
   findByIds(ids: any[]): FindCursor<T>;
-  findByIds(ids: any[], opts: WithInternalOptions<FindOptions>): FindCursor<T>;
   findByIds(
     ids: any[],
-    opts?: WithInternalOptions<FindOptions>
+    options: WithInternalOptions<FindOptions>
+  ): FindCursor<T>;
+  findByIds(
+    ids: any[],
+    options?: WithInternalOptions<FindOptions>
   ): FindCursor<T> {
     return this.find(
       { [this.metadata.idField.propertyName]: { $in: ids } },
-      opts
+      options
     );
   }
 
   async findById(
     id: any,
-    opts?: WithInternalOptions<FindOptions>
+    options?: WithInternalOptions<FindOptions>
   ): Promise<T | null> {
-    return this.findOne({ [this.metadata.idField.propertyName]: id }, opts);
+    return this.findOne({ [this.metadata.idField.propertyName]: id }, options);
   }
 
   async findByIdOrFail(
     id: any,
-    opts?: WithInternalOptions<FindOptions>
+    options?: WithInternalOptions<FindOptions>
   ): Promise<T> {
     return this.failIfEmpty(
       this.metadata,
       { [this.metadata.idField.propertyName]: id },
-      await this.findById(id, opts)
+      await this.findById(id, options)
     );
   }
 
   async findOne(
     filter: Filter<T | any>,
-    opts?: WithInternalOptions<FindOptions>
+    options?: WithInternalOptions<FindOptions>
   ): Promise<T | null> {
     const found = await this.collection.findOne(
-      this.prepareFilter(filter, opts),
-      this.prepareOptions(opts)
+      this.castFilter(filter, options) || {},
+      this.castOptions(options)
     );
 
     return found ? this.fromDB(found) : null;
@@ -167,30 +171,32 @@ export class Repository<T> {
 
   async findOneOrFail(
     filter: Filter<T | any>,
-    opts?: WithInternalOptions<FindOptions>
+    options?: WithInternalOptions<FindOptions>
   ): Promise<T | null> {
     return this.failIfEmpty(
       this.metadata,
       filter,
-      await this.findOne(filter, opts)
+      await this.findOne(filter, options)
     );
   }
 
-  create(props: PartialDeep<T>, opts?: InsertOneOptions): Promise<T>;
-  create(props: PartialDeep<T>[], opts?: BulkWriteOptions): Promise<T[]>;
+  create(props: PartialDeep<T>, options?: InsertOneOptions): Promise<T>;
+  create(props: PartialDeep<T>[], options?: BulkWriteOptions): Promise<T[]>;
   async create(
     props: PartialDeep<T> | PartialDeep<T>[],
-    opts?: InsertOneOptions | BulkWriteOptions
+    options?: InsertOneOptions | BulkWriteOptions
   ): Promise<T | T[]> {
     return Array.isArray(props)
-      ? this.createMany(props, opts)
-      : this.createOne(props, opts);
+      ? this.createMany(props, options)
+      : this.createOne(props, options);
   }
 
-  async createOne(props: PartialDeep<T>, opts?: InsertOneOptions): Promise<T> {
+  async createOne(
+    props: PartialDeep<T>,
+    options?: InsertOneOptions
+  ): Promise<T> {
     const model = this.init(props);
-
-    const { acknowledged } = await this.insertOne(model, opts);
+    const { acknowledged } = await this.insertOne(model, options);
 
     return acknowledged ? model : null;
   }
@@ -207,7 +213,7 @@ export class Repository<T> {
 
   async insertOne(
     model: T,
-    opts?: InsertOneOptions
+    options?: InsertOneOptions
   ): Promise<InsertOneResult<any>> {
     const doc = this.toDB(model);
 
@@ -218,13 +224,15 @@ export class Repository<T> {
         meta: this.metadata,
         model
       },
-      () => this.collection.insertOne(doc, this.prepareOptions(opts))
+      () => {
+        return this.collection.insertOne(doc, this.castOptions(options));
+      }
     );
   }
 
   async insertMany(
     models: T[],
-    opts?: BulkWriteOptions
+    options?: BulkWriteOptions
   ): Promise<InsertManyResult<T>> {
     const docs: OptionalId<T>[] = [];
     const idField = this.metadata.idField;
@@ -247,14 +255,16 @@ export class Repository<T> {
       EventSubscriberMethods.BeforeInsertMany,
       EventSubscriberMethods.AfterInsertMany,
       event,
-      () => this.collection.insertMany(docs, this.prepareOptions(opts))
+      () => {
+        return this.collection.insertMany(docs, this.castOptions(options));
+      }
     );
   }
 
   async findOneAndUpdate(
     filter: Filter<T | any>,
     update: UpdateQuery<T>,
-    opts?: WithInternalOptions<FindOneAndUpdateOptions>
+    options?: WithInternalOptions<FindOneAndUpdateOptions>
   ): Promise<T | null> {
     return this.manager.eventManager.dispatchBeforeAndAfter(
       EventSubscriberMethods.BeforeUpdate,
@@ -266,9 +276,9 @@ export class Repository<T> {
       },
       async () => {
         const result = await this.collection.findOneAndUpdate(
-          this.prepareFilter(filter, opts),
-          update,
-          this.prepareOptions(opts)
+          this.castFilter(filter, options),
+          this.castUpdateQuery(update, options),
+          this.castOptions(options)
         );
 
         return this.fromModifyResult(result);
@@ -279,48 +289,48 @@ export class Repository<T> {
   async findOneAndUpdateOrFail(
     filter: Filter<T | any>,
     update: UpdateQuery<T>,
-    opts?: WithInternalOptions<FindOneAndUpdateOptions>
+    options?: WithInternalOptions<FindOneAndUpdateOptions>
   ): Promise<T> {
     return this.failIfEmpty(
       this.metadata,
       filter,
-      await this.findOneAndUpdate(filter, update, opts)
+      await this.findOneAndUpdate(filter, update, options)
     );
   }
 
   async findByIdAndUpdate(
     id: any,
     update: UpdateQuery<T>,
-    opts?: WithInternalOptions<FindOneAndUpdateOptions>
+    options?: WithInternalOptions<FindOneAndUpdateOptions>
   ): Promise<T | null> {
     return this.findOneAndUpdate(
       { [this.metadata.idField.propertyName]: id },
       update,
-      opts
+      options
     );
   }
 
   async findByIdAndUpdateOrFail(
     id: any,
     update: UpdateQuery<T>,
-    opts?: WithInternalOptions<FindOneAndUpdateOptions>
+    options?: WithInternalOptions<FindOneAndUpdateOptions>
   ): Promise<T> {
     return this.findOneAndUpdateOrFail(
       { [this.metadata.idField.propertyName]: id },
       update,
-      opts
+      options
     );
   }
 
   async findOneAndReplace(
     filter: Filter<T | any>,
-    props: PartialDeep<T>,
-    opts?: WithInternalOptions<FindOneAndReplaceOptions>
+    model: T,
+    options?: WithInternalOptions<FindOneAndReplaceOptions>
   ): Promise<T | null> {
     const result = await this.collection.findOneAndReplace(
-      this.prepareFilter(filter, opts),
-      props,
-      this.prepareOptions(opts)
+      this.castFilter(filter, options),
+      this.toDB(model),
+      this.castOptions(options)
     );
 
     return this.fromModifyResult(result);
@@ -328,43 +338,43 @@ export class Repository<T> {
 
   async findOneAndReplaceOrFail(
     filter: Filter<T | any>,
-    props: PartialDeep<T>,
+    model: T,
     opts?: WithInternalOptions<FindOneAndReplaceOptions>
   ): Promise<T> {
     return this.failIfEmpty(
       this.metadata,
       filter,
-      await this.findOneAndReplace(filter, props, opts)
+      await this.findOneAndReplace(filter, model, opts)
     );
   }
 
   async findByIdAndReplace(
     id: any,
-    props: PartialDeep<T>,
-    opts?: WithInternalOptions<FindOneAndReplaceOptions>
+    model: T,
+    options?: WithInternalOptions<FindOneAndReplaceOptions>
   ): Promise<T | null> {
     return this.findOneAndReplace(
       { [this.metadata.idField.propertyName]: id },
-      props,
-      opts
+      model,
+      options
     );
   }
 
   async findByIdAndReplaceOrFail(
     id: any,
-    props: PartialDeep<T>,
-    opts?: WithInternalOptions<FindOneAndReplaceOptions>
+    model: T,
+    options?: WithInternalOptions<FindOneAndReplaceOptions>
   ): Promise<T> {
     return this.findOneAndReplaceOrFail(
       { [this.metadata.idField.propertyName]: id },
-      props,
-      opts
+      model,
+      options
     );
   }
 
   async findOneAndDelete(
     filter: Filter<T | any>,
-    opts?: WithInternalOptions<FindOneAndDeleteOptions>
+    options?: WithInternalOptions<FindOneAndDeleteOptions>
   ): Promise<T | null> {
     return this.manager.eventManager.dispatchBeforeAndAfter(
       EventSubscriberMethods.BeforeDelete,
@@ -375,8 +385,8 @@ export class Repository<T> {
       },
       async () => {
         const result = await this.collection.findOneAndDelete(
-          this.prepareFilter(filter, opts),
-          this.prepareOptions(opts)
+          this.castFilter(filter, options),
+          this.castOptions(options)
         );
 
         return this.fromModifyResult(result);
@@ -397,28 +407,28 @@ export class Repository<T> {
 
   async findByIdAndDelete(
     id: any,
-    opts?: WithInternalOptions<FindOneAndDeleteOptions>
+    options?: WithInternalOptions<FindOneAndDeleteOptions>
   ): Promise<T | null> {
     return this.findOneAndDelete(
       { [this.metadata.idField.propertyName]: id },
-      opts
+      options
     );
   }
 
   async findByIdAndDeleteOrFail(
     id: any,
-    opts?: WithInternalOptions<FindOneAndDeleteOptions>
+    options?: WithInternalOptions<FindOneAndDeleteOptions>
   ): Promise<T | null> {
     return this.findOneAndDeleteOrFail(
       { [this.metadata.idField.propertyName]: id },
-      opts
+      options
     );
   }
 
   async updateOne(
     filter: Filter<T | any>,
     update: UpdateQuery<T>,
-    opts?: WithInternalOptions<UpdateOptions>
+    options?: WithInternalOptions<UpdateOptions>
   ): Promise<UpdateResult> {
     return this.manager.eventManager.dispatchBeforeAndAfter(
       EventSubscriberMethods.BeforeUpdate,
@@ -430,9 +440,9 @@ export class Repository<T> {
       },
       () =>
         this.collection.updateOne(
-          this.prepareFilter(filter, opts),
-          update,
-          this.prepareOptions(opts)
+          this.castFilter(filter, options),
+          this.castUpdateQuery(update, options),
+          this.castOptions(options)
         ) as Promise<UpdateResult>
     );
   }
@@ -440,19 +450,19 @@ export class Repository<T> {
   async updateById(
     id: any,
     update: UpdateQuery<T>,
-    opts?: WithInternalOptions<UpdateOptions>
+    options?: WithInternalOptions<UpdateOptions>
   ): Promise<UpdateResult> {
     return this.updateOne(
       { [this.metadata.idField.propertyName]: id },
       update,
-      opts
+      options
     );
   }
 
   async updateMany(
     filter: Filter<T | any>,
     update: UpdateQuery<T>,
-    opts?: WithInternalOptions<UpdateOptions>
+    options?: WithInternalOptions<UpdateOptions>
   ): Promise<UpdateResult> {
     return this.manager.eventManager.dispatchBeforeAndAfter(
       EventSubscriberMethods.BeforeUpdateMany,
@@ -464,9 +474,9 @@ export class Repository<T> {
       },
       () =>
         this.collection.updateMany(
-          this.prepareFilter(filter, opts),
-          update,
-          this.prepareOptions(opts)
+          this.castFilter(filter, options),
+          this.castUpdateQuery(update, options),
+          this.castOptions(options)
         ) as Promise<UpdateResult>
     );
   }
@@ -474,19 +484,19 @@ export class Repository<T> {
   async updateByIds(
     ids: any[],
     update: UpdateQuery<T>,
-    opts?: WithInternalOptions<UpdateOptions>
+    options?: WithInternalOptions<UpdateOptions>
   ): Promise<UpdateResult> {
     return this.updateMany(
       { [this.metadata.idField.propertyName]: { $in: ids } },
       update,
-      opts
+      options
     );
   }
 
   async replaceOne(
     filter: Filter<T | any>,
     props: PartialDeep<T>,
-    opts?: WithInternalOptions<UpdateOptions>
+    options?: WithInternalOptions<UpdateOptions>
   ): Promise<UpdateResult> {
     const model =
       props instanceof this.metadata.DocumentClass ? props : this.init(props);
@@ -501,12 +511,14 @@ export class Repository<T> {
       },
       async () => {
         const doc = this.toDB(model);
-        delete doc._id;
+        if (this.metadata.idField.propertyName in doc) {
+          delete doc[this.metadata.idField.propertyName];
+        }
 
         return (await this.collection.replaceOne(
-          this.prepareFilter(filter, opts),
+          this.castFilter(filter, options),
           doc,
-          this.prepareOptions(opts)
+          this.castOptions(options)
         )) as UpdateResult;
       }
     );
@@ -515,18 +527,18 @@ export class Repository<T> {
   async replaceById(
     id: any,
     props: PartialDeep<T>,
-    opts?: WithInternalOptions<UpdateOptions>
+    options?: WithInternalOptions<UpdateOptions>
   ): Promise<UpdateResult> {
     return this.replaceOne(
       { [this.metadata.idField.propertyName]: id },
       props,
-      opts
+      options
     );
   }
 
   async deleteOne(
     filter: Filter<T | any>,
-    opts?: WithInternalOptions<DeleteOptions>
+    options?: WithInternalOptions<DeleteOptions>
   ): Promise<boolean> {
     return this.manager.eventManager.dispatchBeforeAndAfter(
       EventSubscriberMethods.BeforeDelete,
@@ -537,8 +549,8 @@ export class Repository<T> {
       },
       async () => {
         const result = await this.collection.deleteOne(
-          this.prepareFilter(filter, opts),
-          this.prepareOptions(opts)
+          this.castFilter(filter, options),
+          this.castOptions(options)
         );
 
         return result && result.deletedCount === 1;
@@ -548,14 +560,17 @@ export class Repository<T> {
 
   async deleteById(
     id: any,
-    opts?: WithInternalOptions<DeleteOptions>
+    options?: WithInternalOptions<DeleteOptions>
   ): Promise<boolean> {
-    return this.deleteOne({ [this.metadata.idField.propertyName]: id }, opts);
+    return this.deleteOne(
+      { [this.metadata.idField.propertyName]: id },
+      options
+    );
   }
 
   async deleteMany(
     filter: Filter<T | any>,
-    opts?: WithInternalOptions<DeleteOptions>
+    options?: WithInternalOptions<DeleteOptions>
   ): Promise<DeleteResult> {
     return this.manager.eventManager.dispatchBeforeAndAfter(
       EventSubscriberMethods.BeforeDeleteMany,
@@ -566,51 +581,64 @@ export class Repository<T> {
       },
       () =>
         this.collection.deleteMany(
-          this.prepareFilter(filter, opts),
-          this.prepareOptions(opts)
+          this.castFilter(filter, options),
+          this.castOptions(options)
         )
     );
   }
 
   async deleteByIds(
     ids: any[],
-    opts?: WithInternalOptions<DeleteOptions>
+    options?: WithInternalOptions<DeleteOptions>
   ): Promise<DeleteResult> {
     return this.deleteMany(
       {
-        [this.metadata.idField.propertyName]: {
-          $in: ids.map((i) => this.id.convertToDatabaseValue(i))
-        }
+        [this.metadata.idField.propertyName]: { $in: ids }
       },
-      {
-        ...opts,
-        transformQueryFilter: false
-      }
+      options
     );
   }
 
-  prepareFilter(
+  castFilter(
     filter: Filter<T | any>,
-    opts?: WithInternalOptions | Record<any, any>
-  ): Filter<any> {
-    const transformQueryFilter = (opts || {}).transformQueryFilter ?? true;
-
-    return transformQueryFilter
-      ? this.metadata.transformQueryFilter(filter)
-      : filter;
+    options?: InternalOptions
+  ): Filter<T | any> {
+    return this.cast(filter, 'filter', options);
   }
 
-  prepareOptions<T = any>(opts?: T): T {
+  castUpdateQuery(
+    update: UpdateQuery<T | any>,
+    options?: InternalOptions
+  ): Filter<T | any> {
+    return this.cast(update, 'update', options);
+  }
+
+  cast<I extends CastInput<T>>(
+    input: I,
+    type: CastType,
+    options?: InternalOptions
+  ): I {
+    const disableCasting = (options || {}).disableCasting === true;
+    if (disableCasting) {
+      return input;
+    }
+
+    return this.metadata.cast(input, type);
+  }
+
+  castOptions<T = any>(opts?: T): T {
     if (typeof opts !== 'object') {
       return opts;
     }
 
+    const options = { ...opts };
+
     // remove unwanted options
-    if ('transformQueryFilter' in opts) {
-      delete (opts as InternalOptions).transformQueryFilter;
+    if ('disableCasting' in options) {
+      delete (options as InternalOptions).disableCasting;
     }
 
-    return opts;
+    return options;
   }
 
   // -------------------------------------------------------------------------

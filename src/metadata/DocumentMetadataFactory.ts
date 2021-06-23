@@ -12,6 +12,7 @@ import { Repository } from '../repository';
 import { DiscriminatorMetadata } from './DiscriminatorMetadata';
 import { ParentDefinition } from './definitions';
 import { InternalError } from '../errors';
+import { HydratorFactory } from '../hydration';
 
 /**
  * DocumentMetadataFactory builds and validates all the Document's metadata.
@@ -48,6 +49,8 @@ export class DocumentMetadataFactory {
     this.manager = manager;
 
     await this.buildDocuments();
+
+    HydratorFactory.compile();
 
     this.isBuilt = true;
   }

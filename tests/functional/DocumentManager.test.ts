@@ -156,7 +156,8 @@ describe('DocumentManager', () => {
       const result = manager.toDB(User, user);
       expect(result).toEqual({
         _id: user._id,
-        name: 'John'
+        name: 'John',
+        reviews: []
       });
 
       expect(typeof user.address === 'undefined').toBe(true);

@@ -97,7 +97,7 @@ describe('Repository -> queries, inserts, & updates', () => {
     expect(users).toEqual(Object.values(fixtures));
     expect(spies.fromDB).toHaveBeenCalledTimes(2);
     expect(spies.find).toHaveBeenCalledTimes(1);
-    expect(spies.find).toHaveBeenCalledWith(undefined, undefined);
+    expect(spies.find).toHaveBeenCalledWith({}, undefined);
   });
 
   test('find() -> with filter', async () => {
@@ -211,7 +211,7 @@ describe('Repository -> queries, inserts, & updates', () => {
     const result = await manager.getRepository(User).create([{ name: 'Jim' }]);
     expect(result).toHaveLength(1);
     expect(ObjectId.isValid(result[0]._id)).toBeTruthy();
-    const doc = { _id: result[0]._id, name: 'Jim' };
+    const doc = { _id: result[0]._id, name: 'Jim', reviews: [] };
     expect(result).toEqual([Object.assign(new User(), doc)]);
     expect(spies.insertMany).toHaveBeenCalledTimes(1);
     expect(spies.insertMany).toHaveBeenCalledWith([doc], undefined);
@@ -233,20 +233,21 @@ describe('Repository -> queries, inserts, & updates', () => {
   test('create() -> creates a single model (with id)', async () => {
     const props = { _id: new ObjectId(), name: 'Jim' };
     const result = await manager.getRepository(User).create(props);
+    const expected = { ...props, reviews: [] };
     expect(ObjectId.isValid(result._id)).toBeTruthy();
     expect(props._id).toEqual(props._id);
-    expect(result).toEqual(Object.assign(new User(), props));
+    expect(result).toEqual(Object.assign(new User(), expected));
     expect(spies.insertOne).toHaveBeenCalledTimes(1);
-    expect(spies.insertOne).toHaveBeenCalledWith(props, undefined);
+    expect(spies.insertOne).toHaveBeenCalledWith(expected, undefined);
   });
 
   test('create() -> creates a single model (without id)', async () => {
     const result = await manager.getRepository(User).create({ name: 'Jim' });
     expect(ObjectId.isValid(result._id)).toBeTruthy();
-    const doc = { _id: result._id, name: 'Jim' };
-    expect(result).toEqual(Object.assign(new User(), doc));
+    const expected = { _id: result._id, name: 'Jim', reviews: [] };
+    expect(result).toEqual(Object.assign(new User(), expected));
     expect(spies.insertOne).toHaveBeenCalledTimes(1);
-    expect(spies.insertOne).toHaveBeenCalledWith(doc, undefined);
+    expect(spies.insertOne).toHaveBeenCalledWith(expected, undefined);
   });
 
   test('create() -> creates a single model (with opts)', async () => {
@@ -254,11 +255,12 @@ describe('Repository -> queries, inserts, & updates', () => {
     const result = await manager
       .getRepository(User)
       .create(props, { writeConcern: { w: 1 } });
+    const expected = { ...props, reviews: [] };
     expect(ObjectId.isValid(result._id)).toBeTruthy();
-    expect(props._id).toEqual(props._id);
-    expect(result).toEqual(Object.assign(new User(), props));
+    expect(props._id).toEqual(expected._id);
+    expect(result).toEqual(Object.assign(new User(), expected));
     expect(spies.insertOne).toHaveBeenCalledTimes(1);
-    expect(spies.insertOne).toHaveBeenCalledWith(props, {
+    expect(spies.insertOne).toHaveBeenCalledWith(expected, {
       writeConcern: { w: 1 }
     });
   });

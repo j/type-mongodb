@@ -1,13 +1,8 @@
 import { OptionalId } from 'mongodb';
+import { HydratorFactory } from './HydratorFactory';
 import { AbstractDocumentMetadata, FieldMetadata } from '../metadata';
 import { InternalError } from '../errors';
 import { PartialDeep } from '../typings';
-
-export type DocumentTransformerCompiledFunction = (
-  target: any,
-  source: any,
-  parent?: any
-) => any;
 
 // simple helper to create unique variable names
 let variableCount: number = 0;
@@ -15,38 +10,22 @@ function reserveVariable(name: string): string {
   return `${name}_${++variableCount}`;
 }
 
-export class DocumentTransformer<T = any> {
-  private isCompiled: boolean = false;
-  private compiledToDB: DocumentTransformerCompiledFunction;
-  private compiledFromDB: DocumentTransformerCompiledFunction;
-  private compiledInit: DocumentTransformerCompiledFunction;
-  private compiledMerge: DocumentTransformerCompiledFunction;
+export type CompiledHydrator = (target: any, source: any, parent?: any) => any;
 
-  private constructor(private meta: AbstractDocumentMetadata<T>) {}
+interface CompiledHydrators {
+  toDB?: CompiledHydrator;
+  fromDB?: CompiledHydrator;
+  init?: CompiledHydrator;
+  merge?: CompiledHydrator;
+}
 
-  static readonly transformers = new Map<any, DocumentTransformer>();
+export class Hydrator<T = any> {
+  private compiled?: CompiledHydrators;
 
-  static create<T = any>(
-    meta: AbstractDocumentMetadata<T>
-  ): DocumentTransformer<T> {
-    // create transformer if it does not exist
-    let transformer = DocumentTransformer.transformers.get(
-      meta.DocumentClass
-    ) as DocumentTransformer<T>;
-    if (!transformer) {
-      transformer = new DocumentTransformer<T>(meta);
-    }
+  constructor(private meta: AbstractDocumentMetadata<T>) {}
 
-    DocumentTransformer.transformers.set(meta.DocumentClass, transformer);
-
-    return transformer;
-  }
-
-  // compiles all of the transformers
-  static compile(): void {
-    DocumentTransformer.transformers.forEach((transformer) => {
-      transformer.compile();
-    });
+  get isCompiled(): boolean {
+    return typeof this.compiled === 'object';
   }
 
   public compile(): void {
@@ -54,12 +33,12 @@ export class DocumentTransformer<T = any> {
       return;
     }
 
-    this.compiledToDB = this.createCompiler('toDB', false, true);
-    this.compiledFromDB = this.createCompiler('fromDB', true, false);
-    this.compiledInit = this.createCompiler('init', false, false);
-    this.compiledMerge = this.createCompiler('merge', false, false);
-
-    this.isCompiled = true;
+    this.compiled = {
+      toDB: this.compileHydrator('toDB', false, true),
+      fromDB: this.compileHydrator('fromDB', true, false),
+      init: this.compileHydrator('init', false, false),
+      merge: this.compileHydrator('merge', false, false)
+    };
   }
 
   public init(props: PartialDeep<T>, parent?: any): T {
@@ -71,13 +50,11 @@ export class DocumentTransformer<T = any> {
       const { propertyName, mapping } = this.meta.discriminator;
 
       return props[propertyName] && mapping.has(props[propertyName])
-        ? mapping
-            .get(props[propertyName])
-            .documentTransformer.init(props, parent)
+        ? mapping.get(props[propertyName]).hydrator.init(props, parent)
         : undefined;
     }
 
-    return this.compiledInit(
+    return this.compiled.init(
       this.prepare(new this.meta.DocumentClass()),
       props,
       parent
@@ -100,18 +77,16 @@ export class DocumentTransformer<T = any> {
         return;
       }
 
-      const { DocumentClass, documentTransformer } = mapping.get(
-        props[propertyName]
-      );
+      const { DocumentClass, hydrator } = mapping.get(props[propertyName]);
 
       // when a discriminator type changes, it is brand new, so lets create
       // it from scratch.
       return model instanceof DocumentClass
-        ? documentTransformer.merge(model, props, parent)
-        : documentTransformer.init(props, parent);
+        ? hydrator.merge(model, props, parent)
+        : hydrator.init(props, parent);
     }
 
-    return this.compiledMerge(this.prepare(model), props, parent);
+    return this.compiled.merge(this.prepare(model), props, parent);
   }
 
   public fromDB(doc?: Record<string, any>, parent?: any): T {
@@ -126,11 +101,11 @@ export class DocumentTransformer<T = any> {
       const { fieldName, mapping } = this.meta.discriminator;
 
       return doc[fieldName] && mapping.has(doc[fieldName])
-        ? mapping.get(doc[fieldName]).documentTransformer.fromDB(doc, parent)
+        ? mapping.get(doc[fieldName]).hydrator.fromDB(doc, parent)
         : undefined;
     }
 
-    return this.compiledFromDB(
+    return this.compiled.fromDB(
       Object.create(this.meta.DocumentClass.prototype),
       doc,
       parent
@@ -140,7 +115,7 @@ export class DocumentTransformer<T = any> {
   public toDB(model: T): OptionalId<any> {
     this.assertIsCompiled();
 
-    // don't attempt transforming invalid models into documents
+    // don't attempt hydrating invalid models into documents
     if (typeof model !== 'object') {
       return model;
     }
@@ -149,18 +124,18 @@ export class DocumentTransformer<T = any> {
       const { propertyName, mapping } = this.meta.discriminator;
 
       return model[propertyName] && mapping.has(model[propertyName])
-        ? mapping.get(model[propertyName]).documentTransformer.toDB(model)
+        ? mapping.get(model[propertyName]).hydrator.toDB(model)
         : undefined;
     }
 
-    return this.compiledToDB({}, this.prepare(model));
+    return this.compiled.toDB({}, model);
   }
 
-  private createCompiler(
+  private compileHydrator(
     type: 'toDB' | 'fromDB' | 'init' | 'merge',
     isFromDB: boolean,
     isToDB: boolean
-  ): DocumentTransformerCompiledFunction {
+  ): CompiledHydrator {
     const context = new Map<any, any>();
 
     // gets the code for computing field values
@@ -267,19 +242,19 @@ export class DocumentTransformer<T = any> {
         `;
       };
 
-      const transformerVar = reserveVariable(`${fieldName}_transformer`);
-      context.set(transformerVar, DocumentTransformer.create(embeddedMetadata));
+      const hydratorVar = reserveVariable(`${fieldName}_hydrator`);
+      context.set(hydratorVar, HydratorFactory.create(embeddedMetadata));
 
       const transformCode = (source: string, target: string = 'undefined') => {
         switch (type) {
           case 'toDB':
-            return `${transformerVar}.toDB(${source})`;
+            return `${hydratorVar}.toDB(${source})`;
           case 'fromDB':
-            return `${transformerVar}.fromDB(${source}, target)`;
+            return `${hydratorVar}.fromDB(${source}, target)`;
           case 'merge':
-            return `${transformerVar}.merge(${target}, ${source}, target)`;
+            return `${hydratorVar}.merge(${target}, ${source}, target)`;
           case 'init':
-            return `${transformerVar}.init(${source}, target)`;
+            return `${hydratorVar}.init(${source}, target)`;
         }
       };
 
@@ -357,7 +332,7 @@ export class DocumentTransformer<T = any> {
 
   private assertIsCompiled() {
     if (!this.isCompiled) {
-      InternalError.throw('DocumentTransformers are not compiled');
+      InternalError.throw('Hydrators are not compiled');
     }
   }
 }
