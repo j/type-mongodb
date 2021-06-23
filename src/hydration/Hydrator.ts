@@ -17,6 +17,7 @@ interface CompiledHydrators {
   fromDB?: CompiledHydrator;
   init?: CompiledHydrator;
   merge?: CompiledHydrator;
+  toObject?: CompiledHydrator;
 }
 
 export class Hydrator<T = any> {
@@ -37,7 +38,8 @@ export class Hydrator<T = any> {
       toDB: this.compileHydrator('toDB', false, true),
       fromDB: this.compileHydrator('fromDB', true, false),
       init: this.compileHydrator('init', false, false),
-      merge: this.compileHydrator('merge', false, false)
+      merge: this.compileHydrator('merge', false, false),
+      toObject: this.compileHydrator('toObject', false, false)
     };
   }
 
@@ -131,8 +133,22 @@ export class Hydrator<T = any> {
     return this.compiled.toDB({}, model);
   }
 
+  public toObject(model: T, parent?: any): T {
+    this.assertIsCompiled();
+
+    if (this.meta.discriminator) {
+      const { propertyName, mapping } = this.meta.discriminator;
+
+      return model[propertyName] && mapping.has(model[propertyName])
+        ? mapping.get(model[propertyName]).hydrator.toObject(model, parent)
+        : undefined;
+    }
+
+    return this.compiled.toObject({}, model, parent);
+  }
+
   private compileHydrator(
-    type: 'toDB' | 'fromDB' | 'init' | 'merge',
+    type: keyof CompiledHydrators,
     isFromDB: boolean,
     isToDB: boolean
   ): CompiledHydrator {
@@ -209,6 +225,7 @@ export class Hydrator<T = any> {
             ${setTargetCode()}
           `;
         case 'init':
+        case 'toObject':
           return `
             ${createJSValueCode(`source["${accessor}"]`)}
             ${setTargetCode()}
@@ -255,6 +272,8 @@ export class Hydrator<T = any> {
             return `${hydratorVar}.merge(${target}, ${source}, target)`;
           case 'init':
             return `${hydratorVar}.init(${source}, target)`;
+          case 'toObject':
+            return `${hydratorVar}.toObject(${source}, target)`;
         }
       };
 

@@ -95,6 +95,10 @@ export class Repository<T> {
     return this.metadata.merge(model, props);
   }
 
+  toObject(model: T): OptionalId<any> {
+    return this.metadata.toObject(model);
+  }
+
   toDB(model: T): OptionalId<any> {
     return this.metadata.toDB(model);
   }

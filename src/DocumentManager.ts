@@ -141,6 +141,10 @@ export class DocumentManager {
     return this.getAnyMetadata<T>(DocumentClass).merge(model, props);
   }
 
+  toObject<T>(DocumentClass: Constructor<T>, model: T): T {
+    return this.getAnyMetadata<T>(DocumentClass).toObject(model);
+  }
+
   toDB<T>(DocumentClass: Constructor<T>, model: T): OptionalId<any> {
     return this.getAnyMetadata<T>(DocumentClass).toDB(model);
   }

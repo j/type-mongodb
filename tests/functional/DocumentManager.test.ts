@@ -16,6 +16,7 @@ import { DocumentMetadata } from '../../src/metadata/DocumentMetadata';
 import { DocumentMetadataFactory } from '../../src/metadata/DocumentMetadataFactory';
 import { UUIDType } from '../../src/types/UUIDType';
 import { ValidationError } from '../../src/errors';
+import { isPlainObject } from '../../lib/utils';
 
 @Document()
 class DocumentWithRenamedFields {
@@ -282,6 +283,77 @@ describe('DocumentManager', () => {
       const address = manager.init(Address, fields);
       expect(address).toBeInstanceOf(Address);
       expect(address).toEqual(Object.assign(new Address(), fields));
+    });
+  });
+
+  describe('toObject', () => {
+    test('creates an object of Simple', () => {
+      const props = {
+        _id: new ObjectId(),
+        string: 'foo',
+        date: new Date('1986-12-05')
+      };
+
+      const simple = manager.init(Simple, props);
+
+      const object = manager.toObject(Simple, simple);
+      expect(object instanceof Simple).toBeFalsy();
+      expect(isPlainObject(object));
+      expect(object).toEqual({
+        ...props,
+        boolean: true
+      });
+    });
+
+    test('creates an object of User', () => {
+      const props = {
+        _id: new ObjectId(),
+        name: 'John',
+        address: {
+          city: 'San Diego',
+          state: 'CA'
+        },
+        reviews: [
+          { product: { sku: '1', title: 'Poster' }, rating: 10 },
+          { product: { sku: '2', title: 'Frame' }, rating: 5 }
+        ],
+        isActive: true,
+        createdAt: new Date('2020-01-01')
+      };
+
+      const user = manager.init(User, props);
+
+      const object = manager.toObject(User, user);
+      expect(object).toEqual(props);
+      expect(object instanceof User).toBeFalsy();
+      expect(object.address instanceof Address).toBeFalsy();
+      expect(isPlainObject(object)).toBeTruthy();
+      expect(isPlainObject(object.address)).toBeTruthy();
+      expect(isPlainObject(object.reviews[0])).toBeTruthy();
+      expect(isPlainObject(object.reviews[1])).toBeTruthy();
+      expect(object.createdAt instanceof Date).toBeTruthy();
+    });
+
+    it('does not rename fields', () => {
+      const model = manager.init(DocumentWithRenamedFields, { isActive: true });
+      const object = manager.toObject(DocumentWithRenamedFields, model);
+      expect(object instanceof DocumentWithRenamedFields).toBeFalsy();
+      expect(isPlainObject(object));
+      expect(object.id).toBeInstanceOf(ObjectId);
+      expect(object.isActive).toBeTruthy();
+    });
+
+    it('converts embedded documents', () => {
+      const props = {
+        city: 'San Diego',
+        state: 'CA'
+      };
+
+      const model = manager.init(Address, props);
+      const object = manager.toObject(Address, model);
+      expect(object).toEqual(props);
+      expect(object instanceof Address).toBeFalsy();
+      expect(isPlainObject(object));
     });
   });
 

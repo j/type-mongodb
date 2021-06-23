@@ -96,6 +96,13 @@ export abstract class AbstractDocumentMetadata<T> {
   }
 
   /**
+   * Converts the model to a plain object.
+   */
+  toObject(model: T): T {
+    return this.hydrator.toObject(model);
+  }
+
+  /**
    * Casts field names & values from the Repository to MongoDB.
    */
   cast<I extends CastInput<T>>(input: I, type: CastType): I {
