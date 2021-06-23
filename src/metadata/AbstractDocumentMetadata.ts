@@ -64,7 +64,7 @@ export abstract class AbstractDocumentMetadata<T> {
   // -------------------------------------------------------------------------
 
   /**
-   * Creates a model from model properties.
+   * Creates a model from it's properties.
    */
   init(props: PartialDeep<T>): T {
     return this.hydrator.init(props);
@@ -78,7 +78,14 @@ export abstract class AbstractDocumentMetadata<T> {
   }
 
   /**
-   * Maps model fields to a mongodb document.
+   * Converts the model to a plain object.
+   */
+  toObject(model: T): T {
+    return this.hydrator.toObject(model);
+  }
+
+  /**
+   * Converts the model fields to a mongodb document.
    */
   toDB(model: T): OptionalId<any> {
     if (!(model instanceof this.DocumentClass)) {
@@ -89,21 +96,14 @@ export abstract class AbstractDocumentMetadata<T> {
   }
 
   /**
-   * Maps mongodb document(s) to a model.
+   * Creates a model from a document.
    */
   fromDB(doc: Record<string, any>): T {
     return this.hydrator.fromDB(doc);
   }
 
   /**
-   * Converts the model to a plain object.
-   */
-  toObject(model: T): T {
-    return this.hydrator.toObject(model);
-  }
-
-  /**
-   * Casts field names & values from the Repository to MongoDB.
+   * Casts the fields & values to MongoDB filters or update queries.
    */
   cast<I extends CastInput<T>>(input: I, type: CastType): I {
     return cast(this, input, type);

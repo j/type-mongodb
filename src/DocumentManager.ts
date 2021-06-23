@@ -133,22 +133,37 @@ export class DocumentManager {
     return this.metadataFactory.filterMetadata(filter);
   }
 
+  /**
+   * Creates a model from it's properties.
+   */
   init<T>(DocumentClass: Constructor<T>, props: PartialDeep<T>): T {
     return this.getAnyMetadata<T>(DocumentClass).init(props);
   }
 
+  /**
+   * Merges the properties into the given model.
+   */
   merge<T>(DocumentClass: Constructor<T>, model: T, props: PartialDeep<T>): T {
     return this.getAnyMetadata<T>(DocumentClass).merge(model, props);
   }
 
+  /**
+   * Converts the model to a plain object.
+   */
   toObject<T>(DocumentClass: Constructor<T>, model: T): T {
     return this.getAnyMetadata<T>(DocumentClass).toObject(model);
   }
 
+  /**
+   * Converts the model fields to a mongodb document.
+   */
   toDB<T>(DocumentClass: Constructor<T>, model: T): OptionalId<any> {
     return this.getAnyMetadata<T>(DocumentClass).toDB(model);
   }
 
+  /**
+   * Creates a model from a document.
+   */
   fromDB<T>(DocumentClass: Constructor<T>, doc: Record<string, any>): T {
     return this.getAnyMetadata<T>(DocumentClass).fromDB(doc);
   }

@@ -87,22 +87,37 @@ export class Repository<T> {
     (this as Mutable<Repository<T>>).metadata = metadata;
   }
 
+  /**
+   * Creates a model from it's properties.
+   */
   init(props: PartialDeep<T>): T {
     return this.metadata.init(props);
   }
 
+  /**
+   * Merges the properties into the given model.
+   */
   merge(model: T, props: PartialDeep<T>): T {
     return this.metadata.merge(model, props);
   }
 
+  /**
+   * Converts the model to a plain object.
+   */
   toObject(model: T): OptionalId<any> {
     return this.metadata.toObject(model);
   }
 
+  /**
+   * Converts the model fields to a mongodb document.
+   */
   toDB(model: T): OptionalId<any> {
     return this.metadata.toDB(model);
   }
 
+  /**
+   * Creates a model from a document.
+   */
   fromDB(doc: T): T {
     return this.metadata.fromDB(doc);
   }
@@ -603,6 +618,9 @@ export class Repository<T> {
     );
   }
 
+  /**
+   * Casts the fields & values to MongoDB filters.
+   */
   castFilter(
     filter: Filter<T | any>,
     options?: InternalOptions
@@ -610,6 +628,9 @@ export class Repository<T> {
     return this.cast(filter, 'filter', options);
   }
 
+  /**
+   * Casts the fields & values to MongoDB update queries.
+   */
   castUpdateQuery(
     update: UpdateQuery<T | any>,
     options?: InternalOptions
@@ -617,6 +638,9 @@ export class Repository<T> {
     return this.cast(update, 'update', options);
   }
 
+  /**
+   * Casts the fields & values to MongoDB filters or update queries.
+   */
   cast<I extends CastInput<T>>(
     input: I,
     type: CastType,
