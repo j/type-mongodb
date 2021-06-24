@@ -191,7 +191,7 @@ export class Repository<T> {
   async findOneOrFail(
     filter: Filter<T | any>,
     options?: WithInternalOptions<FindOptions>
-  ): Promise<T | null> {
+  ): Promise<T> {
     return this.failIfEmpty(
       this.metadata,
       filter,
@@ -437,7 +437,7 @@ export class Repository<T> {
   async findByIdAndDeleteOrFail(
     id: any,
     options?: WithInternalOptions<FindOneAndDeleteOptions>
-  ): Promise<T | null> {
+  ): Promise<T> {
     return this.findOneAndDeleteOrFail(
       { [this.metadata.idField.propertyName]: id },
       options
