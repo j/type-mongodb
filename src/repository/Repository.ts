@@ -16,7 +16,7 @@ import {
   ModifyResult,
   OptionalId,
   UpdateOptions,
-  UpdateQuery,
+  UpdateFilter,
   UpdateResult
 } from 'mongodb';
 import { DocumentMetadata } from '../metadata';
@@ -34,9 +34,8 @@ export interface InternalOptions {
   disableCasting?: boolean;
 }
 
-export type WithInternalOptions<
-  T extends Record<any, any> = Record<any, any>
-> = T & InternalOptions;
+export type WithInternalOptions<T extends Record<any, any> = Record<any, any>> =
+  T & InternalOptions;
 
 /**
  * Repository for documents
@@ -282,7 +281,7 @@ export class Repository<T> {
 
   async findOneAndUpdate(
     filter: Filter<T | any>,
-    update: UpdateQuery<T>,
+    update: UpdateFilter<T>,
     options?: WithInternalOptions<FindOneAndUpdateOptions>
   ): Promise<T | null> {
     return this.manager.eventManager.dispatchBeforeAndAfter(
@@ -296,7 +295,7 @@ export class Repository<T> {
       async () => {
         const result = await this.collection.findOneAndUpdate(
           this.castFilter(filter, options),
-          this.castUpdateQuery(update, options),
+          this.castUpdateFilter(update, options),
           this.castOptions(options)
         );
 
@@ -307,7 +306,7 @@ export class Repository<T> {
 
   async findOneAndUpdateOrFail(
     filter: Filter<T | any>,
-    update: UpdateQuery<T>,
+    update: UpdateFilter<T>,
     options?: WithInternalOptions<FindOneAndUpdateOptions>
   ): Promise<T> {
     return this.failIfEmpty(
@@ -319,7 +318,7 @@ export class Repository<T> {
 
   async findByIdAndUpdate(
     id: any,
-    update: UpdateQuery<T>,
+    update: UpdateFilter<T>,
     options?: WithInternalOptions<FindOneAndUpdateOptions>
   ): Promise<T | null> {
     return this.findOneAndUpdate(
@@ -331,7 +330,7 @@ export class Repository<T> {
 
   async findByIdAndUpdateOrFail(
     id: any,
-    update: UpdateQuery<T>,
+    update: UpdateFilter<T>,
     options?: WithInternalOptions<FindOneAndUpdateOptions>
   ): Promise<T> {
     return this.findOneAndUpdateOrFail(
@@ -446,7 +445,7 @@ export class Repository<T> {
 
   async updateOne(
     filter: Filter<T | any>,
-    update: UpdateQuery<T>,
+    update: UpdateFilter<T>,
     options?: WithInternalOptions<UpdateOptions>
   ): Promise<UpdateResult> {
     return this.manager.eventManager.dispatchBeforeAndAfter(
@@ -460,7 +459,7 @@ export class Repository<T> {
       () =>
         this.collection.updateOne(
           this.castFilter(filter, options),
-          this.castUpdateQuery(update, options),
+          this.castUpdateFilter(update, options),
           this.castOptions(options)
         ) as Promise<UpdateResult>
     );
@@ -468,7 +467,7 @@ export class Repository<T> {
 
   async updateById(
     id: any,
-    update: UpdateQuery<T>,
+    update: UpdateFilter<T>,
     options?: WithInternalOptions<UpdateOptions>
   ): Promise<UpdateResult> {
     return this.updateOne(
@@ -480,7 +479,7 @@ export class Repository<T> {
 
   async updateMany(
     filter: Filter<T | any>,
-    update: UpdateQuery<T>,
+    update: UpdateFilter<T>,
     options?: WithInternalOptions<UpdateOptions>
   ): Promise<UpdateResult> {
     return this.manager.eventManager.dispatchBeforeAndAfter(
@@ -494,7 +493,7 @@ export class Repository<T> {
       () =>
         this.collection.updateMany(
           this.castFilter(filter, options),
-          this.castUpdateQuery(update, options),
+          this.castUpdateFilter(update, options),
           this.castOptions(options)
         ) as Promise<UpdateResult>
     );
@@ -502,7 +501,7 @@ export class Repository<T> {
 
   async updateByIds(
     ids: any[],
-    update: UpdateQuery<T>,
+    update: UpdateFilter<T>,
     options?: WithInternalOptions<UpdateOptions>
   ): Promise<UpdateResult> {
     return this.updateMany(
@@ -631,8 +630,8 @@ export class Repository<T> {
   /**
    * Casts the fields & values to MongoDB update queries.
    */
-  castUpdateQuery(
-    update: UpdateQuery<T | any>,
+  castUpdateFilter(
+    update: UpdateFilter<T | any>,
     options?: InternalOptions
   ): Filter<T | any> {
     return this.cast(update, 'update', options);
