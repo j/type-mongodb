@@ -19,10 +19,8 @@ type EventSubscribers = Map<EventSubscriberMethods, EventSubscriber[]>;
  */
 export class EventManager {
   protected subscribers: EventSubscriber[] = [];
-  protected documentsWithSubscribers: Map<
-    Constructor,
-    EventSubscribers
-  > = new Map();
+  protected documentsWithSubscribers: Map<Constructor, EventSubscribers> =
+    new Map();
 
   constructor(subscribers: EventSubscriber[]) {
     this.subscribers = subscribers || [];

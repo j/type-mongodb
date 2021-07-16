@@ -27,7 +27,10 @@ export class UUIDType extends Type<string, Binary> {
 
     this.assertValidJSValue(uuid as string);
 
-    return new Binary(Buffer.from(parse(uuid as string)), Binary.SUBTYPE_UUID);
+    return new Binary(
+      Buffer.from(parse(uuid as string) as Buffer),
+      Binary.SUBTYPE_UUID
+    );
   }
 
   convertToJSValue(uuid?: Binary): string | undefined {

@@ -18,18 +18,14 @@ import { HydratorFactory } from '../hydration';
  * DocumentMetadataFactory builds and validates all the Document's metadata.
  */
 export class DocumentMetadataFactory {
-  public loadedDocumentMetadata: Map<
-    Constructor,
-    DocumentMetadata<any>
-  > = new Map();
+  public loadedDocumentMetadata: Map<Constructor, DocumentMetadata<any>> =
+    new Map();
   public loadedEmbeddedDocumentMetadata: Map<
     Constructor,
     EmbeddedDocumentMetadata<any>
   > = new Map();
-  public loadedDiscriminatorMetadata: Map<
-    Constructor,
-    DiscriminatorMetadata
-  > = new Map();
+  public loadedDiscriminatorMetadata: Map<Constructor, DiscriminatorMetadata> =
+    new Map();
 
   public manager: DocumentManager;
 
@@ -219,9 +215,8 @@ export class DocumentMetadataFactory {
             embeddedType = embeddedType[0];
           }
 
-          const embeddedMetadata = this.buildEmbeddedDocumentMetadata(
-            embeddedType
-          );
+          const embeddedMetadata =
+            this.buildEmbeddedDocumentMetadata(embeddedType);
 
           fields.set(
             prop.propertyName,

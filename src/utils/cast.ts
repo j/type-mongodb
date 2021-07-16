@@ -1,9 +1,9 @@
-import { Filter, UpdateQuery } from 'mongodb';
+import { Filter, UpdateFilter } from 'mongodb';
 import { AbstractDocumentMetadata, FieldMetadata } from '../metadata';
 import { isPlainObject } from '../utils';
 import { Type } from '../types';
 
-export type CastInput<T> = Filter<T | any> | UpdateQuery<T | any>;
+export type CastInput<T> = Filter<T | any> | UpdateFilter<T | any>;
 
 export type CastType = 'filter' | 'update';
 
