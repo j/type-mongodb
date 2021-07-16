@@ -16,7 +16,7 @@ import { EventSubscriber } from './events';
 import { EventManager } from './events';
 import { Repository } from './repository';
 import { EmbeddedDocumentMetadata } from './metadata';
-import { HydratorFactory } from './hydration';
+// import { HydratorFactory } from './hydration';
 import { InternalError } from './errors';
 
 export interface ContainerLike {
