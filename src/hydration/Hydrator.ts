@@ -122,6 +122,8 @@ export class Hydrator<T = any> {
       return model;
     }
 
+    this.prepare(model);
+
     if (this.meta.discriminator) {
       const { propertyName, mapping } = this.meta.discriminator;
 

@@ -253,17 +253,7 @@ export class Repository<T> {
     models: T[],
     options?: BulkWriteOptions
   ): Promise<InsertManyResult<T>> {
-    const docs: OptionalId<T>[] = [];
-    const idField = this.metadata.idField;
-
-    models.forEach((model) => {
-      const doc = this.toDB(model);
-      docs.push(doc);
-
-      if (typeof doc?.[idField.fieldName] !== 'undefined') {
-        model[idField.propertyName] = doc[idField.fieldName];
-      }
-    });
+    const docs: OptionalId<T>[] = models.map((model) => this.toDB(model));
 
     const event: InsertManyEvent = {
       meta: this.metadata,

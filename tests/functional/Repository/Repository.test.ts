@@ -1,11 +1,18 @@
 import 'reflect-metadata';
-import { FindCursor, Collection, ObjectId, ReturnDocument } from 'mongodb';
+import {
+  FindCursor,
+  Collection,
+  ObjectId,
+  ReturnDocument,
+  Binary
+} from 'mongodb';
 import { Simple } from '../../__fixtures__/Simple';
 import { User, createUsers, createUserDocs } from '../../__fixtures__/User';
 import { DocumentManager } from '../../../src/DocumentManager';
 import { DocumentMetadata } from '../../../src/metadata/DocumentMetadata';
 import { UserRepository } from '../../__fixtures__/UserRepository';
-import { Repository } from '../../../src';
+import { Repository, UUIDType, removeDocuments } from '../../../src';
+import { UUIDDocument } from '../../__fixtures__/UUIDDocument';
 
 describe('Repository -> queries, inserts, & updates', () => {
   let manager: DocumentManager;
@@ -16,7 +23,7 @@ describe('Repository -> queries, inserts, & updates', () => {
   beforeAll(async () => {
     manager = await DocumentManager.create({
       uri: 'mongodb://localhost:27017/test',
-      documents: [Simple, User]
+      documents: [Simple, User, UUIDDocument]
     });
   });
 
@@ -25,6 +32,8 @@ describe('Repository -> queries, inserts, & updates', () => {
   });
 
   beforeEach(async () => {
+    await removeDocuments(manager);
+
     docs = createUserDocs();
     fixtures = createUsers(docs);
 
@@ -263,6 +272,61 @@ describe('Repository -> queries, inserts, & updates', () => {
     expect(spies.insertOne).toHaveBeenCalledWith(expected, {
       writeConcern: { w: 1 }
     });
+  });
+
+  test('insertOne() - with UUID as ID', async () => {
+    const model = new UUIDDocument();
+    model.name = 'test';
+
+    const inserted = await manager.getRepository(UUIDDocument).insertOne(model);
+
+    expect(typeof model.id === 'string').toBeTruthy();
+    expect(inserted.acknowledged).toBeTruthy();
+  });
+
+  test('insertMany() - with UUID as IDs', async () => {
+    const model1 = new UUIDDocument();
+    model1.name = 'test 1';
+    const model2 = new UUIDDocument();
+    model2.name = 'test 2';
+
+    const inserted = await manager
+      .getRepository(UUIDDocument)
+      .insertMany([model1, model2]);
+
+    expect(typeof model1.id === 'string').toBeTruthy();
+    expect(typeof model2.id === 'string').toBeTruthy();
+    expect(inserted.acknowledged).toBeTruthy();
+  });
+
+  test('insertMany() - with already set UUID as IDs', async () => {
+    const model1 = new UUIDDocument();
+    model1.id = '290a1768-c0a2-409b-95fd-0768d96e172a';
+    model1.name = 'test 1';
+    const model2 = new UUIDDocument();
+    model2.id = '290a1768-c0a2-409b-95fd-0768d96e172b';
+    model2.name = 'test 2';
+
+    const repository = manager.getRepository(UUIDDocument);
+
+    const inserted = await repository.insertMany([model1, model2]);
+
+    expect(model1.id).toBe('290a1768-c0a2-409b-95fd-0768d96e172a');
+    expect(model2.id).toBe('290a1768-c0a2-409b-95fd-0768d96e172b');
+    expect(inserted.acknowledged).toBeTruthy();
+
+    const found = await repository.collection
+      .find()
+      .sort({ name: 1 })
+      .toArray();
+    expect(found[0]._id).toBeInstanceOf(Binary);
+    expect(found[1]._id).toBeInstanceOf(Binary);
+    expect(new UUIDType().convertToJSValue(found[0]._id)).toEqual(
+      '290a1768-c0a2-409b-95fd-0768d96e172a'
+    );
+    expect(new UUIDType().convertToJSValue(found[1]._id)).toEqual(
+      '290a1768-c0a2-409b-95fd-0768d96e172b'
+    );
   });
 
   test('findOneAndDelete() -> without opts', async () => {
