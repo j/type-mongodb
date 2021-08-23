@@ -1,6 +1,14 @@
+import { Repository } from './repository';
+import { DocumentMetadata } from './metadata';
+
 export type Constructor<T = any> = new (...args: any[]) => T;
 
 export type Mutable<T> = { -readonly [P in keyof T]-?: T[P] };
+
+export const DocumentRepository = Symbol('DocumentRepository');
+export type GetRepository<T> = T extends { [DocumentRepository]: any }
+  ? T[typeof DocumentRepository]
+  : Repository<T>;
 
 // Borrowed from https://github.com/sindresorhus/type-fest/blob/main/source/partial-deep.d.ts
 

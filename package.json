@@ -24,12 +24,12 @@
   "main": "lib/index.js",
   "typings": "lib/index.d.ts",
   "scripts": {
-    "build": "tsc --project tsconfig.build.json",
+    "build": "npm run clean && tsc --project tsconfig.build.json",
     "clean": "rimraf lib",
     "watch": "tsc --project tsconfig.build.json --watch",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
     "pretty": "prettier '{src,tests}/**/*.ts' --write",
-    "prepublishOnly": "npm run clean && npm run build",
+    "prepublishOnly": "npm run build",
     "release:next": "npm publish --access public --tag next",
     "release": "release-it",
     "mongo-start": "MONGODB_VERSION=4.x.x npx mongodb-runner start --topology=replicaset --purge=false",
@@ -37,43 +37,39 @@
     "test": "jest --runInBand --verbose --coverage",
     "pretest:ci": "npm run mongo-start",
     "test:ci": "npm run mongo-start && jest --verbose --coverage --ci --forceExit --detectOpenHandles --runInBand",
-    "posttest:ci": "npm run mongo-stop"
+    "posttest:ci": "npm run mongo-stop",
+    "prepare": "husky install"
   },
   "devDependencies": {
-    "@types/jest": "^26.0.3",
-    "@types/uuid": "^8.3.0",
-    "@typescript-eslint/eslint-plugin": "^4.19.0",
-    "@typescript-eslint/parser": "^4.19.0",
-    "eslint": "^7.22.0",
-    "eslint-config-prettier": "^8.1.0",
-    "eslint-plugin-prettier": "^3.3.1",
-    "husky": "^4.2.5",
-    "jest": "^26.1.0",
-    "mongodb": "^4.0.0-beta.4",
-    "mongodb-runner": "^4.7.2",
-    "prettier": "^2.0.5",
-    "pretty-quick": "^2.0.1",
+    "@types/jest": "^27.0.1",
+    "@types/uuid": "^8.3.1",
+    "@typescript-eslint/eslint-plugin": "^4.29.3",
+    "@typescript-eslint/parser": "^4.29.3",
+    "eslint": "^7.32.0",
+    "eslint-config-prettier": "^8.3.0",
+    "eslint-plugin-prettier": "^3.4.1",
+    "husky": "^7.0.0",
+    "jest": "^27.0.6",
+    "mongodb": "^4.1.0",
+    "mongodb-runner": "^4.8.3",
+    "prettier": "^2.3.2",
+    "pretty-quick": "^3.1.1",
     "reflect-metadata": "^0.1.13",
-    "release-it": "^14.6.2",
-    "ts-jest": "^26.1.1",
-    "typescript": "^4.2.4",
+    "release-it": "^14.11.5",
+    "ts-jest": "^27.0.5",
+    "typescript": "^4.3.5",
     "uuid": "^8.3.2"
   },
   "optionalDependencies": {
     "uuid": "^8.3.2"
   },
   "peerDependencies": {
-    "mongodb": "^4.0.0-beta.5",
+    "mongodb": "^4.1.0",
     "reflect-metadata": "^0.1.13"
   },
   "prettier": {
     "singleQuote": true,
     "trailingComma": "none"
-  },
-  "husky": {
-    "hooks": {
-      "pre-commit": "npm run lint"
-    }
   },
   "jest": {
     "moduleFileExtensions": [

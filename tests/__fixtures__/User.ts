@@ -1,4 +1,11 @@
-import { Document, Id, Field, UUIDType, ObjectIdType } from '../../src';
+import {
+  Document,
+  Id,
+  Field,
+  UUIDType,
+  ObjectIdType,
+  DocumentRepository
+} from '../../src';
 import { ObjectId } from 'mongodb';
 import { UserRepository } from './UserRepository';
 
@@ -40,6 +47,8 @@ export class Review {
 
 @Document({ repository: () => UserRepository })
 export class User {
+  [DocumentRepository]: UserRepository;
+
   @Id()
   _id: ObjectId;
 

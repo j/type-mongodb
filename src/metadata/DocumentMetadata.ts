@@ -1,4 +1,4 @@
-import { Collection, Db, MongoClient } from 'mongodb';
+import { Collection, Db, Document, MongoClient } from 'mongodb';
 import { Constructor } from '../typings';
 import {
   AbstractDocumentMetadata,
@@ -25,7 +25,7 @@ export class DocumentMetadata<T = any> extends AbstractDocumentMetadata<T> {
   public readonly manager: DocumentManager;
   public readonly client: MongoClient;
   public readonly db: Db;
-  public readonly collection: Collection<T>;
+  public readonly collection: Collection<T & Document>;
   public readonly extensions: Record<any, any>;
   public readonly repository: Repository<T>;
 

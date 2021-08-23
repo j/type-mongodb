@@ -702,7 +702,7 @@ describe('Repository -> queries, inserts, & updates', () => {
       UserRepository.prototype,
       'findActiveUsers'
     );
-    const repo = manager.getRepository<UserRepository>(User);
+    const repo = manager.getRepository(User);
     expect(repo).toBeInstanceOf(UserRepository);
     const users = await repo.findActiveUsers();
     expect(users).toHaveLength(1);

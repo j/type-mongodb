@@ -9,14 +9,12 @@ import {
   OptionalId,
   MongoClientOptions
 } from 'mongodb';
-import { Constructor, PartialDeep } from './typings';
+import { Constructor, GetRepository, PartialDeep } from './typings';
 import { DocumentMetadataFactory } from './metadata';
 import { DocumentMetadata } from './metadata';
 import { EventSubscriber } from './events';
 import { EventManager } from './events';
-import { Repository } from './repository';
 import { EmbeddedDocumentMetadata } from './metadata';
-import { HydratorFactory } from './hydration';
 import { InternalError } from './errors';
 
 export interface ContainerLike {
@@ -182,9 +180,8 @@ export class DocumentManager {
     return this.getMetadataFor<T>(DocumentClass).collection;
   }
 
-  getRepository<T extends Repository<any>>(DocumentClass: Constructor): T;
-  getRepository<T>(DocumentClass: Constructor<T>): Repository<T> {
-    return this.getMetadataFor<T>(DocumentClass).repository;
+  getRepository<T>(DocumentClass: Constructor<T>): GetRepository<T> {
+    return this.getMetadataFor<T>(DocumentClass).repository as GetRepository<T>;
   }
 
   startSession(opts?: ClientSessionOptions): ClientSession {

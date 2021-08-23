@@ -1,4 +1,4 @@
-import { Filter, UpdateQuery } from 'mongodb';
+import { Filter, UpdateFilter } from 'mongodb';
 import { DocumentMetadata } from '../metadata';
 import { DocumentManager } from '../DocumentManager';
 
@@ -15,7 +15,7 @@ export interface InsertManyEvent<T = any> extends Event<T> {
 }
 
 export interface UpdateEvent<T = any> extends Event<T> {
-  update: UpdateQuery<T>;
+  update: UpdateFilter<T>;
   filter: Filter<T>;
 }
 

@@ -1,10 +1,11 @@
 import 'reflect-metadata';
-import { ObjectId, Binary, Filter, UpdateQuery } from 'mongodb';
+import { ObjectId, Binary } from 'mongodb';
 import { Simple } from '../../__fixtures__/Simple';
-import { User, Address, Review } from '../../__fixtures__/User';
-import { DocumentManager } from '../../../src/DocumentManager';
+import { User } from '../../__fixtures__/User';
 import { UserRepository } from '../../__fixtures__/UserRepository';
-import { UUIDType } from '../../../src';
+import { DocumentManager, UUIDType } from '../../../src';
+
+type TestCollection = Array<[string, any, any, boolean?]>;
 
 function uuidToBinary(uuid: string): Binary {
   return new UUIDType().convertToDatabaseValue(uuid);
@@ -20,7 +21,7 @@ const uuid = (): { from: string; to: Binary } => ({
   to: uuidToBinary('393967e0-8de1-11e8-9eb6-529269fb1459')
 });
 
-describe('Repository.castUpdateQuery', () => {
+describe('Repository.castUpdateFilter', () => {
   let manager: DocumentManager;
   let repository: UserRepository;
 
@@ -30,7 +31,7 @@ describe('Repository.castUpdateQuery', () => {
       documents: [Simple, User]
     });
 
-    repository = manager.getRepository<UserRepository>(User);
+    repository = manager.getRepository(User);
   });
 
   afterAll(async () => {
@@ -38,7 +39,7 @@ describe('Repository.castUpdateQuery', () => {
   });
 
   // Filter validation cases
-  const $set = [
+  const $set: TestCollection = [
     ['$set', { $set: { _id: id().from } }, { $set: { _id: id().to } }],
     [
       `$set array field`,
@@ -80,9 +81,9 @@ describe('Repository.castUpdateQuery', () => {
       { $set: { 'reviews.$[element]': { productUUIDs: uuid().from } } },
       { $set: { 'reviews.$[element]': { productUUIDs: uuid().to } } }
     ]
-  ] as Array<[string, UpdateQuery<User>, UpdateQuery<any>, boolean?]>;
+  ];
 
-  const $addToSet = [
+  const $addToSet: TestCollection = [
     [
       '$addToSet',
       { $addToSet: { bestFriends: id().from } },
@@ -93,13 +94,13 @@ describe('Repository.castUpdateQuery', () => {
       { $addToSet: { bestFriends: { $each: [id().from] } } },
       { $addToSet: { bestFriends: { $each: [id().to] } } }
     ]
-  ] as Array<[string, UpdateQuery<User>, UpdateQuery<any>, boolean?]>;
+  ];
 
-  const $pop = [
+  const $pop: TestCollection = [
     ['$pop', { $pop: { bestFriends: 1 } }, { $pop: { bestFriends: 1 } }]
-  ] as Array<[string, UpdateQuery<User>, UpdateQuery<any>, boolean?]>;
+  ];
 
-  const $pull = [
+  const $pull: TestCollection = [
     [
       '$pull',
       { $pull: { bestFriends: { $in: [id().from] } } },
@@ -140,9 +141,9 @@ describe('Repository.castUpdateQuery', () => {
         }
       }
     ]
-  ] as Array<[string, UpdateQuery<User>, UpdateQuery<any>, boolean?]>;
+  ];
 
-  const $push = [
+  const $push: TestCollection = [
     [
       '$push',
       { $push: { bestFriends: id().from } },
@@ -171,9 +172,9 @@ describe('Repository.castUpdateQuery', () => {
         }
       }
     ]
-  ] as Array<[string, UpdateQuery<User>, UpdateQuery<any>, boolean?]>;
+  ];
 
-  const $pullAll = [
+  const $pullAll: TestCollection = [
     [
       '$pullAll',
       { $pullAll: { bestFriends: [id().from] } },
@@ -184,9 +185,9 @@ describe('Repository.castUpdateQuery', () => {
       { $pullAll: { 'reviews.uuid': [uuid().from] } },
       { $pullAll: { 'reviews.uid': [uuid().to] } }
     ]
-  ] as Array<[string, UpdateQuery<User>, UpdateQuery<any>, boolean?]>;
+  ];
 
-  const advanced = [
+  const advanced: TestCollection = [
     [
       'advanced',
       {
@@ -228,7 +229,7 @@ describe('Repository.castUpdateQuery', () => {
         }
       }
     ]
-  ] as Array<[string, UpdateQuery<User>, UpdateQuery<any>, boolean?]>;
+  ];
 
   [
     ...$set,
@@ -238,9 +239,9 @@ describe('Repository.castUpdateQuery', () => {
     ...$push,
     ...$pullAll,
     ...advanced
-  ].forEach(([name, query, expected]) => {
+  ].forEach(([name, query, expected]: TestCollection) => {
     test(`${name}`, () => {
-      const update = repository.castUpdateQuery(query);
+      const update = repository.castUpdateFilter(query);
       expect(update).toEqual(expected);
     });
   });

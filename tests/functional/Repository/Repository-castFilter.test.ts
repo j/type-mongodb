@@ -34,7 +34,7 @@ describe('Repository.castFilter', () => {
       documents: [Simple, User]
     });
 
-    repository = manager.getRepository<UserRepository>(User);
+    repository = manager.getRepository(User);
   });
 
   afterAll(async () => {

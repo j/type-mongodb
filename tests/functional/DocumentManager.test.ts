@@ -16,7 +16,7 @@ import { DocumentMetadata } from '../../src/metadata/DocumentMetadata';
 import { DocumentMetadataFactory } from '../../src/metadata/DocumentMetadataFactory';
 import { UUIDType } from '../../src/types/UUIDType';
 import { ValidationError } from '../../src/errors';
-import { isPlainObject } from '../../lib/utils';
+import { isPlainObject } from '../../src/utils';
 
 @Document()
 class DocumentWithRenamedFields {
@@ -460,7 +460,7 @@ describe('DocumentManager', () => {
       const doc = manager.toDB(DocumentWithCustomTypes, model);
       expect(doc._id).toBeInstanceOf(Binary);
       expect(doc.field).toBeInstanceOf(Binary);
-      expect(uuid.convertToJSValue((doc.field as any) as Binary)).toBe(
+      expect(uuid.convertToJSValue(doc.field as any as Binary)).toBe(
         model.field
       );
       expect(typeof doc.optional === 'undefined').toBe(true);

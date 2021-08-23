@@ -14,7 +14,7 @@ interface DocumentOptions {
   database?: string;
   collection?: string;
   extensions?: Record<any, any>;
-  repository?: () => Constructor<Repository<any>>;
+  repository?: () => Constructor;
 }
 
 export function Document(options: DocumentOptions = {}): ClassDecorator {

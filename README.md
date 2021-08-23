@@ -172,11 +172,15 @@ export class UserRepository extends Repository<User> {
 Then register this repository with the `User` class:
 
 ```typescript
+import { DocumentRepository } from 'type-mongodb';
 import { UserRepository } from './repositories';
 // ...
 
 @Document({ repository: () => UserRepository })
 class User extends BaseDocument {
+  // for type inference when using `getRepository`
+  [DocumentRepository]: UserRepository;
+  
   // ...
 }
 ```
@@ -184,7 +188,7 @@ class User extends BaseDocument {
 ... and finally, to use:
 
 ```typescript
-const repository = dm.getRepository<UserRepository>(User);
+const repository = dm.getRepository(User); // repository typed as UserRepository
 ```
 
 What about custom IDs? You can either create your own type that extends `Type`, or use our built-ins:
