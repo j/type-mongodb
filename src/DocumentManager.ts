@@ -9,7 +9,12 @@ import {
   OptionalId,
   MongoClientOptions
 } from 'mongodb';
-import { Constructor, GetRepository, PartialDeep } from './typings';
+import {
+  Constructor,
+  GetRepository,
+  PartialDeep,
+  WithDocumentFields
+} from './typings';
 import { DocumentMetadataFactory } from './metadata';
 import { DocumentMetadata } from './metadata';
 import { EventSubscriber } from './events';
@@ -86,17 +91,19 @@ export class DocumentManager {
   /**
    * Gets the DocumentMetadata for the given class.
    */
-  getMetadataFor<T>(DocumentClass: Constructor<T>): DocumentMetadata<T> {
-    return this.metadataFactory.getMetadataFor<T>(DocumentClass);
+  getMetadataFor<Model, Document = WithDocumentFields<Model>>(
+    DocumentClass: Constructor<Model>
+  ): DocumentMetadata<Model, Document> {
+    return this.metadataFactory.getMetadataFor<Model, Document>(DocumentClass);
   }
 
   /**
    * Gets the EmbeddedDocumentMetadata for the given class.
    */
-  getEmbeddedMetadataFor<T>(
-    EmbeddedDocumentClass: Constructor<T>
-  ): EmbeddedDocumentMetadata<T> {
-    return this.metadataFactory.getEmbeddedMetadataFor<T>(
+  getEmbeddedMetadataFor<Model, Document = WithDocumentFields<Model>>(
+    EmbeddedDocumentClass: Constructor<Model>
+  ): EmbeddedDocumentMetadata<Model, Document> {
+    return this.metadataFactory.getEmbeddedMetadataFor<Model, Document>(
       EmbeddedDocumentClass
     );
   }
@@ -104,17 +111,17 @@ export class DocumentManager {
   /**
    * Gets the DocumentMetadata for the given class.
    */
-  getAnyMetadata<T>(
-    DocumentClass: Constructor<T>
-  ): DocumentMetadata<T> | EmbeddedDocumentMetadata<T> {
+  getAnyMetadata<Model, Document = WithDocumentFields<Model>>(
+    DocumentClass: Constructor<Model>
+  ): DocumentMetadata<Model> | EmbeddedDocumentMetadata<Model, Document> {
     try {
-      return this.getMetadataFor<T>(DocumentClass);
+      return this.getMetadataFor<Model>(DocumentClass);
     } catch (err) {
       // no-op
     }
 
     try {
-      return this.getEmbeddedMetadataFor<T>(DocumentClass);
+      return this.getEmbeddedMetadataFor<Model, Document>(DocumentClass);
     } catch (err) {
       // no-op
     }
@@ -176,12 +183,17 @@ export class DocumentManager {
   /**
    * Gets the mongo Collection for the class.
    */
-  collection<T>(DocumentClass: Constructor<T>): Collection<T> {
-    return this.getMetadataFor<T>(DocumentClass).collection;
+  collection<Model, Document = WithDocumentFields<Model>>(
+    DocumentClass: Constructor<Model>
+  ): Collection<Document> {
+    return this.getMetadataFor<Model, Document>(DocumentClass).collection;
   }
 
-  getRepository<T>(DocumentClass: Constructor<T>): GetRepository<T> {
-    return this.getMetadataFor<T>(DocumentClass).repository as GetRepository<T>;
+  getRepository<Model, Document = WithDocumentFields<Model>>(
+    DocumentClass: Constructor<Model>
+  ): GetRepository<Model> {
+    return this.getMetadataFor<Model, Document>(DocumentClass)
+      .repository as GetRepository<Model>;
   }
 
   startSession(opts?: ClientSessionOptions): ClientSession {

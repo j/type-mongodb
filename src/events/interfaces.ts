@@ -2,38 +2,43 @@ import { Filter, UpdateFilter } from 'mongodb';
 import { DocumentMetadata } from '../metadata';
 import { DocumentManager } from '../DocumentManager';
 
-export interface Event<T = any> {
-  meta: DocumentMetadata<T>;
+export interface Event<Model, Document> {
+  meta: DocumentMetadata<Model, Document>;
 }
 
-export interface InsertEvent<T = any> extends Event<T> {
-  model: T;
+export interface InsertEvent<Model = any, Document = any>
+  extends Event<Model, Document> {
+  model: Model;
 }
 
-export interface InsertManyEvent<T = any> extends Event<T> {
-  models: T[];
+export interface InsertManyEvent<Model = any, Document = any>
+  extends Event<Model, Document> {
+  models: Model[];
 }
 
-export interface UpdateEvent<T = any> extends Event<T> {
-  update: UpdateFilter<T>;
-  filter: Filter<T>;
+export interface UpdateEvent<Model = any, Document = any>
+  extends Event<Model, Document> {
+  update: UpdateFilter<Document>;
+  filter: Filter<Document>;
 }
 
-export interface DeleteEvent<T = any> extends Event<T> {
-  filter: Filter<T>;
+export interface DeleteEvent<Model = any, Document = any>
+  extends Event<Model, Document> {
+  filter: Filter<Document>;
 }
 
-export interface ReplaceEvent<T = any> extends Event<T> {
-  filter: Filter<T>;
-  model: T;
+export interface ReplaceEvent<Model = any, Document = any>
+  extends Event<Model, Document> {
+  filter: Filter<Document>;
+  model: Model;
 }
 
-export type Events<T> =
-  | InsertEvent<T>
-  | InsertManyEvent<T>
-  | UpdateEvent<T>
-  | DeleteEvent<T>
-  | ReplaceEvent<T>;
+export type Events<Model = any, Document = any> =
+  | InsertEvent<Model, Document>
+  | InsertManyEvent<Model, Document>
+  | UpdateEvent<Model, Document>
+  | DeleteEvent<Model, Document>
+  | ReplaceEvent<Model, Document>;
 
 export enum EventSubscriberMethods {
   // events on single document
@@ -55,24 +60,24 @@ export enum EventSubscriberMethods {
   AfterDeleteMany = 'afterDeleteMany'
 }
 
-export interface EventSubscriber<T = any> {
+export interface EventSubscriber<Model = any, Document = any> {
   getSubscribedDocuments?(manager: DocumentManager): any[];
 
   // events on single document
-  beforeInsert?(e: InsertEvent<T>): Promise<void> | void;
-  afterInsert?(e: InsertEvent<T>): Promise<void> | void;
-  beforeUpdate?(e: UpdateEvent<T>): Promise<void> | void;
-  afterUpdate?(e: UpdateEvent<T>): Promise<void> | void;
-  beforeDelete?(e: DeleteEvent<T>): Promise<void> | void;
-  afterDelete?(e: DeleteEvent<T>): Promise<void> | void;
-  beforeReplace?(e: ReplaceEvent<T>): Promise<void> | void;
-  afterReplace?(e: ReplaceEvent<T>): Promise<void> | void;
+  beforeInsert?(e: InsertEvent<Model, Document>): Promise<void> | void;
+  afterInsert?(e: InsertEvent<Model, Document>): Promise<void> | void;
+  beforeUpdate?(e: UpdateEvent<Model, Document>): Promise<void> | void;
+  afterUpdate?(e: UpdateEvent<Model, Document>): Promise<void> | void;
+  beforeDelete?(e: DeleteEvent<Model, Document>): Promise<void> | void;
+  afterDelete?(e: DeleteEvent<Model, Document>): Promise<void> | void;
+  beforeReplace?(e: ReplaceEvent<Model, Document>): Promise<void> | void;
+  afterReplace?(e: ReplaceEvent<Model, Document>): Promise<void> | void;
 
   // events on many documents
-  beforeInsertMany?(e: InsertManyEvent<T>): Promise<void> | void;
-  afterInsertMany?(e: InsertManyEvent<T>): Promise<void> | void;
-  beforeUpdateMany?(e: UpdateEvent<T>): Promise<void> | void;
-  afterUpdateMany?(e: UpdateEvent<T>): Promise<void> | void;
-  beforeDeleteMany?(e: DeleteEvent<T>): Promise<void> | void;
-  afterDeleteMany?(e: DeleteEvent<T>): Promise<void> | void;
+  beforeInsertMany?(e: InsertManyEvent<Model, Document>): Promise<void> | void;
+  afterInsertMany?(e: InsertManyEvent<Model, Document>): Promise<void> | void;
+  beforeUpdateMany?(e: UpdateEvent<Model, Document>): Promise<void> | void;
+  afterUpdateMany?(e: UpdateEvent<Model, Document>): Promise<void> | void;
+  beforeDeleteMany?(e: DeleteEvent<Model, Document>): Promise<void> | void;
+  afterDeleteMany?(e: DeleteEvent<Model, Document>): Promise<void> | void;
 }

@@ -29,8 +29,8 @@ export interface CastContext {
 /**
  * `input` should be a valid MongoDB query filter or operator.
  */
-export function cast<T, C extends CastInput<T>>(
-  metadata: AbstractDocumentMetadata<T>,
+export function cast<Model, Document, C extends CastInput<Document>>(
+  metadata: AbstractDocumentMetadata<Model, Document>,
   input: C,
   type: CastType
 ): C {
@@ -46,8 +46,8 @@ export function cast<T, C extends CastInput<T>>(
   return castAny(metadata, input, { type });
 }
 
-function castAny<T, C extends CastInput<T>>(
-  metadata: AbstractDocumentMetadata<T>,
+function castAny<Model, Document, C extends CastInput<Document>>(
+  metadata: AbstractDocumentMetadata<Model, Document>,
   input: C,
   context: CastContext
 ): C {
@@ -72,8 +72,8 @@ function castAny<T, C extends CastInput<T>>(
 /**
  * Assumes the input is a direct queryable object.
  */
-function castObject<T = any>(
-  metadata: AbstractDocumentMetadata<T>,
+function castObject<Model, Document>(
+  metadata: AbstractDocumentMetadata<Model, Document>,
   input: any,
   context: CastContext
 ): any {
@@ -96,14 +96,14 @@ function castObject<T = any>(
  * Determines if the path is a query against an embedded document, a direct field,
  * etc.
  */
-function castPath<T = any>(
-  metadata: AbstractDocumentMetadata<T>,
+function castPath<Model, Document>(
+  metadata: AbstractDocumentMetadata<Model, Document>,
   path: string,
   condition: Filter<any>,
   context: CastContext
 ): [string, Filter<any>] {
-  let field: FieldMetadata;
-  let embeddedMetadata: AbstractDocumentMetadata<any> = metadata;
+  let field: FieldMetadata<Model, Document>;
+  let embeddedMetadata: AbstractDocumentMetadata<Model, Document> = metadata;
 
   const fixedPaths: string[] = [];
   const paths = path.split('.');

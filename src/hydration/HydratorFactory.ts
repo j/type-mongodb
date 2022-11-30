@@ -1,11 +1,13 @@
 import { AbstractDocumentMetadata } from '../metadata';
-import { Constructor } from '../typings';
+import { Constructor, WithDocumentFields } from '../typings';
 import { Hydrator } from './Hydrator';
 
-const hydrators = new Map<Constructor, Hydrator>();
+const hydrators = new Map<Constructor, Hydrator<any, any>>();
 
 export class HydratorFactory {
-  static create<T = any>(meta: AbstractDocumentMetadata<T>): Hydrator<T> {
+  static create<Model = any, Document = WithDocumentFields<Model>>(
+    meta: AbstractDocumentMetadata<Model, Document>
+  ): Hydrator<Model, Document> {
     const { DocumentClass } = meta;
 
     if (!hydrators.has(DocumentClass)) {

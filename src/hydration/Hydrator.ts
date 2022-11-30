@@ -1,8 +1,8 @@
-import { OptionalId } from 'mongodb';
+import { OptionalUnlessRequiredId } from 'mongodb';
 import { HydratorFactory } from './HydratorFactory';
 import { AbstractDocumentMetadata, FieldMetadata } from '../metadata';
 import { InternalError } from '../errors';
-import { PartialDeep } from '../typings';
+import { PartialDeep, WithDocumentFields } from '../typings';
 
 // simple helper to create unique variable names
 let variableCount: number = 0;
@@ -20,10 +20,10 @@ interface CompiledHydrators {
   toObject?: CompiledHydrator;
 }
 
-export class Hydrator<T = any> {
+export class Hydrator<Model, Document = WithDocumentFields<Model>> {
   private compiled?: CompiledHydrators;
 
-  constructor(private meta: AbstractDocumentMetadata<T>) {}
+  constructor(private meta: AbstractDocumentMetadata<Model, Document>) {}
 
   get isCompiled(): boolean {
     return typeof this.compiled === 'object';
@@ -43,10 +43,10 @@ export class Hydrator<T = any> {
     };
   }
 
-  public init(props: PartialDeep<T>, parent?: any): T {
+  public init(props: PartialDeep<Model>, parent?: any): Model {
     this.assertIsCompiled();
 
-    props = props || ({} as PartialDeep<T>);
+    props = props || ({} as PartialDeep<Model>);
 
     if (this.meta.discriminator) {
       const { propertyName, mapping } = this.meta.discriminator;
@@ -63,7 +63,7 @@ export class Hydrator<T = any> {
     );
   }
 
-  public merge(model: T, props: PartialDeep<T>, parent?: any): T {
+  public merge(model: Model, props: PartialDeep<Model>, parent?: any): Model {
     this.assertIsCompiled();
 
     if (!model) {
@@ -91,7 +91,7 @@ export class Hydrator<T = any> {
     return this.compiled.merge(this.prepare(model), props, parent);
   }
 
-  public fromDB(doc?: Record<string, any>, parent?: any): T {
+  public fromDB(doc?: Record<string, any>, parent?: any): Model {
     this.assertIsCompiled();
 
     // don't attempt transforming invalid documents into models
@@ -114,12 +114,12 @@ export class Hydrator<T = any> {
     );
   }
 
-  public toDB(model: T): OptionalId<any> {
+  public toDB(model: Model): OptionalUnlessRequiredId<Document> {
     this.assertIsCompiled();
 
     // don't attempt hydrating invalid models into documents
     if (typeof model !== 'object') {
-      return model;
+      return model as OptionalUnlessRequiredId<Document>;
     }
 
     this.prepare(model);
@@ -135,7 +135,7 @@ export class Hydrator<T = any> {
     return this.compiled.toDB({}, model);
   }
 
-  public toObject(model: T, parent?: any): T {
+  public toObject(model: Model, parent?: any): Model {
     this.assertIsCompiled();
 
     if (this.meta.discriminator) {

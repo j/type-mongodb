@@ -319,6 +319,7 @@ describe('Repository -> queries, inserts, & updates', () => {
       .find()
       .sort({ name: 1 })
       .toArray();
+
     expect(found[0]._id).toBeInstanceOf(Binary);
     expect(found[1]._id).toBeInstanceOf(Binary);
     expect(new UUIDType().convertToJSValue(found[0]._id)).toEqual(

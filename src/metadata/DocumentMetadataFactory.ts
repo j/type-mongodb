@@ -1,6 +1,6 @@
 import { DocumentMetadata } from './DocumentMetadata';
 import { FieldMetadata } from './FieldMetadata';
-import { Constructor } from '../typings';
+import { Constructor, WithDocumentFields } from '../typings';
 import { definitionStorage } from '../utils';
 import { DocumentManager } from '../DocumentManager';
 import { EmbeddedDocumentMetadata } from './EmbeddedDocumentMetadata';
@@ -54,7 +54,9 @@ export class DocumentMetadataFactory {
   /**
    * Gets the DocumentMetadata for the given class.
    */
-  getMetadataFor<T>(DocumentClass: Constructor<T>): DocumentMetadata<T> {
+  getMetadataFor<Model, Document = WithDocumentFields<Model>>(
+    DocumentClass: Constructor<Model>
+  ): DocumentMetadata<Model, Document> {
     this.assertMetadataIsBuilt();
 
     const meta = this.loadedDocumentMetadata.get(DocumentClass);
@@ -71,9 +73,9 @@ export class DocumentMetadataFactory {
   /**
    * Gets the DocumentMetadata for the given class.
    */
-  getEmbeddedMetadataFor<T>(
-    EmbeddedDocumentClass: Constructor<T>
-  ): EmbeddedDocumentMetadata<T> {
+  getEmbeddedMetadataFor<Model, Document = WithDocumentFields<Model>>(
+    EmbeddedDocumentClass: Constructor<Model>
+  ): EmbeddedDocumentMetadata<Model, Document> {
     this.assertMetadataIsBuilt();
 
     const meta = this.loadedEmbeddedDocumentMetadata.get(EmbeddedDocumentClass);
@@ -90,18 +92,22 @@ export class DocumentMetadataFactory {
   /**
    * Filters metadata by given criteria.
    */
-  filterMetadata<T = any>(
+  filterMetadata(
     filter: (value: DocumentMetadata) => boolean
-  ): DocumentMetadata<T>[] {
+  ): DocumentMetadata[] {
     return Array.from(this.loadedDocumentMetadata.values()).filter(filter);
   }
 
   /**
    * Filters metadata by given criteria.
    */
-  map<T = any>(
-    fn: (value: DocumentMetadata, index: number, array: DocumentMetadata[]) => T
-  ): T[] {
+  map(
+    fn: (
+      value: DocumentMetadata,
+      index: number,
+      array: DocumentMetadata[]
+    ) => DocumentMetadata
+  ): DocumentMetadata[] {
     return Array.from(this.loadedDocumentMetadata.values()).map(fn);
   }
 
@@ -171,7 +177,7 @@ export class DocumentMetadataFactory {
 
   protected buildEmbeddedDocumentMetadata(
     DocumentClass: Constructor
-  ): EmbeddedDocumentMetadata {
+  ): EmbeddedDocumentMetadata<any> {
     if (this.loadedEmbeddedDocumentMetadata.has(DocumentClass)) {
       return this.loadedEmbeddedDocumentMetadata.get(DocumentClass);
     }

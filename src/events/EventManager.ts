@@ -66,54 +66,54 @@ export class EventManager {
     });
   }
 
-  dispatchBeforeAndAfter<T1 = any, T2 = any>(
+  dispatchBeforeAndAfter<Response, Model = any, Document = any>(
     before: EventSubscriberMethods.BeforeInsert,
     after: EventSubscriberMethods.AfterInsert,
-    e: InsertEvent<T1>,
-    run: () => Promise<T2>
-  ): Promise<T2>;
-  dispatchBeforeAndAfter<T1 = any, T2 = any>(
+    e: InsertEvent<Model, Document>,
+    run: () => Response
+  ): Promise<Response>;
+  dispatchBeforeAndAfter<Response, Model = any, Document = any>(
     before: EventSubscriberMethods.BeforeUpdate,
     after: EventSubscriberMethods.AfterUpdate,
-    e: UpdateEvent<T1>,
-    run: () => Promise<T2>
-  ): Promise<T2>;
-  dispatchBeforeAndAfter<T1 = any, T2 = any>(
+    e: UpdateEvent<Model, Document>,
+    run: () => Response
+  ): Promise<Response>;
+  dispatchBeforeAndAfter<Response, Model = any, Document = any>(
     before: EventSubscriberMethods.BeforeDelete,
     after: EventSubscriberMethods.AfterDelete,
-    e: DeleteEvent<T1>,
-    run: () => Promise<T2>
-  ): Promise<T2>;
-  dispatchBeforeAndAfter<T1 = any, T2 = any>(
+    e: DeleteEvent<Model, Document>,
+    run: () => Response
+  ): Promise<Response>;
+  dispatchBeforeAndAfter<Response, Model = any, Document = any>(
     before: EventSubscriberMethods.BeforeReplace,
     after: EventSubscriberMethods.AfterReplace,
-    e: ReplaceEvent<T1>,
-    run: () => Promise<T2>
-  ): Promise<T2>;
-  dispatchBeforeAndAfter<T1 = any, T2 = any>(
+    e: ReplaceEvent<Model, Document>,
+    run: () => Response
+  ): Promise<Response>;
+  dispatchBeforeAndAfter<Response, Model = any, Document = any>(
     before: EventSubscriberMethods.BeforeInsertMany,
     after: EventSubscriberMethods.AfterInsertMany,
-    e: InsertManyEvent<T1>,
-    run: () => Promise<T2>
-  ): Promise<T2>;
-  dispatchBeforeAndAfter<T1 = any, T2 = any>(
+    e: InsertManyEvent<Model, Document>,
+    run: () => Response
+  ): Promise<Response>;
+  dispatchBeforeAndAfter<Response, Model = any, Document = any>(
     before: EventSubscriberMethods.BeforeUpdateMany,
     after: EventSubscriberMethods.AfterUpdateMany,
-    e: UpdateEvent<T1>,
-    run: () => Promise<T2>
-  ): Promise<T2>;
-  dispatchBeforeAndAfter<T1 = any, T2 = any>(
+    e: UpdateEvent<Model, Document>,
+    run: () => Response
+  ): Promise<Response>;
+  dispatchBeforeAndAfter<Response, Model = any, Document = any>(
     before: EventSubscriberMethods.BeforeDeleteMany,
     after: EventSubscriberMethods.AfterDeleteMany,
-    e: DeleteEvent<T1>,
-    run: () => Promise<T2>
-  ): Promise<T2>;
-  async dispatchBeforeAndAfter<T1 = any, T2 = any>(
+    e: DeleteEvent<Model, Document>,
+    run: () => Response
+  ): Promise<Response>;
+  async dispatchBeforeAndAfter<Response, Model = any, Document = any>(
     before: EventSubscriberMethods,
     after: EventSubscriberMethods,
-    e: Events<T1>,
-    run: () => Promise<T2>
-  ): Promise<T2> {
+    e: Events<Model, Document>,
+    run: () => Response
+  ): Promise<Response> {
     await this.dispatch(before, e);
     const result = await run();
     await this.dispatch(after, e);

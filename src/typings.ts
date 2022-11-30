@@ -9,6 +9,20 @@ export type GetRepository<T> = T extends { [DocumentRepository]: any }
   ? T[typeof DocumentRepository]
   : Repository<T>;
 
+export const DocumentFields = Symbol('DocumentFields');
+export type WithDocumentFields<T> = T extends { [DocumentFields]: any }
+  ? T[typeof DocumentFields]
+  : T;
+
+export type Filter<
+  Model = any,
+  Document = WithDocumentFields<Model>
+> = import('mongodb').Filter<Document>;
+export type UpdateFilter<
+  Model = any,
+  Document = WithDocumentFields<Model>
+> = import('mongodb').UpdateFilter<Document>;
+
 // Borrowed from https://github.com/sindresorhus/type-fest/blob/main/source/partial-deep.d.ts
 
 export type Primitive =

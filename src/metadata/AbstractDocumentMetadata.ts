@@ -1,5 +1,5 @@
-import { OptionalId } from 'mongodb';
-import { Constructor, PartialDeep } from '../typings';
+import { OptionalUnlessRequiredId } from 'mongodb';
+import { Constructor, PartialDeep, WithDocumentFields } from '../typings';
 import { FieldMetadata } from './FieldMetadata';
 import { ParentDefinition } from './definitions';
 import { DiscriminatorMetadata } from './DiscriminatorMetadata';
@@ -14,19 +14,22 @@ export type FieldsMetadata = Map<string, FieldMetadata>;
  * AbstractDocumentMetadata contains all the needed info for Document and embedded
  * documents.
  */
-export abstract class AbstractDocumentMetadata<T> {
+export abstract class AbstractDocumentMetadata<
+  Model = any,
+  Document = WithDocumentFields<Model>
+> {
   public readonly manager: DocumentManager;
-  public readonly DocumentClass: Constructor<T>;
+  public readonly DocumentClass: Constructor<Model>;
   public readonly name: string;
   public readonly fields: FieldsMetadata;
   public readonly idField: FieldMetadata;
   public readonly parent?: ParentDefinition;
   public readonly discriminator?: DiscriminatorMetadata;
-  public readonly hydrator: Hydrator;
+  public readonly hydrator: Hydrator<Model, Document>;
 
   constructor(
     manager: DocumentManager,
-    DocumentClass: Constructor<T>,
+    DocumentClass: Constructor<Model>,
     fields: FieldsMetadata,
     parent?: ParentDefinition,
     discriminator?: DiscriminatorMetadata
@@ -37,7 +40,7 @@ export abstract class AbstractDocumentMetadata<T> {
     this.fields = fields;
     this.parent = parent;
     this.discriminator = discriminator;
-    this.hydrator = HydratorFactory.create(this);
+    this.hydrator = HydratorFactory.create<Model, Document>(this);
 
     // set the idField property if it exists
     this.idField = [...this.fields.values()].find((f) => f.fieldName === '_id');
@@ -66,30 +69,30 @@ export abstract class AbstractDocumentMetadata<T> {
   /**
    * Creates a model from it's properties.
    */
-  init(props: PartialDeep<T>): T {
+  init(props: PartialDeep<Model>): Model {
     return this.hydrator.init(props);
   }
 
   /**
    * Creates a model from model properties.
    */
-  merge(model: T, props: PartialDeep<T>): T {
+  merge(model: Model, props: PartialDeep<Model>): Model {
     return this.hydrator.merge(model, props);
   }
 
   /**
    * Converts the model to a plain object.
    */
-  toObject(model: T): T {
+  toObject(model: Model): Model {
     return this.hydrator.toObject(model);
   }
 
   /**
    * Converts the model fields to a mongodb document.
    */
-  toDB(model: T): OptionalId<any> {
+  toDB(model: Model): OptionalUnlessRequiredId<Document> {
     if (!(model instanceof this.DocumentClass)) {
-      model = this.init(model as PartialDeep<T>);
+      model = this.init(model as PartialDeep<Model>);
     }
 
     return this.hydrator.toDB(model);
@@ -98,14 +101,14 @@ export abstract class AbstractDocumentMetadata<T> {
   /**
    * Creates a model from a document.
    */
-  fromDB(doc: Record<string, any>): T {
+  fromDB(doc: Record<string, any>): Model {
     return this.hydrator.fromDB(doc);
   }
 
   /**
    * Casts the fields & values to MongoDB filters or update queries.
    */
-  cast<I extends CastInput<T>>(input: I, type: CastType): I {
+  cast<I extends CastInput<Model>>(input: I, type: CastType): I {
     return cast(this, input, type);
   }
 }

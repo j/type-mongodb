@@ -4,14 +4,15 @@ import { FieldDefinition } from './definitions';
 import { Type } from '../types';
 import { InternalError } from '../errors';
 
-export interface FieldMetadataOpts<T = any> extends FieldDefinition<T> {
+export interface FieldMetadataOpts<Model, Document>
+  extends FieldDefinition<Model> {
   isEmbeddedArray?: boolean;
   embeddedType?: Constructor;
-  embeddedMetadata?: EmbeddedDocumentMetadata;
+  embeddedMetadata?: EmbeddedDocumentMetadata<Model, Document>;
 }
 
-export class FieldMetadata<T = any> {
-  public readonly DocumentClass: Constructor<T>;
+export class FieldMetadata<Model = any, Document = Model> {
+  public readonly DocumentClass: Constructor<Model>;
   public readonly propertyName: string;
   public readonly fieldName: string;
   public readonly isId: boolean;
@@ -19,12 +20,12 @@ export class FieldMetadata<T = any> {
   public readonly isEmbedded: boolean;
   public readonly isEmbeddedArray?: boolean;
   public readonly embeddedType?: Constructor;
-  public readonly embeddedMetadata?: EmbeddedDocumentMetadata;
+  public readonly embeddedMetadata?: EmbeddedDocumentMetadata<Model, Document>;
   public readonly type: Type;
   public readonly typeIsArray: boolean;
   public readonly shouldCreateJSValue: boolean;
 
-  constructor(opts: FieldMetadataOpts) {
+  constructor(opts: FieldMetadataOpts<Model, Document>) {
     this.DocumentClass = opts.DocumentClass;
     this.propertyName = opts.propertyName;
     this.fieldName = opts.fieldName;
