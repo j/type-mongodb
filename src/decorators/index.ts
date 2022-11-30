@@ -5,7 +5,6 @@ import {
   ParentDefinition
 } from '../metadata';
 import { Constructor } from '../typings';
-import { Repository } from '../repository';
 import { Type } from '../types';
 import { definitionStorage, fieldToType } from '../utils';
 import { InternalError } from '../errors';

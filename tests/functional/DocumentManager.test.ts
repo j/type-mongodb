@@ -44,7 +44,7 @@ describe('DocumentManager', () => {
 
   beforeAll(async () => {
     manager = await DocumentManager.create({
-      uri: 'mongodb://localhost:27017/test',
+      uri: process.env.MONGODB_URI,
       documents: [
         Simple,
         User,

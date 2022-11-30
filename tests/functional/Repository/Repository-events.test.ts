@@ -69,7 +69,7 @@ describe('Repository -> Events', () => {
 
   beforeAll(async () => {
     manager = await DocumentManager.create({
-      uri: 'mongodb://localhost:27017/test',
+      uri: process.env.MONGODB_URI,
       documents: [Event],
       subscribers: [new NoopListener()]
     });

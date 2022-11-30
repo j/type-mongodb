@@ -1,5 +1,4 @@
 import { Repository } from './repository';
-import { DocumentMetadata } from './metadata';
 
 export type Constructor<T = any> = new (...args: any[]) => T;
 
